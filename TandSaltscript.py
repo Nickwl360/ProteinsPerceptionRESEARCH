@@ -1,11 +1,4 @@
-from SCDcalc import *
-from xCalc import *
-import math
-from scipy import special
-import numpy as np
-import matplotlib.pyplot as plt
-from scipy.optimize import minimize
-from ConfunsTandSalt import *
+from OldProteinProjects.ConfunsTandSalt import *
 
 ##a1 = a+, a2 = a-
 def Fcon(params, seq,t,cs):
