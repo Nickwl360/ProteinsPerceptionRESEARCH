@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "MCbraindistribution.py", line 45, in <module>
+    toggletimes =sampletimes(initial,params,samples)
+  File "MCbraindistribution.py", line 30, in sampletimes
+    a,b = simulation(initial,params,Tmax)
+  File "/home/nlamb/MCBrainTime.py", line 63, in simulation
+    nextpkl = runtime_program(params,Pkl_prog,NA,NB)
+  File "/home/nlamb/MCBrainTime.py", line 21, in runtime_program
+    with open(prog_path, "r") as f:
+FileNotFoundError: [Errno 2] No such file or directory: '/Users/Nickl/PycharmProjects/Researchcode (1) (1)/mcbraintime.cl'
