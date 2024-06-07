@@ -1,9 +1,4 @@
-import numpy as np
-import matplotlib.pyplot as plt
-import math
-from numba import jit
-from scipy.special import erfinv
-from MaxCalAAsim import *
+from OldMCProjects.MaxCalAAsim import *
 from numba import jit
 from scipy.optimize import minimize
 
@@ -22,7 +17,7 @@ F_sig = 30
 # fdata = ITS_pull(data, prob)
 # np.save('AAflur100k',fdata)
 
-mcdata = np.load('NA-AAtest100k.npy')
+mcdata = np.load('OldMCProjects/NA-AAtest100k.npy')
 dflur =np.load('AAflur100k.npy')
 
 @jit(nopython=True)

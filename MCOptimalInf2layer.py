@@ -19,7 +19,6 @@ unbiasparams = (halpha, ha, halpha - etop1, ha + etop1, hgamma, hc, hgamma - ebo
 Punbias = runtime_program(unbiasparams,Pmnop_prog)
 Punbiasreshape = Punbias.reshape((MAXTOP, MAXTOP, MAXBOT, MAXBOT, MAXTOP, MAXTOP, MAXBOT, MAXBOT))
 Punbiasnormal = renormalize(Punbiasreshape)
-np.save('unbias2layer.npy',Punbiasnormal)
 
 ##############biasedTransitionmatrix
 etop2 = 0
@@ -61,8 +60,8 @@ def simulationswitch(Nstart,Punbias,Pbias,Tflip):
     return A,B,C,D
 
 # Create a list of trajectories for all objects (A, B, C, D)
-unbias = np.load('unbias2layer.npy')
-bias = np.load('bias2layere0_5.npy')
+#unbias = np.load('unbias2layer.npy')
+#bias = np.load('bias2layere0_5.npy')
 Atrajs =[]
 Btrajs =[]
 Ctrajs=[]

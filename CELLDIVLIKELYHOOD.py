@@ -15,11 +15,11 @@ divcount = np.load('trajectory_counts_div-3.npy')
 nicknodiv2 =np.load('ndivv2.npy')
 nickdiv2 = np.load('divv2.npy')
 
-fluri = np.load('trans_nodiv_i.npy')
-flurj = np.load('trans_nodiv_j.npy')
-flurdi = np.load('trans_div_i.npy')
-flurdk = np.load('trans_div_k.npy')
-flurdl = np.load('trans_div_l (1).npy')
+fluri = np.load('OldMCProjects/trans_nodiv_i.npy')
+flurj = np.load('OldMCProjects/trans_nodiv_j.npy')
+flurdi = np.load('OldMCProjects/trans_div_i.npy')
+flurdk = np.load('OldMCProjects/trans_div_k.npy')
+flurdl = np.load('OldMCProjects/trans_div_l (1).npy')
 
 
 # def Likelyhood(multipliers,divcount,nodivcount,m):
