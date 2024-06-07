@@ -28,9 +28,6 @@ PendStateE25R5File = '/Users/Nickl/PycharmProjects/Researchcode (1) (1)/MCBrainT
 # datad=Ekij[1,lencount,set]/(MAXBOT-1)
 
 
-
-
-
 def countbrain(dataa, datab, datac, datad):
     count = np.zeros((MAXTOP, MAXTOP, MAXBOT, MAXBOT, MAXTOP, MAXTOP, MAXBOT, MAXBOT))
     lencount = np.len(dataa)
@@ -80,6 +77,7 @@ def CalcPEndState(params, ns, prog_path):
     # Read the results back from the GPU to the host
     cl.enqueue_copy(queue, NextPmnop, Pmnop_buf)
     return NextPmnop
+
 def calcPTransitiongpu(params,start,end):
     na1, nb1, nc1, nd1 = start
     na2, nb2, nc2, nd2 = end
@@ -111,7 +109,6 @@ def brainlikelyhood(params9, counts):
     params = (halpha, ha, halpha, ha , hgamma, hc, hgamma - epsilon2, hc + epsilon2, kcoop, kcomp, kdu, kud,kx)
     non_zero_indices_values = get_non_zero_indices_and_values(counts)
     #non_zero_indices_values = counts
-
     likelyhood = 0
     for idx, value in non_zero_indices_values:
         start = idx[0],idx[1],idx[2],idx[3]
@@ -157,7 +154,7 @@ if __name__ == "__main__":
 
     params = (halpha, ha, halpha - epsilon1, ha + epsilon1, hgamma, hc, hgamma - epsilon2, hc + epsilon2, kcoop, kcomp, kdu, kud,kx)
     p = calcPTransitiongpu(params, (0, 0, 0, 0), (0, 1, 1, 1))
-
+    print(p)
     #
     #count = np.load('Jochdt001I6875NE25NR5counts.npy')
     # count = np.load('Jochdt001I0625NE25NR5counts.npy')

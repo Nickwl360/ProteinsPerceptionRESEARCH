@@ -18,7 +18,7 @@ class Proton:
         self.position = np.array(position, dtype=float)
         self.velocity = np.array(velocity, dtype=float)
         self.charge = charge*Z
-        self.mass = mass*2*Z
+        self.mass = mass*Z
         self.initial_speed = np.linalg.norm(velocity)
 
     def update_position(self, dt):
