@@ -1,16 +1,14 @@
 import numpy as np
-from SCDcalc import *
+from OldProteinProjects.SCDcalc import *
 from scipy import integrate
 from scipy.optimize import fsolve
 import matplotlib.pyplot as plt
 from scipy.optimize import minimize
 from scipy.optimize import root_scalar
-import time
-
 
 #CONSTANTS##################################################################
 phiS = 0.01
-seqs = getseq('SCDtests.xlsx')
+seqs = getseq('OldProteinProjects/SCDtests.xlsx')
 #seq1= seqs[0]
 seq1 = 'MGDEDWEAEINPHMSSYVPIFEKDRYSGENGDNFNRTPASSSEMDDGPSRRDHFMKSGFASGRNFGNRDAGECNKRDNTSTMGGFGVGKSFGNRGFSNSRFEDGDSSGFWRESSNDCEDNPTRNRGFSKRGGYRDGNNSEASGPYRRGGRGSFRGCRGGFGLGSPNNDLDPDECMQRTGGLFGSRRPVLSGTGNGDTSQSRSGSGSERGGYKGLNEEVITGSGKNSWKSEAEGGES'
 N = len(seq1)

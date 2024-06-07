@@ -20,8 +20,8 @@ dipt = dip / l
 cs = 1
 cst = cs * l ** 3 * 6.022E20 / 1e27  # mM--- mmol/L
 
-IDPs = getseq('../xij_test_seqs.xlsx')
-tests = getseq('../SCDtests.xlsx')
+IDPs = getseq('xij_test_seqs.xlsx')
+tests = getseq('SCDtests.xlsx')
 
 def fminus(seq):
     N = len(seq)

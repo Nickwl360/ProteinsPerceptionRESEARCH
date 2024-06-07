@@ -19,8 +19,8 @@ def Fcon(params, seq):
 # minX = minf.x[0]
 
 # return minX
-seq = getseq("../SCDtests.xlsx")
-seq2 = getseq("../xij_test_seqs.xlsx")
+seq = getseq("SCDtests.xlsx")
+seq2 = getseq("xij_test_seqs.xlsx")
 initial_guess = (1.2, .97, .9)
 #bounds = [(0, 10), (0, 10), (0, 11)]
 #,bounds=bounds

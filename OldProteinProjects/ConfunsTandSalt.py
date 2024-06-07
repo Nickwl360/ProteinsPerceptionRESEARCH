@@ -16,8 +16,8 @@ rho = 5
 rhot = rho * l ** 3 * 6.022E20 / 1e27
 dip = 2.28
 dipt = dip / l
-IDPs = getseq('../xij_test_seqs.xlsx')
-tests = getseq('../SCDtests.xlsx')
+IDPs = getseq('xij_test_seqs.xlsx')
+tests = getseq('SCDtests.xlsx')
 
 def fminus(seq):
     N = len(seq)
