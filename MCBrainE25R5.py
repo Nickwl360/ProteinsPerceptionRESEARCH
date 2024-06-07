@@ -5,6 +5,8 @@ import math
 from scipy.optimize import minimize
 import pyopencl as cl
 import scipy.io
+from collections import defaultdict
+
 # directory = 'JochNE25NR5Counts'
 # if not os.path.exists(directory):
 #     os.makedirs(directory)
@@ -26,12 +28,35 @@ PendStateE25R5File = '/Users/Nickl/PycharmProjects/Researchcode (1) (1)/MCBrainT
 # datad=Ekij[1,lencount,set]/(MAXBOT-1)
 
 
-def countbrain(dataa,datab,datac,datad):
-    count = np.zeros((MAXTOP, MAXTOP, MAXBOT, MAXBOT,MAXTOP, MAXTOP, MAXBOT, MAXBOT))
+
+
+
+def countbrain(dataa, datab, datac, datad):
+    count = np.zeros((MAXTOP, MAXTOP, MAXBOT, MAXBOT, MAXTOP, MAXTOP, MAXBOT, MAXBOT))
     lencount = np.len(dataa)
     for i in range(0, lencount - 1):
         print(i)
-        count[int(dataa[i])][int(datab[i])][int(datac[i])][int(datad[i])][int(dataa[i+1])][int(datab[i + 1])][int(datac[i+1])][int(datad[i + 1])] += 1
+        count[int(dataa[i])][int(datab[i])][int(datac[i])][int(datad[i])][int(dataa[i + 1])][int(datab[i + 1])][
+            int(datac[i + 1])][int(datad[i + 1])] += 1
+    return count
+
+
+def countbrain2_0(dataa, datab, datac, datad):
+    # Initialize a dictionary to store the counts of transitions
+    count = defaultdict(int)
+    lencount = len(dataa)
+
+    for i in range(lencount - 1):
+        # Create a tuple representing the current and next state
+        current_state = (int(dataa[i]), int(datab[i]), int(datac[i]), int(datad[i]))
+        next_state = (int(dataa[i + 1]), int(datab[i + 1]), int(datac[i + 1]), int(datad[i + 1]))
+
+        # Create a tuple representing the transition
+        transition = (current_state, next_state)
+
+        # Increment the count of this transition
+        count[transition] += 1
+
     return count
 
 
