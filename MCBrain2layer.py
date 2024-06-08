@@ -6,7 +6,7 @@ import pyopencl.array as cl_array
 from EQUILIBRIUMFINDER import EquilibriumMatrix
 import os
 
-Pmnop_prog = '/Users/Nickl/PycharmProjects/Researchcode (1) (1)/MCBrain2layer.cl'
+Pmnop_prog = '/Users/Nick/PycharmProjects/Researchcode (1) (1)/MCBrain2layer.cl'
 
 # constants
 Tmax = 10_000
