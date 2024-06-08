@@ -6,7 +6,7 @@ import pyopencl.array as cl_array
 from EQUILIBRIUMFINDER import EquilibriumMatrix
 import os
 
-Pmnop_prog = '/Users/Nick/PycharmProjects/Researchcode (1) (1)/MCBrain2layer.cl'
+Pmnop_prog = '/Users/Nickl/PycharmProjects/Researchcode (1) (1)/MCBrain2layer.cl'
 
 # constants
 Tmax = 10_000
@@ -26,7 +26,9 @@ def runtime_program(params, prog_path):
     queue = cl.CommandQueue(ctx)
     with open(prog_path, "r") as f:
         program_source = f.read()
+    print('read')
     program = cl.Program(ctx, program_source).build()
+    print('built')
     NextPmnop = np.zeros(((MAXTOP*MAXTOP*MAXBOT*MAXBOT)**2),dtype=np.float64)
     Pmnop_buf = cl.Buffer(ctx, cl.mem_flags.WRITE_ONLY, NextPmnop.nbytes)
 
