@@ -1,9 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import math
 import pyopencl as cl
-import pyopencl.array as cl_array
-from EQUILIBRIUMFINDER import EquilibriumMatrix
+from Utilities.EQUILIBRIUMFINDER import EquilibriumMatrix
 import os
 
 Pmnop_prog = '/Users/Nickl/PycharmProjects/Researchcode (1) (1)/MCBrain2layer.cl'

@@ -1,5 +1,5 @@
 from scipy.stats import multivariate_normal
-from MCBrain2LayerInference import *
+from CurrentProjects.PerceptionE25R5.MCBrain2LayerInference import *
 
 
 #memorystuff
@@ -13,8 +13,9 @@ from MCBrain2LayerInference import *
 
 #MCbrain2layer
 #########10mil
-brain1a, brain1b,brain1c,brain1d = np.load('OldMCProjects/Atest10mil.npy'),np.load(
-    'OldMCProjects/Btest10mil.npy'),np.load('OldMCProjects/Ctest10mil.npy'),np.load('OldMCProjects/Dtest10mil.npy')
+brain1a, brain1b,brain1c,brain1d = np.load('../OldMCProjects/Atest10mil.npy'), np.load(
+    '../OldMCProjects/Btest10mil.npy'), np.load('../OldMCProjects/Ctest10mil.npy'), np.load(
+    '../OldMCProjects/Dtest10mil.npy')
 #print(len(brain1a))
 
 def countFlips(seqA,seqB):

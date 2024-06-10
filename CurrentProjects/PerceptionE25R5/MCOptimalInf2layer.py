@@ -1,4 +1,4 @@
-from MCBrain2layer import runtime_program, renormalize, nextNs
+from CurrentProjects.PerceptionE25R5.MCBrain2layer import runtime_program, renormalize, nextNs
 import numpy as np
 from matplotlib import pyplot as plt
 

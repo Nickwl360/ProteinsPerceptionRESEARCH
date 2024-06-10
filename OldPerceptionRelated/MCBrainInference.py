@@ -1,9 +1,6 @@
-import numpy as np
-import sys
-from matplotlib import pyplot as plt
-from MaxCalBrainTest1 import *
+from CurrentProjects.PerceptionE25R5.MaxCalBrainTest1 import *
 from scipy.optimize import minimize
-from numba import jit
+
 MAX=26
 Pijkl_prog = '/Users/Nickl/PycharmProjects/Researchcode (1) (1)/brainpijkl.cl'
 dataa= np.loadtxt('../OldMCProjects/NA_sequence.csv', delimiter=",")

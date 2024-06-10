@@ -1,11 +1,5 @@
-import numpy as np
-import matplotlib.pyplot as plt
-import math
-from MCBrain2layer import *
+from CurrentProjects.PerceptionE25R5.MCBrain2layer import *
 from scipy.optimize import minimize
-from scipy.optimize import basinhopping
-from scipy.optimize import shgo
-from scipy.sparse import lil_matrix
 import scipy.io
 # directory = 'JochNE25NR5Counts'
 # if not os.path.exists(directory):

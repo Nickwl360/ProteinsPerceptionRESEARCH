@@ -1,10 +1,5 @@
-import numpy as np
-import matplotlib.pyplot as plt
-import math
 import pyopencl as cl
-import pyopencl.array as cl_array
-from scipy.optimize import minimize
-from EQUILIBRIUMFINDER import *
+from Utilities.EQUILIBRIUMFINDER import *
 
 Pijkl_prog = 'brainpijkl.cl'
 # constants

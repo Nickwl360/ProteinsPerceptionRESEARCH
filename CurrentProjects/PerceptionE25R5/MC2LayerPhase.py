@@ -1,5 +1,4 @@
-import numpy as np
-from MCBrain2layer import *
+from CurrentProjects.PerceptionE25R5.MCBrain2layer import *
 from MaxCalBrainTest1 import *
 
 

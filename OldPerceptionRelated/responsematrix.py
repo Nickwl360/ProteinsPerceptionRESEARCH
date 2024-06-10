@@ -1,4 +1,4 @@
-from MaxCalBrainTest1 import*
+from CurrentProjects.PerceptionE25R5.MaxCalBrainTest1 import*
 import numpy as np
 import matplotlib.pyplot as plt
 Pijkl_prog = '/Users/Nickl/PycharmProjects/Researchcode (1) (1)/brainpijkl.cl'

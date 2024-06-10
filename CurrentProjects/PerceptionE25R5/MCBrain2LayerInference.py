@@ -1,7 +1,4 @@
-import numpy as np
-import matplotlib.pyplot as plt
-import math
-from MCBrain2layer import *
+from CurrentProjects.PerceptionE25R5.MCBrain2layer import *
 from scipy.optimize import minimize
 import scipy.io
 
