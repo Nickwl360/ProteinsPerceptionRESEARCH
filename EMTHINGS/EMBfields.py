@@ -58,9 +58,9 @@ def PlotBfieldEarth():
     z = radius_earth * np.outer(np.ones(np.size(u)), np.cos(v))
     ax.plot_surface(x, y, z, color='b', alpha=0.3, rstride=4, cstride=4)
     # Set labels and title
-    ax.set_xlabel('X Position (1e6m)')
-    ax.set_ylabel('Y Position (1e6m)')
-    ax.set_zlabel('Z Position (1e6m)')
+    ax.set_xlabel('X Position (1e7m)')
+    ax.set_ylabel('Y Position (1e7m)')
+    ax.set_zlabel('Z Position (1e7m)')
     ax.set_title('Magnetic Field Streamlines around Earth')
     max_val = 10e6
     ax.set_xlim(-max_val, max_val)
