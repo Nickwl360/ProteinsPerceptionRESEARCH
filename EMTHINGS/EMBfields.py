@@ -43,11 +43,11 @@ def PlotBfieldEarth():
         [0, 6e6, 6e6],
         [0, -6e6, -6e6]
     ]
-    steps = 1000
+    steps = 2000
     step_size = 1e5
     for start_pos in initialpoints:
         streamline = getStreamLine(np.array(start_pos), steps, step_size)
-        ax.plot(streamline[:, 0], streamline[:, 1], streamline[:, 2], 'b-')
+        ax.plot(streamline[:, 0], streamline[:, 1], streamline[:, 2], 'b-',linewidth=.5)
 
     # Plot the Earth as a sphere #GOT THIS FROM CHAT GPT TO PLOT A SPHERE
     radius_earth = 6371e3  # Radius of Earth in meters
@@ -58,9 +58,9 @@ def PlotBfieldEarth():
     z = radius_earth * np.outer(np.ones(np.size(u)), np.cos(v))
     ax.plot_surface(x, y, z, color='b', alpha=0.3, rstride=4, cstride=4)
     # Set labels and title
-    ax.set_xlabel('X Position (m)')
-    ax.set_ylabel('Y Position (m)')
-    ax.set_zlabel('Z Position (m)')
+    ax.set_xlabel('X Position (1e6m)')
+    ax.set_ylabel('Y Position (1e6m)')
+    ax.set_zlabel('Z Position (1e6m)')
     ax.set_title('Magnetic Field Streamlines around Earth')
     max_val = 10e6
     ax.set_xlim(-max_val, max_val)

@@ -20,7 +20,7 @@ class Proton:
     def __init__(self, position, velocity, charge=1.602e-19, mass=1.672e-27):
         self.position = np.array(position, dtype=float)
         self.velocity = np.array(velocity, dtype=float)
-        self.charge = charge*Z
+        self.charge = charge
         self.mass = mass*Z
         self.initial_speed = np.linalg.norm(velocity)
 
