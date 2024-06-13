@@ -3,14 +3,17 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
 ##biggerparticle options
-Z=10
+Z=1
 
 def Bfield(position):
     M = np.array([0, 0, -8e22])
     x, y, z = position
-    r = np.sqrt(x ** 2 + y ** 2 + z ** 2)
+    r = np.sqrt(x**2 + y**2 + z**2)
     u0 = 12.57e-7
-    B = (u0 / (4 * np.pi)) * (1 / (r ** 3)) * (3 * np.dot(M, position / r) * position / r - M)
+    if r == 0:
+        return np.array([0, 0, 0])
+    pos_unit = position / r  # Unit vector of position
+    B = (u0 / (4 * np.pi)) * (1 / r**3) * (3 * np.dot(M, pos_unit) * pos_unit - M)
     return B
 
 class Proton:
@@ -76,16 +79,56 @@ def plot_trajectory(trajectory):
 
     plt.show()
 
+def plot_magnetic_field():
+
+    grid_size = 10
+    x = np.linspace(-10e6, 10e6, grid_size)
+    y = np.linspace(-10e6, 10e6, grid_size)
+    z = np.linspace(-10e6, 10e6, grid_size)
+    X, Y, Z = np.meshgrid(x, y, z)
+    #bfieldstorage
+    U = np.zeros_like(X)
+    V = np.zeros_like(Y)
+    W = np.zeros_like(Z)
+    for i in range(X.shape[0]):
+        for j in range(X.shape[1]):
+            for k in range(X.shape[2]):
+                position = np.array([X[i, j, k], Y[i, j, k], Z[i, j, k]])
+                B = Bfield(position)
+                U[i, j, k] = B[0]
+                V[i, j, k] = B[1]
+                W[i, j, k] = B[2]
+
+    # Plot magnetic field lines
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    ax.quiver(X, Y, Z, U, V, W, length=1e6, normalize=True, alpha=0.5)
+
+    # Set labels and title
+    ax.set_xlabel('X Position (m)')
+    ax.set_ylabel('Y Position (m)')
+    ax.set_zlabel('Z Position (m)')
+    ax.set_title('Magnetic Field around Earth')
+
+    # Adjust axis limits
+    max_val = 10e6
+    ax.set_xlim(-max_val, max_val)
+    ax.set_ylim(-max_val, max_val)
+    ax.set_zlim(-max_val, max_val)
+
+    plt.show()
+
 if __name__ == "__main__":
+    plot_magnetic_field()
 
     #######INITIALCONDITIONS############
-    initial_position = [7371e3, 0, 8000e3]
-    initial_velocity = [0,0 , -6e7]
-    proton = Proton(initial_position, initial_velocity)
-
-    total_time = 2.8  # Total time in seconds
-    dt = 1e-3  # Time step in seconds
-
-    trajectory = simulate_proton_trajectory(proton, total_time, dt)
-
-    plot_trajectory(trajectory)
+    # initial_position = [7371e3, 0, 8000e3]
+    # initial_velocity = [0,0 , -6e7]
+    # proton = Proton(initial_position, initial_velocity)
+    #
+    # total_time = 2.8  # Total time in seconds
+    # dt = 1e-3  # Time step in seconds
+    #
+    # trajectory = simulate_proton_trajectory(proton, total_time, dt)
+    #
+    # plot_trajectory(trajectory)
