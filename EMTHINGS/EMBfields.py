@@ -14,14 +14,14 @@ def magnetic_field_earth(position):
 
 def getStreamLine(start, steps, dt):
     positions = [start]
-    current_pos = start
+    currentR = start
     for i in range(steps):
-        B = magnetic_field_earth(current_pos)
+        B = magnetic_field_earth(currentR)
         if np.linalg.norm(B) == 0:
             break
-        next_pos = current_pos + B / np.linalg.norm(B) * dt
-        positions.append(next_pos)
-        current_pos = next_pos
+        nextR = currentR + B / np.linalg.norm(B) * dt
+        positions.append(nextR)
+        currentR = nextR
     return np.array(positions)
 
 def PlotBfieldEarth():
