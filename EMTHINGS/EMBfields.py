@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-def magnetic_field_earth(position):
+def Bfield(position):
     M = np.array([0, 0, -8e22])
     x, y, z = position
     r = np.sqrt(x**2 + y**2 + z**2)
@@ -16,7 +16,7 @@ def getStreamLine(start, steps, dt):
     positions = [start]
     currentR = start
     for i in range(steps):
-        B = magnetic_field_earth(currentR)
+        B = Bfield(currentR)
         if np.linalg.norm(B) == 0:
             break
         nextR = currentR + B / np.linalg.norm(B) * dt
