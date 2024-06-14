@@ -17,33 +17,26 @@ MAXBOT = 26
 PendStateE25R5File = '/Users/Nick/PycharmProjects/Researchcode (1) (1)/CurrentProjects/PerceptionE25R5/MCBrainTransitionGPU.cl'
 
 #############JOCHEN DATA  TRAJS############
-# set = 0  #######DT = .001
-# jochdatafix = scipy.io.loadmat('StochasticRecurrentSymmetricNE25NR5.mat')
-# Rkij = jochdatafix['R_kij']
-# Ekij = jochdatafix['E_kij']
-# lencount= 50_000_000
-# dataa=Rkij[0,lencount,set]/(MAXTOP-1)
-# datab=Rkij[1,lencount,set]/(MAXTOP-1)
-# datac=Ekij[0,lencount,set]/(MAXBOT-1)
-# datad=Ekij[1,lencount,set]/(MAXBOT-1)
+set = 0  #######DT = .001
+jochdatafix = scipy.io.loadmat('StochasticRecurrentSymmetricNE25NR5.mat')
+Rkij = jochdatafix['R_kij']
+Ekij = jochdatafix['E_kij']
+lencount= 100_000_000
+dataa=Rkij[0,:lencount,set]/(MAXTOP-1)
+datab=Rkij[1,:lencount,set]/(MAXTOP-1)
+datac=Ekij[0,:lencount,set]/(MAXBOT-1)
+datad=Ekij[1,:lencount,set]/(MAXBOT-1)
 
-
-def countbrain(dataa, datab, datac, datad):
-    count = np.zeros((MAXTOP, MAXTOP, MAXBOT, MAXBOT, MAXTOP, MAXTOP, MAXBOT, MAXBOT))
-    lencount = np.len(dataa)
-    for i in range(0, lencount - 1):
-        print(i)
-        count[int(dataa[i])][int(datab[i])][int(datac[i])][int(datad[i])][int(dataa[i + 1])][int(datab[i + 1])][
-            int(datac[i + 1])][int(datad[i + 1])] += 1
-    return count
-
-
-def countbrain2_0(dataa, datab, datac, datad):
+def countbrainSparced(dataa, datab, datac, datad):
     # Initialize a dictionary to store the counts of transitions
     count = defaultdict(int)
-    lencount = len(dataa)
+    dataa = np.asarray(dataa)
+    datab = np.asarray(datab)
+    datac = np.asarray(datac)
+    datad = np.asarray(datad)
 
     for i in range(lencount - 1):
+        print(i)
         # Create a tuple representing the current and next state
         current_state = (int(dataa[i]), int(datab[i]), int(datac[i]), int(datad[i]))
         next_state = (int(dataa[i + 1]), int(datab[i + 1]), int(datac[i + 1]), int(datad[i + 1]))
@@ -91,7 +84,6 @@ def calcPTransitiongpu(params,start,end):
     #find prob i->j from P(start)
     return ptrans
 
-
 def get_non_zero_indices_and_values(arr, index=()):
     indices_values = []
     if isinstance(arr, np.ndarray):
@@ -103,77 +95,47 @@ def get_non_zero_indices_and_values(arr, index=()):
             indices_values.extend(get_non_zero_indices_and_values(sub_arr, index + (i,)))
     return indices_values
 
-def brainlikelyhood(params9, counts):
+def brainlikelyhood(params9, countsdict):
     hgamma,hc,halpha,ha,kcoop,kcomp,kdu,kud,kx = params9
     epsilon2=0
     params = (halpha, ha, halpha, ha , hgamma, hc, hgamma - epsilon2, hc + epsilon2, kcoop, kcomp, kdu, kud,kx)
-    non_zero_indices_values = get_non_zero_indices_and_values(counts)
-    #non_zero_indices_values = counts
+
     likelyhood = 0
-    for idx, value in non_zero_indices_values:
-        start = idx[0],idx[1],idx[2],idx[3]
-        end = idx[4],idx[5],idx[6],idx[7]
+    for transition, count in countsdict.items():
+        start,end = transition
         prob= calcPTransitiongpu(params,start,end)
-        likelyhood += value*np.log(prob)
+        likelyhood += count*np.log(prob)
     length= 100_000_000
     val= -1*likelyhood/length
     print('Likelyhood: ', val)
     return val
-
-def minlikely(counts):
+def minlikely(countsdict):
     #SEED FROM NE11NR4 RESULTS
     initialdt001I0625=(-8.9673,-7.7323,-6.01935,-0.9932,4.722814,1.981144,6.05944,0.29747,1.53068)
 
-    ###ALL REST
-    maxL = minimize(brainlikelyhood, initialdt001I0625, args=(counts,), method='Powell' ,tol= 1e-9)
-
+    #MINIMIZE
+    maxL = minimize(brainlikelyhood, initialdt001I0625, args=(countsdict,), method='Powell' ,tol= 1e-9)
     maxparams = maxL.x
+
     return maxparams
 
 if __name__ == "__main__":
-    #count = countbrain(dataa, datab, datac, datad)
 
-    #np.save('JochDt001I1Counts',count)
-    #np.save('JochDt001I0625Counts',count)
-    #np.save('JochDt001I375Counts',count)
-    #np.save('JochDt001I6875Counts',count)
-    #np.save('Jochdt001I0625NE25NR5counts',count)
-    #np.save('Jochdt001I0625NE25NR5counts1/2',count)
+    ####SAVINGCOUNTS#####################
+    # count = countbrainSparced(dataa, datab, datac, datad)
+    # count_array = np.array(list(count.items()), dtype=object)
+    # np.save('E25R5DT001I0625JochCounts.npy', count_array)
 
-    #np.save('Jochdt001I1NE25NR5counts',count)
-    #np.save('Jochdt001I375NE25NR5counts',count)
-    #np.save('Jochdt001I6875NE25NR5counts',count)
+    ###########LOADINGCOUTNS###################
+    loaded_count_array = np.load('E25R5DT001I0625JochCounts.npy', allow_pickle=True)
+    loaded_counts_dict = defaultdict(int, dict(loaded_count_array))
+    print(loaded_counts_dict)
 
-
-    #count= np.load('JochDt001I0625Counts.npy')
-    #count=np.load('JochDt001I375Counts.npy')
-    #count=np.load('JochDt001I6875Counts.npy')
-    epsilon1, epsilon2 = 0,0
-    #params= (-8.39780022, -8.31815575, -6.24283186, -0.62797361, 4.64786633, 2.1348466, 6.06874194, 0.29438665, 1.62159095)
-    (hgamma, hc, halpha, ha, kcoop, kcomp, kdu, kud, kx) = (-8.39780022, -8.31815575, -6.24283186, -0.62797361, 4.64786633, 2.1348466, 6.06874194, 0.29438665, 1.62159095)
-
-    params = (halpha, ha, halpha - epsilon1, ha + epsilon1, hgamma, hc, hgamma - epsilon2, hc + epsilon2, kcoop, kcomp, kdu, kud,kx)
-    p = calcPTransitiongpu(params, (0, 0, 0, 0), (0, 1, 1, 1))
-    print(p)
-    #
-    #count = np.load('Jochdt001I6875NE25NR5counts.npy')
-    # count = np.load('Jochdt001I0625NE25NR5counts.npy')
-
-    # params = minlikely(count)
+    ##########INFERENCE THINGS#################
+    # params = minlikely(loaded_counts_dict)
     # print(params, 'max likelyhood: ', brainlikelyhood(params,count))
-    #
-    #epsilon1,epsilon2=0,0
 
-    #Strong infered calcedhs dt01
-    #paramsBEST= (-6.00432578 ,-6.03486149, -3.80626702 , 5.35061176 , 6.4340547  , 3.67099913 ,8.6066445  , 0.28647123 , 2.42905138)
 
-    #weak infered calcedhas dt01
-    #paramsBEST=(-6.58151137, -5.4149016 , -7.32583317, 11.50703375,  8.02477748,  7.15952577, 11.87505467,  0.31408652,  5.4198252 )
-
-    #strong infered dt001BEST
-    #paramsBEST = (-8.28640719, -8.42166917, -6.27641919, -0.61254556, 4.71567638, 2.15322098, 6.15779811, 0.29307981, 1.63738961)
-
-    #print(brainlikelyhood(paramsBEST,count))
 
 
 
