@@ -14,7 +14,7 @@ from collections import defaultdict
 # constants
 MAXTOP = 6
 MAXBOT = 26
-PendStateE25R5File = '/Users/Nickl/PycharmProjects/Researchcode (1) (1)/MCBrainTransitionGPU.cl'
+PendStateE25R5File = '/Users/Nick/PycharmProjects/Researchcode (1) (1)/CurrentProjects/PerceptionE25R5/MCBrainTransitionGPU.cl'
 
 #############JOCHEN DATA  TRAJS############
 # set = 0  #######DT = .001
