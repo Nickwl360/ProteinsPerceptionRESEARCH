@@ -58,7 +58,7 @@ __kernel void compute_Pmnop(__global double* Pmnop, const double NA, const doubl
                     int f = nb2 - NB + b;  //lbeta
                     int g = nc2 - NC + c;  //lgamma
                     int h = nd2 - ND + d; // ldelta
-                    if(0 <= e && e <= (MAXTOP-1) && 0 <= f && f <= (MAXTOP-1) && 0 <= g && g <= (M) && 0 <= h && h <= (M))
+                    if(0 <= e && e <= (MAXTOP-1-NA) && 0 <= f && f <= (MAXTOP-1-NB) && 0 <= g && g <= (M-NC) && 0 <= h && h <= (M-ND))
                        //&& (0<=nam) && nam<=(MAXTOP-1) && (0<=nbn) && nbn<=(MAXTOP-1) && (0<=nco) && nco<=(MAXBOT-1) && (0<=ndp) && ndp<=(MAXBOT-1)
                     {
                         loop +=  exp(calcP(NA,NB,NC,ND, e,a,f,b,g,c,h,d, halpha,ha,hbeta,hb,hgamma,hdelta,hc,hd,kcoop,kcomp,kdu,kup,kx));

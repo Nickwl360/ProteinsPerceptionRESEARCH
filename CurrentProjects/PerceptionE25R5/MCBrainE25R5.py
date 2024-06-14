@@ -49,7 +49,11 @@ def countbrainSparced(dataa, datab, datac, datad):
 
     return count
 
-
+def organize_counts_by_start_state(countsdict):
+    start_state_dict = defaultdict(list)
+    for (start, end), count in countsdict.items():
+        start_state_dict[start].append((end, count))
+    return start_state_dict
 def CalcPEndState(params, ns, prog_path):
     na,nb,nc,nd = ns
     halpha, ha, hbeta,hb,hgamma,hc,hdelta,hd, kcoop,kcomp,kdu,kud, kx = params
@@ -57,9 +61,7 @@ def CalcPEndState(params, ns, prog_path):
     queue = cl.CommandQueue(ctx)
     with open(prog_path, "r") as f:
         program_source = f.read()
-    print('read')
     program = cl.Program(ctx, program_source).build()
-    print('built')
     NextPmnop = np.zeros(((MAXTOP*MAXTOP*MAXBOT*MAXBOT)),dtype=np.float64)
     Pmnop_buf = cl.Buffer(ctx, cl.mem_flags.WRITE_ONLY, NextPmnop.nbytes)
     global_size = ((MAXTOP*MAXTOP*MAXBOT*MAXBOT),)
@@ -71,40 +73,32 @@ def CalcPEndState(params, ns, prog_path):
     cl.enqueue_copy(queue, NextPmnop, Pmnop_buf)
     return NextPmnop
 
-def calcPTransitiongpu(params,start,end):
+def calcPTransitiongpu(params,start):
     na1, nb1, nc1, nd1 = start
-    na2, nb2, nc2, nd2 = end
     #calculate probability based on ^
     Praw = CalcPEndState(params,start,PendStateE25R5File)
     Preshape= Praw.reshape((MAXTOP,MAXTOP,MAXBOT,MAXBOT))
     PendstateNormal= Preshape/(np.sum(Preshape))
-    #THIS IS WHERE YOU CAN SAVE AND CHECK IF ALREADY MADE#####################################
-    ptrans = PendstateNormal[na2,nb2,nc2,nd2]
-    #save P(start)
-    #find prob i->j from P(start)
-    return ptrans
-
-def get_non_zero_indices_and_values(arr, index=()):
-    indices_values = []
-    if isinstance(arr, np.ndarray):
-        non_zero_indices = np.transpose(np.nonzero(arr))
-        for idx in non_zero_indices:
-            indices_values.append((index + tuple(idx), arr[tuple(idx)]))
-    else:
-        for i, sub_arr in enumerate(arr):
-            indices_values.extend(get_non_zero_indices_and_values(sub_arr, index + (i,)))
-    return indices_values
+    # RETURN THE TOTAL TRANSITION PROB AS AN ARRAY
+    return PendstateNormal
 
 def brainlikelyhood(params9, countsdict):
     hgamma,hc,halpha,ha,kcoop,kcomp,kdu,kud,kx = params9
     epsilon2=0
     params = (halpha, ha, halpha, ha , hgamma, hc, hgamma - epsilon2, hc + epsilon2, kcoop, kcomp, kdu, kud,kx)
 
+    #ONLY LOOK THROUGH UNIQUE STARTS
+    start_state_dict = organize_counts_by_start_state(countsdict)
+
     likelyhood = 0
-    for transition, count in countsdict.items():
-        start,end = transition
-        prob= calcPTransitiongpu(params,start,end)
-        likelyhood += count*np.log(prob)
+
+    for start, transitions in start_state_dict.items():
+        prob_array = calcPTransitiongpu(params, start)  # Calculate prob once for each start state
+        for end, count in transitions:
+            prob = prob_array[end]
+            if not np.isnan(prob) and prob != 0:
+                likelyhood += count * np.log(prob)
+            #print(start, transitions, end, count, prob, likelyhood)
     length= 100_000_000
     val= -1*likelyhood/length
     print('Likelyhood: ', val)
@@ -129,11 +123,11 @@ if __name__ == "__main__":
     ###########LOADINGCOUTNS###################
     loaded_count_array = np.load('E25R5DT001I0625JochCounts.npy', allow_pickle=True)
     loaded_counts_dict = defaultdict(int, dict(loaded_count_array))
-    print(loaded_counts_dict)
+    print('loadedcounts')
 
     ##########INFERENCE THINGS#################
-    # params = minlikely(loaded_counts_dict)
-    # print(params, 'max likelyhood: ', brainlikelyhood(params,count))
+    params = minlikely(loaded_counts_dict)
+    print(params, 'max likelyhood: ', brainlikelyhood(params,loaded_counts_dict))
 
 
 
