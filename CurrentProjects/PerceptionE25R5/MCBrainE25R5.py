@@ -48,7 +48,6 @@ def countbrainSparced(dataa, datab, datac, datad):
         count[transition] += 1
 
     return count
-
 def organize_counts_by_start_state(countsdict):
     start_state_dict = defaultdict(list)
     for (start, end), count in countsdict.items():
@@ -72,7 +71,6 @@ def CalcPEndState(params, ns, prog_path):
     # Read the results back from the GPU to the host
     cl.enqueue_copy(queue, NextPmnop, Pmnop_buf)
     return NextPmnop
-
 def calcPTransitiongpu(params,start):
     na1, nb1, nc1, nd1 = start
     #calculate probability based on ^
@@ -81,7 +79,6 @@ def calcPTransitiongpu(params,start):
     PendstateNormal= Preshape/(np.sum(Preshape))
     # RETURN THE TOTAL TRANSITION PROB AS AN ARRAY
     return PendstateNormal
-
 def brainlikelyhood(params9, countsdict):
     hgamma,hc,halpha,ha,kcoop,kcomp,kdu,kud,kx = params9
     epsilon2=0
