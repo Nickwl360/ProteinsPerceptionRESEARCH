@@ -61,7 +61,7 @@ def findPhisnoconst(Y,phiC,lastphi1,lastphi2):
     print(lastphi1, 'last')
     print(Y,phi1spin,phi2spin, 'starting spinpoints')
     if lastphi1==phiC:
-        bounds = [(phi1spin*.8, phi1spin - epsilon), (phi2spin + epsilon, phi2spin*1.2)]
+        bounds = [(phi1spin*.85, phi1spin - epsilon), (phi2spin + epsilon, phi2spin*1.15)]
         initial_guess = (phi1spin*.9,phi2spin*1.1)
     else:
         bounds = [(lastphi1*.5,lastphi1-epsilon), (lastphi2+epsilon,lastphi2*1.5)]

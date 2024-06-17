@@ -84,7 +84,7 @@ def getSpinodal(phiMs):
     Ys=[]
     for j in range(len(phiMs)):
         i = phiMs[j]
-        y = root_scalar(FreeEnergyD2,args=(i,phiS,),x0=.5, bracket=[1e-4,.99])
+        y = root_scalar(FreeEnergyD2,args=(i,phiS,),x0=.5, bracket=[1e-3,.99])
         print(i,y.root)
         Ys.append(y.root)
     return Ys
@@ -113,7 +113,7 @@ if __name__ == "__main__":
     plt.plot(phiMs,Ys)
     plt.xlabel('Volume Fraction of Protein (phi)')
     plt.ylabel('l/lB')
-    plt.title(('L/Lb vs Volume Fraction Phase Diagram DDx4'))
+    plt.title(('L/Lb vs Volume Fraction Phase Diagram DDx4, SPINODAL'))
     plt.show()
 
 
