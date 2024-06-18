@@ -123,14 +123,14 @@ if __name__ == "__main__":
     print('loadedcounts')
 
     ##########INFERENCE THINGS#################
-    #params = minlikely(loaded_counts_dict)
-    #print(params, 'max likelyhood: ', brainlikelyhood(params,loaded_counts_dict))
+    params = minlikely(loaded_counts_dict)
+    print(params, 'max likelyhood: ', brainlikelyhood(params,loaded_counts_dict))
 
     ########################TESTINGGPUS###############
-    (hgamma, hc, halpha, ha, kcoop, kcomp, kdu, kud, kx)= (-8.96733557, -7.73231853, -6.01935508 ,-0.99322105,  4.7228139 ,  1.98114397 ,6.05944224 , 0.29747507 , 1.53067954)
-    epsilon1, epsilon2 = 0, 0
-    params = (halpha, ha, halpha - epsilon1, ha + epsilon1, hgamma, hc, hgamma - epsilon2, hc + epsilon2, kcoop, kcomp, kdu, kud,kx)
-    p = calcPTransitiongpu(params,(0,0,0,0))
-    print(p)
+    # (hgamma, hc, halpha, ha, kcoop, kcomp, kdu, kud, kx)= (-8.96733557, -7.73231853, -6.01935508 ,-0.99322105,  4.7228139 ,  1.98114397 ,6.05944224 , 0.29747507 , 1.53067954)
+    # epsilon1, epsilon2 = 0, 0
+    # params = (halpha, ha, halpha - epsilon1, ha + epsilon1, hgamma, hc, hgamma - epsilon2, hc + epsilon2, kcoop, kcomp, kdu, kud,kx)
+    # p = calcPTransitiongpu(params,(0,0,0,0))
+    # print(p)
 
 
