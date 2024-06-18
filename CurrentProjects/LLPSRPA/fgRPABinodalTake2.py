@@ -11,7 +11,7 @@ seq1 = 'MGDEDWEAEINPHMSSYVPIFEKDRYSGENGDNFNRTPASSSEMDDGPSRRDHFMKSGFASGRNFGNRDAGE
 qs = getcharges(seq1)
 qc = abs(sum(qs))/N
 #print(qc)
-resolution = .0005
+scale = .0005
 epsilon = 1e-7
 phiC,Yc = findCrits(phiS)
 minY = Yc*.9
@@ -23,13 +23,13 @@ def findSpinlow(Y,phiC):
     bounds = [(epsilon, phiC-epsilon)]
     result = minimize(FreeEnergyD2reverse, initial, args=(Y,phiS,),method='SLSQP',bounds=bounds)
     #result = fsolve(FreeEnergyD2reverse, x0=initial, args=(Y,phiS))
-    return result
+    return result.x
 def findSpinhigh(Y,phiC):
     initial = phiC+epsilon
     bounds = [(phiC+epsilon, 1-epsilon)]
     result = minimize(FreeEnergyD2reverse, initial, args=(Y,phiS),method='SLSQP',bounds=bounds)
     #result = fsolve(FreeEnergyD2reverse, x0=initial, args=(Y,phiS))
-    return result
+    return result.x
 def FreeEnergyD2reverse(phiM,Y,phiS):
     d2s =0
     #################Entropyd2##########
@@ -71,24 +71,21 @@ def findPhisnoconst(Y,phiC,lastphi1,lastphi2):
     return maxparams
 
 def getbinodal(Yc,phiC):
-    phibin=np.full(1,phiC)
-    Ybin =np.full(1,Yc)
-    Ytest=Yc-resolution
-    save1,save2= phiC[0],phiC[0]
-    tries = 100
-    take = 0
-    while take>tries:
-        if Ytest== Yc-resolution:
-            phil,phi2 = findPhisnoconst(Ytest,phiC,phiC,phiC)
-            save1,save2 = phil,phi2
-        else:
-            phil,phi2 = findPhisnoconst(Ytest,phiC,save1,save2)
-            save1,save2 = phil,phi2
-        print(Ytest, phil, phi2, 'results. loop # = ', take)
-        phibin = np.concatenate(([phil], phibin, [phi2]))
+    phibin=phiC
+    Ybin = np.array([Yc])
+    Ytest=Yc-scale
+    while Ytest>minY:
+        print(Ytest, "until", minY)
+        phiLlast,phiDlast = phibin[0], phibin[-1]
+        phi1,phi2 = findPhisnoconst(Ytest,phiC,phiLlast,phiDlast)
+        phi1=np.array([phi1])
+        phi2=np.array([phi2])
+        phibin = np.concatenate((phi1, phibin, phi2))
         Ybin = np.concatenate(([Ytest], Ybin, [Ytest]))
+        ####HIGHER RESOLUTION AT TOP OF PHASE DIAGRAM###################
+        resolution = scale*(Yc/Ytest)
+        print("NEXT YTEST CHANGED BY:", resolution)
         Ytest-=resolution
-        take +=1
 
     return phibin,Ybin
 
@@ -96,12 +93,12 @@ print(phiC,Yc)
 phis,chis = getbinodal(Yc,phiC)
 plt.plot(phis, chis, label='Binodal')
 
-# phi_values = np.linspace(.001, .4, 1000)
-# Ts = []
-# for i in phi_values:
-#     Y = fsolve(FreeEnergyD2,x0=.4,args=(i,phiS))
-#     Ts.append(Y)
-# plt.plot(phi_values,Ts,label='Spinodal')
+phi_values = np.linspace(.001, .4, 1000)
+Ts = []
+for i in phi_values:
+    Y = fsolve(FreeEnergyD2,x0=.4,args=(i,phiS))
+    Ts.append(Y)
+plt.plot(phi_values,Ts,label='Spinodal')
 
 plt.legend()
 plt.show()
