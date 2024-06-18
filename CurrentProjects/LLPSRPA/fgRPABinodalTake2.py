@@ -11,7 +11,7 @@ seq1 = 'MGDEDWEAEINPHMSSYVPIFEKDRYSGENGDNFNRTPASSSEMDDGPSRRDHFMKSGFASGRNFGNRDAGE
 qs = getcharges(seq1)
 qc = abs(sum(qs))/N
 #print(qc)
-scale = .0005
+scale = .001
 epsilon = 1e-7
 phiC,Yc = findCrits(phiS)
 minY = Yc*.9
@@ -83,7 +83,7 @@ def getbinodal(Yc,phiC):
         phibin = np.concatenate((phi1, phibin, phi2))
         Ybin = np.concatenate(([Ytest], Ybin, [Ytest]))
         ####HIGHER RESOLUTION AT TOP OF PHASE DIAGRAM###################
-        resolution = scale*(Yc/Ytest)
+        resolution = scale*(Yc/Ytest)**2
         print("NEXT YTEST CHANGED BY:", resolution)
         Ytest-=resolution
 
@@ -92,13 +92,10 @@ def getbinodal(Yc,phiC):
 print(phiC,Yc)
 phis,chis = getbinodal(Yc,phiC)
 plt.plot(phis, chis, label='Binodal')
+phiMs = np.linspace(1e-3, .799, 100)
+Ys = getSpinodal(phiMs)
 
-phi_values = np.linspace(.001, .4, 1000)
-Ts = []
-for i in phi_values:
-    Y = fsolve(FreeEnergyD2,x0=.4,args=(i,phiS))
-    Ts.append(Y)
-plt.plot(phi_values,Ts,label='Spinodal')
+plt.plot(phiMs,Ys,label='Spinodal')
 
 plt.legend()
 plt.show()
