@@ -11,10 +11,10 @@ seq1 = 'MGDEDWEAEINPHMSSYVPIFEKDRYSGENGDNFNRTPASSSEMDDGPSRRDHFMKSGFASGRNFGNRDAGE
 qs = getcharges(seq1)
 qc = abs(sum(qs))/N
 #print(qc)
-scale = .001
-epsilon = 1e-7
+scale = .0001
+epsilon = 1e-15
 phiC,Yc = findCrits(phiS)
-minY = Yc*.9
+minY = Yc*.95
 print('looping from ', Yc, 'to ', minY)
 
 
@@ -55,18 +55,17 @@ def TotalFreeEnergy(variables,Y):
     return eqn
 
 def findPhisnoconst(Y,phiC,lastphi1,lastphi2):
-    phi1spin = findSpinlow(Y,phiC)[0]
-    print('next')
-    phi2spin= findSpinhigh(Y,phiC)[0]
-    print(lastphi1, 'last')
-    print(Y,phi1spin,phi2spin, 'starting spinpoints')
-    if lastphi1==phiC:
-        bounds = [(phi1spin*.85, phi1spin - epsilon), (phi2spin + epsilon, phi2spin*1.15)]
-        initial_guess = (phi1spin*.9,phi2spin*1.1)
-    else:
-        bounds = [(lastphi1*.5,lastphi1-epsilon), (lastphi2+epsilon,lastphi2*1.5)]
-        initial_guess = (lastphi1-epsilon,lastphi2+epsilon)
-    maxL = minimize(TotalFreeEnergy, initial_guess, args=(Y,), method='Nelder-Mead', bounds=bounds)
+    #phi1spin = findSpinlow(Y,phiC)[0]
+    #phi2spin= findSpinhigh(Y,phiC)[0]
+    print(lastphi1, lastphi2, 'last 1&2')
+    #print(Y,phi1spin,phi2spin, 'starting spinpoints')
+    #if lastphi1==phiC:
+     #   bounds = [(phi1spin*.85, phi1spin - epsilon), (phi2spin + epsilon, phi2spin*1.15)]
+      #  initial_guess = (phi1spin*.9,phi2spin*1.1)
+    #else:
+    bounds = [(lastphi1/2,lastphi1-epsilon), (lastphi2+epsilon,lastphi2*1.2)]
+    initial_guess = (lastphi1-epsilon,lastphi2+epsilon)
+    maxL = minimize(TotalFreeEnergy, initial_guess, args=(Y,), method='Powell', bounds=bounds)
     maxparams = maxL.x
     return maxparams
 
@@ -75,7 +74,8 @@ def getbinodal(Yc,phiC):
     Ybin = np.array([Yc])
     Ytest=Yc-scale
     while Ytest>minY:
-        print(Ytest, "until", minY)
+
+        #print(Ytest, "until", minY)
         phiLlast,phiDlast = phibin[0], phibin[-1]
         phi1,phi2 = findPhisnoconst(Ytest,phiC,phiLlast,phiDlast)
         phi1=np.array([phi1])
@@ -83,8 +83,8 @@ def getbinodal(Yc,phiC):
         phibin = np.concatenate((phi1, phibin, phi2))
         Ybin = np.concatenate(([Ytest], Ybin, [Ytest]))
         ####HIGHER RESOLUTION AT TOP OF PHASE DIAGRAM###################
-        resolution = scale*(Yc/Ytest)**2
-        print("NEXT YTEST CHANGED BY:", resolution)
+        resolution = scale*np.exp((Yc/Ytest)**6)/np.exp(1)
+        print("NEXT YTEST CHANGED BY:", resolution, "and Ytest=", Ytest)
         Ytest-=resolution
 
     return phibin,Ybin
@@ -92,7 +92,7 @@ def getbinodal(Yc,phiC):
 print(phiC,Yc)
 phis,chis = getbinodal(Yc,phiC)
 plt.plot(phis, chis, label='Binodal')
-phiMs = np.linspace(1e-3, .799, 100)
+phiMs = np.linspace(1e-3, .499, 100)
 Ys = getSpinodal(phiMs)
 
 plt.plot(phiMs,Ys,label='Spinodal')
