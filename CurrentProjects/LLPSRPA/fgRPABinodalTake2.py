@@ -11,23 +11,23 @@ seq1 = 'MGDEDWEAEINPHMSSYVPIFEKDRYSGENGDNFNRTPASSSEMDDGPSRRDHFMKSGFASGRNFGNRDAGE
 qs = getcharges(seq1)
 qc = abs(sum(qs))/N
 #print(qc)
-scale = .0001
+scale = .001
 epsilon = 1e-15
 phiC,Yc = findCrits(phiS)
-minY = Yc*.95
+minY = Yc*.3
 print('looping from ', Yc, 'to ', minY)
 
 
 def findSpinlow(Y,phiC):
-    initial = phiC-epsilon
+    initial = phiC/2
     bounds = [(epsilon, phiC-epsilon)]
-    result = minimize(FreeEnergyD2reverse, initial, args=(Y,phiS,),method='SLSQP',bounds=bounds)
+    result = minimize(FreeEnergyD2reverse, initial, args=(Y,phiS,),method='Powell',bounds=bounds)
     #result = fsolve(FreeEnergyD2reverse, x0=initial, args=(Y,phiS))
     return result.x
 def findSpinhigh(Y,phiC):
-    initial = phiC+epsilon
+    initial = phiC+ phiC/2
     bounds = [(phiC+epsilon, 1-epsilon)]
-    result = minimize(FreeEnergyD2reverse, initial, args=(Y,phiS),method='SLSQP',bounds=bounds)
+    result = minimize(FreeEnergyD2reverse, initial, args=(Y,phiS),method='Powell',bounds=bounds)
     #result = fsolve(FreeEnergyD2reverse, x0=initial, args=(Y,phiS))
     return result.x
 def FreeEnergyD2reverse(phiM,Y,phiS):
@@ -55,17 +55,16 @@ def TotalFreeEnergy(variables,Y):
     return eqn
 
 def findPhisnoconst(Y,phiC,lastphi1,lastphi2):
-    #phi1spin = findSpinlow(Y,phiC)[0]
-    #phi2spin= findSpinhigh(Y,phiC)[0]
+    phi1spin = findSpinlow(Y,phiC)[0]
+    phi2spin= findSpinhigh(Y,phiC)[0]
     print(lastphi1, lastphi2, 'last 1&2')
-    #print(Y,phi1spin,phi2spin, 'starting spinpoints')
-    #if lastphi1==phiC:
-     #   bounds = [(phi1spin*.85, phi1spin - epsilon), (phi2spin + epsilon, phi2spin*1.15)]
-      #  initial_guess = (phi1spin*.9,phi2spin*1.1)
-    #else:
-    bounds = [(lastphi1/2,lastphi1-epsilon), (lastphi2+epsilon,lastphi2*1.2)]
-    initial_guess = (lastphi1-epsilon,lastphi2+epsilon)
-    maxL = minimize(TotalFreeEnergy, initial_guess, args=(Y,), method='Powell', bounds=bounds)
+    print(Y,phi1spin,phi2spin, 'starting spinpoints')
+    #bounds,guesses#################
+    bounds = [(epsilon,phi1spin-epsilon), (phi2spin+epsilon,phi2spin*2)]
+    initial_guess=(phi1spin*.75, phi2spin*1.25)
+    #bounds = [(lastphi1/2,lastphi1-epsilon), (lastphi2+epsilon,lastphi2*1.2)]
+    #initial_guess = (lastphi1*.9,lastphi2+epsilon)
+    maxL = minimize(TotalFreeEnergy, initial_guess, args=(Y,), method='SLSQP', bounds=bounds)
     maxparams = maxL.x
     return maxparams
 
@@ -83,7 +82,7 @@ def getbinodal(Yc,phiC):
         phibin = np.concatenate((phi1, phibin, phi2))
         Ybin = np.concatenate(([Ytest], Ybin, [Ytest]))
         ####HIGHER RESOLUTION AT TOP OF PHASE DIAGRAM###################
-        resolution = scale*np.exp((Yc/Ytest)**6)/np.exp(1)
+        resolution = scale*np.exp((Yc/Ytest))/np.exp(1)
         print("NEXT YTEST CHANGED BY:", resolution, "and Ytest=", Ytest)
         Ytest-=resolution
 
@@ -96,6 +95,7 @@ phiMs = np.linspace(1e-3, .499, 100)
 Ys = getSpinodal(phiMs)
 
 plt.plot(phiMs,Ys,label='Spinodal')
+plt.xlim((0,1))
 
 plt.legend()
 plt.show()
