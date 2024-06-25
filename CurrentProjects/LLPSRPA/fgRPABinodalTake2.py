@@ -4,36 +4,21 @@ from matplotlib import pyplot as plt
 from scipy.optimize import minimize
 from scipy.optimize import least_squares
 
-#CONSTANTS##################################################################
-#phiS = 0.01
-phiS = 0
-seqs = getseq('../../OldProteinProjects/SCDtests.xlsx')
-ddx4n1 = 'MGDEDWEAEINPHMSSYVPIFEKDRYSGENGDNFNRTPASSSEMDDGPSRRDHFMKSGFASGRNFGNRDAGECNKRDNTSTMGGFGVGKSFGNRGFSNSRFEDGDSSGFWRESSNDCEDNPTRNRGFSKRGGYRDGNNSEASGPYRRGGRGSFRGCRGGFGLGSPNNDLDPDECMQRTGGLFGSRRPVLSGTGNGDTSQSRSGSGSERGGYKGLNEEVITGSGKNSWKSEAEGGES'
-ddx4n1CS = 'MGDRDWRAEINPHMSSYVPIFEKDRYSGENGRNFNDTPASSSEMRDGPSERDHFMKSGFASGDNFGNRDAGKCNERDNTSTMGGFGVGKSFGNEGFSNSRFERGDSSGFWRESSNDCRDNPTRNDGFSDRGGYEKGNNSEASGPYERGGRGSFDGCRGGFGLGSPNNRLDPRECMQRTGGLFGSDRPVLSGTGNGDTSQSRSGSGSERGGYKGLNEKVITGSGENSWKSEARGGES'
-IP5 = 'HAQGTFTSDKSKYLDERAAQDFVQWLLDGGPSSGAPPPS'
-
-#qs = getcharges(ddx4n1)
-qs = getcharges(IP5)
-
-qc = abs(sum(qs))/N
-#print(qc)
-scale = .001
-epsilon = 1e-15
-phiC,Yc = findCrits(phiS)
-minY = Yc*.8
-print('looping from ', Yc, 'to ', minY)
-
+######################FUNCTIONS###############################
 
 def findSpinlow(Y,phiC):
     initial = phiC/2
     bounds = [(epsilon, phiC-epsilon)]
-    result = minimize(FreeEnergyD2reverse, initial, args=(Y,phiS,),method='Powell',bounds=bounds)
+    #result = minimize(FreeEnergyD2reverse, initial, args=(Y,phiS,),method='Powell',bounds=bounds)
+    result = minimize(FreeEnergyD2reverseFP, initial, args=(Y,phiS,),method='Powell',bounds=bounds)
     #result = fsolve(FreeEnergyD2reverse, x0=initial, args=(Y,phiS))
     return result.x
 def findSpinhigh(Y,phiC):
     initial = phiC+ phiC/2
     bounds = [(phiC+epsilon, 1-epsilon)]
-    result = minimize(FreeEnergyD2reverse, initial, args=(Y,phiS),method='Powell',bounds=bounds)
+    #result = minimize(FreeEnergyD2reverse, initial, args=(Y,phiS),method='Powell',bounds=bounds)
+    result = minimize(FreeEnergyD2reverseFP, initial, args=(Y,phiS),method='Nelder-Mead',bounds=bounds)
+
     #result = fsolve(FreeEnergyD2reverse, x0=initial, args=(Y,phiS))
     return result.x
 def FreeEnergyD2reverse(phiM,Y,phiS):
@@ -54,25 +39,28 @@ def FreeEnergyD2reverse(phiM,Y,phiS):
     return np.sqrt((d2s + d2fel)**2)
     #return d2s + d2fel
 
+
 def TotalFreeEnergy(variables,Y):
     phi1,phi2 = variables
     v = (phiC-phi2)/(phi1-phi2)
-    eqn = v * ftot(phi1,Y,phiS) + (1-v)*ftot(phi2,Y,phiS)
+    #eqn = v * ftot(phi1,Y,phiS) + (1-v)*ftot(phi2,Y,phiS)
+    eqn = v * ftotfp(phi1,Y,phiS) + (1-v)*ftotfp(phi2,Y,phiS)
     return eqn
+
 
 def findPhisnoconst(Y,phiC,lastphi1,lastphi2):
     phi1spin = findSpinlow(Y,phiC)[0]
     phi2spin= findSpinhigh(Y,phiC)[0]
     print(lastphi1, lastphi2, 'last 1&2')
     print(Y,phi1spin,phi2spin, 'starting spinpoints')
-    #bounds,guesses#################
-    bounds = [(epsilon,phi1spin-epsilon), (phi2spin+epsilon,phi2spin*1.8)]
-    initial_guess=(phi1spin*.8, phi2spin*1.2)
-    #bounds = [(lastphi1/2,lastphi1-epsilon), (lastphi2+epsilon,lastphi2*1.2)]
-    #initial_guess = (lastphi1*.9,lastphi2+epsilon)
-    #maxL = minimize(TotalFreeEnergy, initial_guess, args=(Y,), method='SLSQP', bounds=bounds)
-    maxL = minimize(TotalFreeEnergy, initial_guess, args=(Y,), method='Powell', bounds=bounds)
 
+    initial_guess=(phi1spin/2, phi2spin*5)
+    bounds = [(epsilon, phi1spin - epsilon), (phi2spin*1.04, 1-epsilon)]
+
+
+    #initial_guess = (lastphi1-scale*2,lastphi2+scale*2)
+
+    maxL = minimize(TotalFreeEnergy, initial_guess, args=(Y,), method='Nelder-Mead', bounds=bounds)
     maxparams = maxL.x
     return maxparams
 
@@ -95,15 +83,40 @@ def getbinodal(Yc,phiC):
         Ytest-=resolution
 
     return phibin,Ybin
+if __name__ == "__main__":
+    # CONSTANTS##################################################################
+    ph = 5.5
+    # phiS = 0.01
+    phiS = 0
+    seqs = getseq('../../OldProteinProjects/SCDtests.xlsx')
+    ddx4n1 = 'MGDEDWEAEINPHMSSYVPIFEKDRYSGENGDNFNRTPASSSEMDDGPSRRDHFMKSGFASGRNFGNRDAGECNKRDNTSTMGGFGVGKSFGNRGFSNSRFEDGDSSGFWRESSNDCEDNPTRNRGFSKRGGYRDGNNSEASGPYRRGGRGSFRGCRGGFGLGSPNNDLDPDECMQRTGGLFGSRRPVLSGTGNGDTSQSRSGSGSERGGYKGLNEEVITGSGKNSWKSEAEGGES'
+    ddx4n1CS = 'MGDRDWRAEINPHMSSYVPIFEKDRYSGENGRNFNDTPASSSEMRDGPSERDHFMKSGFASGDNFGNRDAGKCNERDNTSTMGGFGVGKSFGNEGFSNSRFERGDSSGFWRESSNDCRDNPTRNDGFSDRGGYEKGNNSEASGPYERGGRGSFDGCRGGFGLGSPNNRLDPRECMQRTGGLFGSDRPVLSGTGNGDTSQSRSGSGSERGGYKGLNEKVITGSGENSWKSEARGGES'
+    IP5 = 'HAQGTFTSDKSKYLDERAAQDFVQWLLDGGPSSGAPPPS'
 
-print(phiC,Yc)
-phis,chis = getbinodal(Yc,phiC)
-plt.plot(phis, chis, label='Binodal')
-phiMs = np.linspace(1e-3, .199, 100)
-Ys = getSpinodal(phiMs)
+    ######################GET QS AND SEQUENCE SPECIFIC PARAMS############################
+    seq = IP5
+    qs = pH_qs(seq,ph)
+    N = len(qs)
+    qc = abs(sum(qs))/N
 
-plt.plot(phiMs,Ys,label='Spinodal')
-plt.xlim((0,1))
+    # print(qc)
+    ################
+    scale = .0008
+    epsilon = 1e-15
+    phiC, Yc = findCrits(phiS,guess=.08)
+    minY = Yc * .94
+    print('looping from ', Yc, 'to ', minY)
+    print(phiC,Yc)
 
-plt.legend()
-plt.show()
+    phis,chis = getbinodal(Yc,phiC)
+    phiMs = np.linspace(1e-3, .399, 100)
+    Ys = getSpinodal(phiMs)
+
+    ###################PLOTTING########################
+
+    plt.plot(phis, chis, label='Binodal')
+    plt.plot(phiMs,Ys,label='Spinodal')
+    plt.xlim((0,1))
+
+    plt.legend()
+    plt.show()
