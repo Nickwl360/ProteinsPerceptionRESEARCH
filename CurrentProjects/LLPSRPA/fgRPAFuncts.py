@@ -7,16 +7,45 @@ from scipy.optimize import minimize
 from scipy.optimize import root_scalar
 
 #CONSTANTS##################################################################
-phiS = 0.01
+#phiS = 0.01
+phiS = 0
 seqs = getseq('../../OldProteinProjects/SCDtests.xlsx')
-#seq1= seqs[0]
-seq1 = 'MGDEDWEAEINPHMSSYVPIFEKDRYSGENGDNFNRTPASSSEMDDGPSRRDHFMKSGFASGRNFGNRDAGECNKRDNTSTMGGFGVGKSFGNRGFSNSRFEDGDSSGFWRESSNDCEDNPTRNRGFSKRGGYRDGNNSEASGPYRRGGRGSFRGCRGGFGLGSPNNDLDPDECMQRTGGLFGSRRPVLSGTGNGDTSQSRSGSGSERGGYKGLNEEVITGSGKNSWKSEAEGGES'
-N = len(seq1)
-qs = getcharges(seq1)
-qc = abs(sum(qs))/N
+ddx4n1 = 'MGDEDWEAEINPHMSSYVPIFEKDRYSGENGDNFNRTPASSSEMDDGPSRRDHFMKSGFASGRNFGNRDAGECNKRDNTSTMGGFGVGKSFGNRGFSNSRFEDGDSSGFWRESSNDCEDNPTRNRGFSKRGGYRDGNNSEASGPYRRGGRGSFRGCRGGFGLGSPNNDLDPDECMQRTGGLFGSRRPVLSGTGNGDTSQSRSGSGSERGGYKGLNEEVITGSGKNSWKSEAEGGES'
+ddx4n1CS = 'MGDRDWRAEINPHMSSYVPIFEKDRYSGENGRNFNDTPASSSEMRDGPSERDHFMKSGFASGDNFGNRDAGKCNERDNTSTMGGFGVGKSFGNEGFSNSRFERGDSSGFWRESSNDCRDNPTRNDGFSDRGGYEKGNNSEASGPYERGGRGSFDGCRGGFGLGSPNNRLDPRECMQRTGGLFGSDRPVLSGTGNGDTSQSRSGSGSERGGYKGLNEKVITGSGENSWKSEARGGES'
+IP5 = 'HAQGTFTSDKSKYLDERAAQDFVQWLLDGGPSSGAPPPS'
+
+seq1 = IP5
+# N = len(seq1)
+# qs = getcharges(seq1)
+# qc = abs(sum(qs))/N
 #print(qc)
 
+def pH_qs(seq, ph):
+    charges = []
+    # get charge array
+    for letter in seq:
+        if letter == 'E' or letter == 'D':
+            if letter == 'E':
+                q = -1*(10**(-1*(4.15- ph)))/(1+ 10**(-1*(4.15-ph)))
+            elif letter == 'D':
+                q = -1 * (10 ** (-1*(3.71 - ph))) / (1 + 10 ** (-1*(3.71 - ph)))
+            charges.append(q)
+        elif letter == 'R' or letter == 'K':
+            if letter == 'R':
+                q = (10**(12.1- ph))/(1 + 10**(12.1-ph))
+            elif letter == 'K':
+                q = (10**(10.67- ph))/(1 + 10**(10.67-ph))
+            charges.append(q)
+        else:
+            charges.append(0)
+    return charges
+N = len(seq1)
+qs = pH_qs(seq1,7.42)
+qc = abs(sum(qs))/N
+#qc = sum(qs)/N
 
+
+print(qc)
 #FUNCTIONS#################################################################
 def getSigShift(qs):
     sigS = []
@@ -96,7 +125,8 @@ def SpinodalY(phiM,phiS):
 def findCrits(phiS):
     phiC=0
     Yc=0
-    Yc = minimize(SpinodalY, x0=.04,args=(phiS,),method='Nelder-Mead')
+    bounds = [(.001,.49)]
+    Yc = minimize(SpinodalY, x0=.09, args=(phiS,),method='Nelder-Mead', bounds=bounds)
     phiC = Yc.x
     return phiC, -1*Yc.fun
 

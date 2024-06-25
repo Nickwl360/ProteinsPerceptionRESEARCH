@@ -5,16 +5,22 @@ from scipy.optimize import minimize
 from scipy.optimize import least_squares
 
 #CONSTANTS##################################################################
-phiS = 0.01
+#phiS = 0.01
+phiS = 0
 seqs = getseq('../../OldProteinProjects/SCDtests.xlsx')
-seq1 = 'MGDEDWEAEINPHMSSYVPIFEKDRYSGENGDNFNRTPASSSEMDDGPSRRDHFMKSGFASGRNFGNRDAGECNKRDNTSTMGGFGVGKSFGNRGFSNSRFEDGDSSGFWRESSNDCEDNPTRNRGFSKRGGYRDGNNSEASGPYRRGGRGSFRGCRGGFGLGSPNNDLDPDECMQRTGGLFGSRRPVLSGTGNGDTSQSRSGSGSERGGYKGLNEEVITGSGKNSWKSEAEGGES'
-qs = getcharges(seq1)
+ddx4n1 = 'MGDEDWEAEINPHMSSYVPIFEKDRYSGENGDNFNRTPASSSEMDDGPSRRDHFMKSGFASGRNFGNRDAGECNKRDNTSTMGGFGVGKSFGNRGFSNSRFEDGDSSGFWRESSNDCEDNPTRNRGFSKRGGYRDGNNSEASGPYRRGGRGSFRGCRGGFGLGSPNNDLDPDECMQRTGGLFGSRRPVLSGTGNGDTSQSRSGSGSERGGYKGLNEEVITGSGKNSWKSEAEGGES'
+ddx4n1CS = 'MGDRDWRAEINPHMSSYVPIFEKDRYSGENGRNFNDTPASSSEMRDGPSERDHFMKSGFASGDNFGNRDAGKCNERDNTSTMGGFGVGKSFGNEGFSNSRFERGDSSGFWRESSNDCRDNPTRNDGFSDRGGYEKGNNSEASGPYERGGRGSFDGCRGGFGLGSPNNRLDPRECMQRTGGLFGSDRPVLSGTGNGDTSQSRSGSGSERGGYKGLNEKVITGSGENSWKSEARGGES'
+IP5 = 'HAQGTFTSDKSKYLDERAAQDFVQWLLDGGPSSGAPPPS'
+
+#qs = getcharges(ddx4n1)
+qs = getcharges(IP5)
+
 qc = abs(sum(qs))/N
 #print(qc)
 scale = .001
 epsilon = 1e-15
 phiC,Yc = findCrits(phiS)
-minY = Yc*.3
+minY = Yc*.8
 print('looping from ', Yc, 'to ', minY)
 
 
@@ -60,11 +66,13 @@ def findPhisnoconst(Y,phiC,lastphi1,lastphi2):
     print(lastphi1, lastphi2, 'last 1&2')
     print(Y,phi1spin,phi2spin, 'starting spinpoints')
     #bounds,guesses#################
-    bounds = [(epsilon,phi1spin-epsilon), (phi2spin+epsilon,phi2spin*2)]
-    initial_guess=(phi1spin*.75, phi2spin*1.25)
+    bounds = [(epsilon,phi1spin-epsilon), (phi2spin+epsilon,phi2spin*1.8)]
+    initial_guess=(phi1spin*.8, phi2spin*1.2)
     #bounds = [(lastphi1/2,lastphi1-epsilon), (lastphi2+epsilon,lastphi2*1.2)]
     #initial_guess = (lastphi1*.9,lastphi2+epsilon)
-    maxL = minimize(TotalFreeEnergy, initial_guess, args=(Y,), method='SLSQP', bounds=bounds)
+    #maxL = minimize(TotalFreeEnergy, initial_guess, args=(Y,), method='SLSQP', bounds=bounds)
+    maxL = minimize(TotalFreeEnergy, initial_guess, args=(Y,), method='Powell', bounds=bounds)
+
     maxparams = maxL.x
     return maxparams
 
@@ -91,7 +99,7 @@ def getbinodal(Yc,phiC):
 print(phiC,Yc)
 phis,chis = getbinodal(Yc,phiC)
 plt.plot(phis, chis, label='Binodal')
-phiMs = np.linspace(1e-3, .499, 100)
+phiMs = np.linspace(1e-3, .199, 100)
 Ys = getSpinodal(phiMs)
 
 plt.plot(phiMs,Ys,label='Spinodal')
