@@ -6,10 +6,10 @@ from threeCompFH_functions import *
 if __name__ == "__main__":
     initialize()
 
-    # bulk1_array= np.linspace(1e-6 ,.2,100)
-    # bulk2_array= np.linspace(1e-6 ,.2,100)
-    bulk1_array = np.linspace(.1, .15, 50)
-    bulk2_array = np.linspace(.1, .15, 50)
+    bulk1_array= np.linspace(1e-6 ,.3,250)
+    bulk2_array= np.linspace(1e-6 ,.3,250)
+    # bulk1_array = np.linspace(.07, .15, 50)
+    # bulk2_array = np.linspace(.07, .15, 50)
 
     denseSet, lightSet = solveBinaryExample1(bulk1_array, bulk2_array)
     pltScatter(denseSet,lightSet)
