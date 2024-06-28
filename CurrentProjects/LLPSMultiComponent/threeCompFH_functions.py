@@ -89,7 +89,7 @@ def solveBinaryExample1(bulk1list, bulk2list):
             if (calcDeterminant(bulk1,bulk2)<0):
                 bulk= (bulk1,bulk2)
                 #initial_guess= [.05,.05,.5]
-                initial_guess= [.9*bulk1, .9*bulk2, .95]
+                initial_guess= [.9*bulk1, .9*bulk2, .92]
                 bounds= [(epsilon, 1-epsilon),(epsilon, 1-epsilon),(epsilon, 1-epsilon)]
                 const= makeConstraints(bulk)
                 result = minimize(fbinary, initial_guess, args=(bulk,), method='SLSQP', bounds=bounds, constraints=const)
@@ -97,7 +97,7 @@ def solveBinaryExample1(bulk1list, bulk2list):
                 minP1A, minP2A, minV = minInput  ###########0: phi1A, 1: phi2A, 2: v
 
 
-                print(minInput)
+                print(bulk, '\n',minInput)
                 if (fbinary((minP1A,minP2A,minV),bulk) < free_energy_inphase(bulk1, bulk2)):
                     minP1B = (bulk1 - minV * minP1A) / (1 - minV)
                     minP2B = (bulk2 - minV * minP2A) / (1 - minV)
