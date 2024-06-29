@@ -4,7 +4,7 @@ import numpy as np
 chi11= .66
 chi22= .66
 #chi12 = np.array([.72, .645, .63])
-chi12 = .645
+chi12 = .63
 #chi12= np.sqrt(chi11)*np.sqrt(chi22)
 
 ##########LENGTHS########
