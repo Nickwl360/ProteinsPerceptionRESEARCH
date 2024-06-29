@@ -135,14 +135,16 @@ def solveBinaryExample1(bulkPairs):
 
 def pltScatter(pointsDense, pointsLight, numSamples):
 
+    plt.figure(figsize=(5, 4), dpi=150)
+
     ##############PHASE BOUNDARY############################
     phi1coordsA = [point[0] for point in pointsLight]
     phi2coordsA = [point[1] for point in pointsLight]
     phi1coordsB = [point[0] for point in pointsDense]
     phi2coordsB = [point[1] for point in pointsDense]
 
-    plt.scatter(phi1coordsA,phi2coordsA, linewidths=0.005, c='b')
-    plt.scatter(phi1coordsB, phi2coordsB, linewidths=0.005, c='b')
+    plt.scatter(phi1coordsA,phi2coordsA, s=1, c='b')
+    plt.scatter(phi1coordsB, phi2coordsB, s=1, c='b')
 
     ###########TIELINES#######################
     random_indices = random.sample(range(len(pointsLight)), numSamples)
@@ -153,6 +155,8 @@ def pltScatter(pointsDense, pointsLight, numSamples):
 
     #################BOUNDARY AND OTHER SETTINGS###################
     plt.plot([1, 0], [0, 1], linestyle='-', color='r', linewidth=1, label='Boundary Line')  # Solid black line
+
+    plt.grid(True, which='both', linestyle='--', linewidth=0.5, color='gray', alpha=0.7)  # Opaque grid lines
 
     plt.xlim((0,1))
     plt.ylim((0,1))
