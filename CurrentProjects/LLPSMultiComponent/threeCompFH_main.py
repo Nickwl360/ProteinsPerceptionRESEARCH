@@ -24,10 +24,11 @@ def generateBulkInputMatrix(n_points, max_value):
 
 if __name__ == "__main__":
     initialize()
-    bulkMatrix = generateBulkInputMatrix(n_points=1000, max_value=(1 - epsilon))
+    bulkMatrix = generateBulkInputMatrix(n_points=25, max_value=(1 - epsilon))
 
     # bulk1_array= np.linspace(1e-6 ,.9999,550)
     # bulk2_array= np.linspace(1e-6 ,.4,550)
 
     denseSet, lightSet = solveBinaryExample1(bulkMatrix)
+
     pltScatter(denseSet,lightSet,25)

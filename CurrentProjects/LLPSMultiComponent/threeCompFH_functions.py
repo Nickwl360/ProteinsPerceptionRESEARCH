@@ -97,8 +97,6 @@ def makeConstraints(bulk):
 def solveBinaryExample1(bulkPairs):
     phiMinimizedLight = []
     phiMinimizedDense = []
-    # for bulk1 in bulk1list:
-    #     for bulk2 in bulk2list:
 
     for pair in bulkPairs:
         bulk1,bulk2 = pair

@@ -6,7 +6,7 @@ from scipy.optimize import minimize
 ###constants##############
 epsilon = 1e-7
 resolution = .001
-NA = 1000
+NA = 10
 NB = 1
 
 def criticalVals(NA,NB):
