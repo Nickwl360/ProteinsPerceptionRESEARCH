@@ -1,4 +1,4 @@
-from fgRPAFuncts import *
+from fgRPA_functions import *
 import numpy as np
 from matplotlib import pyplot as plt
 from scipy.optimize import minimize
@@ -54,10 +54,8 @@ def findPhisnoconst(Y,phiC,lastphi1,lastphi2):
     print(lastphi1, lastphi2, 'last 1&2')
     print(Y,phi1spin,phi2spin, 'starting spinpoints')
 
-
     initial_guess=(phi1spin/2, phi2spin*5)
     bounds = [(epsilon, phi1spin - epsilon), (phi2spin*1.04, 1-epsilon)]
-
 
     #initial_guess = (lastphi1-scale*2,lastphi2+scale*2)
 

@@ -1,4 +1,4 @@
-from fgRPAFuncts import *
+from fgRPA_functions import *
 import numpy as np
 from matplotlib import pyplot as plt
 from scipy.optimize import minimize
