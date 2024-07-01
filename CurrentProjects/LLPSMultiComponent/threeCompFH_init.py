@@ -7,11 +7,11 @@ import numpy as np
 #panel1
 #chi11,chi22,chi12 = 1.3,.5,.8
 #panel2
-chi11,chi22,chi12 = 1.3,.5,1
+#chi11,chi22,chi12 = 1.3,.5,1
 #panel3
 #chi11,chi22,chi12 = 1.3,.5,1.3
 #panel4
-#chi11,chi22,chi12 = 1.3,.9,1.3
+chi11,chi22,chi12 = 1.3,.9,1.3
 #panel5
 #chi11,chi22,chi12 = 1.3,.9,.9
 
