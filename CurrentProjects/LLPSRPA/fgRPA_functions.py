@@ -5,44 +5,11 @@ from scipy.optimize import fsolve
 import matplotlib.pyplot as plt
 from scipy.optimize import minimize
 from scipy.optimize import root_scalar
+from fgRPA_init import *
 
-# CONSTANTS##################################################################
-ph = 5.5
-# phiS = 0.01
-phiS = 0
-seqs = getseq('../../OldProteinProjects/SCDtests.xlsx')
-ddx4n1 = 'MGDEDWEAEINPHMSSYVPIFEKDRYSGENGDNFNRTPASSSEMDDGPSRRDHFMKSGFASGRNFGNRDAGECNKRDNTSTMGGFGVGKSFGNRGFSNSRFEDGDSSGFWRESSNDCEDNPTRNRGFSKRGGYRDGNNSEASGPYRRGGRGSFRGCRGGFGLGSPNNDLDPDECMQRTGGLFGSRRPVLSGTGNGDTSQSRSGSGSERGGYKGLNEEVITGSGKNSWKSEAEGGES'
-ddx4n1CS = 'MGDRDWRAEINPHMSSYVPIFEKDRYSGENGRNFNDTPASSSEMRDGPSERDHFMKSGFASGDNFGNRDAGKCNERDNTSTMGGFGVGKSFGNEGFSNSRFERGDSSGFWRESSNDCRDNPTRNDGFSDRGGYEKGNNSEASGPYERGGRGSFDGCRGGFGLGSPNNRLDPRECMQRTGGLFGSDRPVLSGTGNGDTSQSRSGSGSERGGYKGLNEKVITGSGENSWKSEARGGES'
-IP5 = 'HAQGTFTSDKSKYLDERAAQDFVQWLLDGGPSSGAPPPS'
 
-#FUNCTIONS#################################################################
-def pH_qs(seq, ph):
-    charges = []
-    # get charge array
-    for letter in seq:
-        if letter == 'E' or letter == 'D':
-            if letter == 'E':
-                q = -1*(10**(-1*(4.15- ph)))/(1+ 10**(-1*(4.15-ph)))
-            elif letter == 'D':
-                q = -1 * (10 ** (-1*(3.71 - ph))) / (1 + 10 ** (-1*(3.71 - ph)))
-            charges.append(q)
-        elif letter == 'R' or letter == 'K' or letter == 'H':
-            if letter == 'R':
-                q = (10**(12.1- ph))/(1 + 10**(12.1-ph))
-            elif letter == 'K':
-                q = (10**(10.67- ph))/(1 + 10**(10.67-ph))
-            elif letter =='H':
-                q = (10**(6.04-ph))/(1+10**(6.04-ph))
-            charges.append(q)
-        else:
-            charges.append(0)
-    return charges
-######################GET QS AND SEQUENCE SPECIFIC PARAMS############################
-seq = IP5
-qs = pH_qs(seq, ph)
-N = len(qs)
-qc = abs(sum(qs)) / N
-#qc = sum(qs) / N
+########################FUNCTIONS################################
+
 #############SEQUENCE SPECIFIC CHARGE/XEE###########################
 def getSigShift(qs):
     sigS = []
@@ -84,7 +51,6 @@ def felD2integrand(k,Y,phiM):
     x = xee(k,sigS=sigShift)
     return -1 * k * k * (4 * np.pi / Y)**2 * (qc + x)**2 / \
            (((4 * np.pi / Y) * (phiS + (qc + x) * phiM) + (k * k))**2)
-
 def FreeEnergyD2FP(Y,phiM,phiS):
     d2s =0
     #################Entropyd2##########
@@ -113,7 +79,6 @@ def fpD2integrand(k,Y,phiM):
     num = -16*np.pi*np.pi*x*k*k*(k*k*Y+ 4*np.pi*phiS)*(x*k*k*Y+4*np.pi*x*(2*qc*phiM+ phiS)+ 2*k*k*qc*Y+8*np.pi*qc*(qc*phiM+phiS))
     den = (k*k*Y+ 4*np.pi*(qc*phiM+ phiS))*(k*k*Y+ 4*np.pi*(qc*phiM+ phiS))*(4*np.pi*(phiM*(x+qc)+phiS)+k*k*Y)*(4*np.pi*(phiM*(x+qc)+phiS)+k*k*Y)
     return num/den
-
 def FreeEnergyD2reverseFP(phiM,Y,phiS):
     d2s =0
     #################Entropyd2##########
@@ -135,7 +100,6 @@ def FreeEnergyD2reverseFP(phiM,Y,phiS):
     result = integrate.quad(fpD2integrand,lowerlim,upperlim,args=(Y,phiM,),limit=150)
     d2fp= result[0] / (4 * np.pi * np.pi)
     return np.sqrt((d2s + d2fp + d2fion) ** 2)
-
 def felintegrand(k,Y,phiM,phiS):
     x = xee(k,sigS=sigShift)
     return (k**2)*np.log(1 + ((4*np.pi)/(k**2*Y))*(phiS+(qc+x)*phiM))
@@ -157,18 +121,36 @@ def fp(phiM, Y, phiS):
 def fion(phiM,Y,phiS):
     kl = np.sqrt(4*np.pi*(phiS+qc*phiM)/Y)
     return (-1/(4*np.pi))*(np.log(1+kl)-kl + .5*kl*kl)
-def Entropy(phiM,phiS):
+def entropy(phiM,phiS):
     phiC = qc*phiM
     phiW = 1-phiM-phiS-phiC
     #################FIGURE OUT LOGIC FOR 0s
     if phiS!= 0:
         return (phiM/N)*np.log(phiM) + phiS* np.log(phiS) + phiC*np.log(phiC) + phiW*np.log(phiW)
     else:return (phiM/N)*np.log(phiM)+ phiC*np.log(phiC) + phiW*np.log(phiW)
+def ftot_pointIons(phiM,Y,phiS):
+    return entropy(phiM, phiS) + fel(phiM, Y, phiS)
+def ftot_gaussIons(phiM,Y,phiS):
+    return entropy(phiM, phiS) + fion(phiM, Y, phiS) + fp(phiM, Y, phiS)
+def dftotGauss_dphi(phiM,Y,phiS):
+    ds_dphi =np.log(phiM)/N + 1/N - 1 + qc*np.log(qc*phiM) + (-1*qc-1)*np.log(1-qc*phiM -phiS - phiM)
+    dfion_dphi= (-1*np.sqrt(np.pi)*qc*np.sqrt((qc*phiM+phiS)/Y))/(Y*(2*np.sqrt(np.pi)*np.sqrt((qc*phiM)/Y)+1))
+    def dfpintegrand(k,Y,phiM,phiS):
+        x = xee(k, sigS=sigShift)
+        a = k*k*Y/(4*np.pi)
+        return k*k * (x*(phiS+ a))/((qc*phiM+phiS+a)*((qc+x)*phiM+phiS+a))
+    upper,lower = 0,np.inf
+    result = integrate.quad(dfpintegrand,lower,upper,args=(Y,phiM,phiS,),limit=150)
+    dfp_dphi = result[0] / (4 * np.pi * np.pi)
 
-def ftot(phiM,Y,phiS):
-    return Entropy(phiM,phiS) + fel(phiM,Y,phiS)
-def ftotfp(phiM,Y,phiS):
-    return Entropy(phiM,phiS)+ fion(phiM,Y,phiS) + fp(phiM,Y,phiS)
+    return ds_dphi+dfion_dphi+dfp_dphi
+
+def checkPotentials(phi1,phi2,Y,phiS):
+    thresh = .1
+    if(np.abs(dftotGauss_dphi(phi1,Y,phiS)-dftotGauss_dphi(phi2,Y,phiS)) < thresh):
+        return True
+    else: return False
+
 def getSpinodal(phiMs):
     Ys=[]
     for j in range(len(phiMs)):
@@ -178,7 +160,7 @@ def getSpinodal(phiMs):
         Ys.append(y.root)
     return Ys
 def SpinodalY(phiM,phiS,guess):
-    guess1 = .29
+    guess1 = guess
     y = fsolve(FreeEnergyD2FP, args=(phiM, phiS,), x0=guess1)
     print('phi', phiM, 'l/lb', y)
     return -1*y
@@ -189,22 +171,104 @@ def findCrits(phiS,guess):
     Yc = minimize(SpinodalY, x0=guess, args=(phiS,guess,),method='Powell', bounds=bounds)
     phiC = Yc.x
     return phiC, -1*Yc.fun
+phiC,Yc = findCrits(phiS,guess=.025)
 
-if __name__ == "__main__":
-    x,y = findCrits(phiS,.1)
-    print(x,y, ' FINAL phiC/Yc')
-    ######################FINDING SPINODAL#########################
-    phiMs = np.linspace(1e-3,.799,100)
-    #Ys= [0.28270371056883575,0.6183707670808203,0.6644949264903841,0.663421867142575,0.6479709933346601, 0.6278191295235688,0.6065203753916169,0.5855094630020322,0.5653729080073601,0.5463272614483451,0.5284200885862346,0.5116210713183862,0.4958654699978174,0.4810755008183442,0.46717095218422255, 0.45407436517366956,0.4417134029427058,0.43002175146490546,.4189,.4084,.3984,.3888,.3797,.3709,.36255,.35449,.34673,.33924,.3320,.3250,.31827,.3117,.3053,.2991,.2931,.287265,.2815,.2759,.2705,.26516,.2599,.2548,.24485,.2400,.2352,.23056,.2259,.2214,.2169,.21250,.208139,.20382,.199567,.19535,.19118,.18705,.1829,.1789,.1748,.17088,.16691,.1629,.1590,.1551,.15126,.14739,.14353,.13969,.13585,.13202,.12819,.12436,.1205,.116689,.1128,.10898,.1051,.10121,.0972,.0933,.08936,.08534,.08128,.077162,.07298,.068729,.06439,.059957,.055403,.0507,.04583,.04075,.035387,.02964,.02333,.016100,.0065,0,0,0]
-    Ys = getSpinodal(phiMs)
+def findSpinlow(Y,phiC):
+    initial = phiC/2
+    bounds = [(epsilon, phiC-epsilon)]
+    #result = minimize(FreeEnergyD2reverse, initial, args=(Y,phiS,),method='Powell',bounds=bounds)
+    result = minimize(FreeEnergyD2reverseFP, initial, args=(Y,phiS,),method='Powell',bounds=bounds)
+    #result = fsolve(FreeEnergyD2reverse, x0=initial, args=(Y,phiS))
+    return result.x
+def findSpinhigh(Y,phiC):
+    initial = phiC+ phiC/2
+    bounds = [(phiC+epsilon, 1-epsilon)]
+    #result = minimize(FreeEnergyD2reverse, initial, args=(Y,phiS),method='Powell',bounds=bounds)
+    result = minimize(FreeEnergyD2reverseFP, initial, args=(Y,phiS),method='Nelder-Mead',bounds=bounds)
 
-    ##################PLOT SPINODAL######################
-    plt.figure()
-    plt.plot(phiMs,Ys)
-    plt.xlabel('Volume Fraction of Protein (phi)')
-    plt.ylabel('l/lB')
-    plt.title(('L/Lb vs Volume Fraction Phase Diagram SPINODAL'))
-    plt.show()
+    #result = fsolve(FreeEnergyD2reverse, x0=initial, args=(Y,phiS))
+    return result.x
+def FreeEnergyD2reverse(phiM,Y,phiS):
+    d2s =0
+    #################Entropyd2##########
+    if phiM!=0:
+        if phiM != (phiS-1)/(-1*qc -1):
+            d2s = 1/(N*phiM)+ qc/phiM + ((-qc-1)**2)/(-1*qc*phiM-phiS-phiM + 1)
+        elif phiM == (phiS-1)/(-1*qc -1):
+            d2s = qc/phiM + 1/(N*phiM)
+    else: d2s = (-1*qc -1)**2/(-1*phiS +1)
+
+    #################Electrofreeenergyd2###########
+    upperlim = np.inf
+    lowerlim = 0
+    result = integrate.quad(felD2integrand,lowerlim,upperlim,args=(Y,phiM,),limit=150)
+    d2fel= result[0]/(4*np.pi*np.pi)
+    return np.sqrt((d2s + d2fel)**2)
+    #return d2s + d2fel
+
+def totalFreeEnergyVsolved(variables,Y):
+    phi1,phi2 = variables
+    v = (phiC-phi2)/(phi1-phi2)
+    #eqn = v * ftot(phi1,Y,phiS) + (1-v)*ftot(phi2,Y,phiS)
+    eqn = v * ftot_gaussIons(phi1, Y, phiS) + (1 - v) * ftot_gaussIons(phi2, Y, phiS)
+    return eqn
+def getInitialVsolved(Y,spinlow,spinhigh):
+    bounds = [(epsilon,spinlow-epsilon),(spinhigh+epsilon, 1-epsilon)]
+    initial_guess=(spinlow*.9, spinhigh*1.1)
+    result = minimize(totalFreeEnergyVsolved, initial_guess, args=(Y,), method='Nelder-Mead', bounds=bounds)
+    #result = minimize(TotalFreeEnergyVsolved,initial_guess,args=(Y,),method='Powell',bounds=bounds)
+    phi1i,phi2i= result.x
+    return phi1i,phi2i
+
+def minFtotal(Y,phiC,lastphi1,lastphi2):
+    maxTries= 20
+    phi1spin = findSpinlow(Y, phiC)[0]
+    phi2spin = findSpinhigh(Y, phiC)[0]
+    print(lastphi1, lastphi2, 'last 1&2')
+    print(phi1spin, phi2spin, 'SPINS LEFT/RIGHT')
+    phi1i, phi2i = getInitialVsolved(Y, phi1spin, phi2spin)
+    for attempt in range(maxTries):
+        i = attempt*.0005*(-1)**(attempt)
+        #initial_guess=(phi1spin/2, phi2spin*5)
+        initial_guess = (phi1i - i, phi2i + i)
+        if(phiC!=phi1spin):
+            initial_guess=(lastphi1-scale - i,lastphi2+scale + i)
+
+        bounds = [(epsilon, phi1spin - epsilon), (phi2spin+epsilon, 1-epsilon)]
+        maxL = minimize(totalFreeEnergyVsolved, initial_guess, args=(Y,), method='SLSQP', bounds=bounds)
+        #maxL = minimize(totalFreeEnergyVsolved, initial_guess, args=(Y,), method='Powell', bounds=bounds)
+
+        maxparams = maxL.x
+        phi1min,phi2min = maxparams
+
+        if(checkPotentials(phi1min,phi2min,Y,phiS) and (np.abs(phi1min-phi1spin)>2*epsilon) and (np.abs(phi2min-phi2spin)>2*epsilon)):
+            print(initial_guess, 'THIS IS WHAT GOT US THE PASS')
+            return maxparams
+        else:
+            print('FAILED POTENTIALS, attempt', attempt + 1)
+    print('allfailed')
+    return 0,0
+
+def getBinodal(Yc,phiC,minY):
+    phibin=phiC
+    Ybin = np.array([Yc])
+    Ytest=Yc-scale
+    while Ytest>minY:
+
+        #print(Ytest, "until", minY)
+        phiLlast,phiDlast = phibin[0], phibin[-1]
+        phi1,phi2 = minFtotal(Ytest, phiC, phiLlast, phiDlast)
+        phi1=np.array([phi1])
+        phi2=np.array([phi2])
+        phibin = np.concatenate((phi1, phibin, phi2))
+        Ybin = np.concatenate(([Ytest], Ybin, [Ytest]))
+        ####HIGHER RESOLUTION AT TOP OF PHASE DIAGRAM###################
+        resolution = scale*np.exp((Yc/Ytest))/np.exp(1)
+        print("NEXT YTEST CHANGED BY:", resolution, "and Ytest=", Ytest)
+        Ytest-=resolution
+
+    return phibin,Ybin
+
 
 
 
