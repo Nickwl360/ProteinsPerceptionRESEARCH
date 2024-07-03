@@ -106,7 +106,6 @@ def solveBinaryExample1(bulkPairs):
                     mtP1C= (bulk1-mtVA*mtP1A-mtVB*mtP1B)/(1-mtVA-mtVB)
                     mtP2C= (bulk2-mtVA*mtP2A-mtVB*mtP2B)/(1-mtVA-mtVB)
 
-
                 bulk= (bulk1,bulk2)
                 #initial_guess= [.05,.05,.5]
                 phi1ai, phi2ai, vi, = getInitial(bulk)
@@ -119,6 +118,7 @@ def solveBinaryExample1(bulkPairs):
                 minP1A, minP2A, minV = minInput  ###########0: phi1A, 1: phi2A, 2: v
 
                 print(bulk, '\n',minInput)
+
                 if (fbinary((minP1A,minP2A,minV),bulk) < free_energy_inphase(bulk1, bulk2)):
                     minP1B = (bulk1 - minV * minP1A) / (1 - minV)
                     minP2B = (bulk2 - minV * minP2A) / (1 - minV)

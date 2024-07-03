@@ -3,7 +3,6 @@ import numpy as np
 from matplotlib import pyplot as plt
 from fgRPA_init import phiS, scale,epsilon,qc,N
 
-######################FUNCTIONS###############################
 if __name__ == "__main__":
     minY = Yc*.8
     print('looping from ', Yc, 'to ', minY)

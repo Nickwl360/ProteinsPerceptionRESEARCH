@@ -214,7 +214,7 @@ def totalFreeEnergyVsolved(variables,Y):
     return eqn
 def getInitialVsolved(Y,spinlow,spinhigh):
     bounds = [(epsilon,spinlow-epsilon),(spinhigh+epsilon, 1-epsilon)]
-    initial_guess=(spinlow*.9, spinhigh*1.1)
+    initial_guess=(spinlow*.8, spinhigh*1.2)
     result = minimize(totalFreeEnergyVsolved, initial_guess, args=(Y,), method='Nelder-Mead', bounds=bounds)
     #result = minimize(TotalFreeEnergyVsolved,initial_guess,args=(Y,),method='Powell',bounds=bounds)
     phi1i,phi2i= result.x
@@ -227,12 +227,12 @@ def minFtotal(Y,phiC,lastphi1,lastphi2):
     print(lastphi1, lastphi2, 'last 1&2')
     print(phi1spin, phi2spin, 'SPINS LEFT/RIGHT')
     phi1i, phi2i = getInitialVsolved(Y, phi1spin, phi2spin)
-    for attempt in range(maxTries):
-        i = attempt*.0005*(-1)**(attempt)
+    for attempt in range(0,maxTries):
+        i = attempt*.0001#*(-1)**(attempt)
         #initial_guess=(phi1spin/2, phi2spin*5)
         initial_guess = (phi1i - i, phi2i + i)
         if(phiC!=phi1spin):
-            initial_guess=(lastphi1-scale - i,lastphi2+scale + i)
+            initial_guess=(lastphi1 - i,lastphi2 + i)
 
         bounds = [(epsilon, phi1spin - epsilon), (phi2spin+epsilon, 1-epsilon)]
         maxL = minimize(totalFreeEnergyVsolved, initial_guess, args=(Y,), method='SLSQP', bounds=bounds)
@@ -247,7 +247,7 @@ def minFtotal(Y,phiC,lastphi1,lastphi2):
         else:
             print('FAILED POTENTIALS, attempt', attempt + 1)
     print('allfailed')
-    return 0,0
+    return lastphi1-scale,lastphi2+scale
 
 def getBinodal(Yc,phiC,minY):
     phibin=phiC
