@@ -29,7 +29,6 @@ def xee(k,sigS):
     for i in range(0,N-1):
         xeesum += sigS[i]*np.exp((-1/6)*(k*k)*i)
     return xeesum/N
-
 #####################SECOND DERIVATIVE FREE ENERGIES 2 VERSIONS#############################
 def FreeEnergyD2FEL(Y,phiM,phiS):
     d2s =0
@@ -144,13 +143,11 @@ def dftotGauss_dphi(phiM,Y,phiS):
     dfp_dphi = result[0] / (4 * np.pi * np.pi)
 
     return ds_dphi+dfion_dphi+dfp_dphi
-
 def checkPotentials(phi1,phi2,Y,phiS):
-    thresh = .1
+    thresh = .09
     if(np.abs(dftotGauss_dphi(phi1,Y,phiS)-dftotGauss_dphi(phi2,Y,phiS)) < thresh):
         return True
     else: return False
-
 def getSpinodal(phiMs):
     Ys=[]
     for j in range(len(phiMs)):
@@ -172,7 +169,6 @@ def findCrits(phiS,guess):
     phiC = Yc.x
     return phiC, -1*Yc.fun
 phiC,Yc = findCrits(phiS,guess=.025)
-
 def findSpinlow(Y,phiC):
     initial = phiC/2
     bounds = [(epsilon, phiC-epsilon)]
@@ -205,7 +201,6 @@ def FreeEnergyD2reverse(phiM,Y,phiS):
     d2fel= result[0]/(4*np.pi*np.pi)
     return np.sqrt((d2s + d2fel)**2)
     #return d2s + d2fel
-
 def totalFreeEnergyVsolved(variables,Y):
     phi1,phi2 = variables
     v = (phiC-phi2)/(phi1-phi2)
@@ -214,40 +209,37 @@ def totalFreeEnergyVsolved(variables,Y):
     return eqn
 def getInitialVsolved(Y,spinlow,spinhigh):
     bounds = [(epsilon,spinlow-epsilon),(spinhigh+epsilon, 1-epsilon)]
-    initial_guess=(spinlow*.8, spinhigh*1.2)
+    initial_guess=(spinlow*.9, spinhigh*1.1)
     result = minimize(totalFreeEnergyVsolved, initial_guess, args=(Y,), method='Nelder-Mead', bounds=bounds)
     #result = minimize(TotalFreeEnergyVsolved,initial_guess,args=(Y,),method='Powell',bounds=bounds)
     phi1i,phi2i= result.x
     return phi1i,phi2i
-
-def minFtotal(Y,phiC,lastphi1,lastphi2):
-    maxTries= 20
+def minFtotal(Y,phiC,lastphi1,lastphi2, last_2_phi1, last_2_phi2):
     phi1spin = findSpinlow(Y, phiC)[0]
     phi2spin = findSpinhigh(Y, phiC)[0]
+    # dphi1 = abs(last_2_phi1 - lastphi1)
+    # dphi2 = abs(lastphi2 - last_2_phi2)
+
     print(lastphi1, lastphi2, 'last 1&2')
     print(phi1spin, phi2spin, 'SPINS LEFT/RIGHT')
     phi1i, phi2i = getInitialVsolved(Y, phi1spin, phi2spin)
-    for attempt in range(0,maxTries):
-        i = attempt*.0001#*(-1)**(attempt)
-        #initial_guess=(phi1spin/2, phi2spin*5)
-        initial_guess = (phi1i - i, phi2i + i)
-        if(phiC!=phi1spin):
-            initial_guess=(lastphi1 - i,lastphi2 + i)
+    initial_guess=(phi1i,phi2i)
+    # if abs(initial_guess[1] - phi2spin)<2*epsilon:
+    #     initial_guess= (phi1i,phi2i*1.1)
+    # elif abs(initial_guess[0] - phi1spin)<2*epsilon:
+    #     initial_guess= (phi1i*.9,phi2i)
+    # elif (abs(initial_guess[0] - phi1spin)<2*epsilon) and (abs(initial_guess[1] - phi2spin)<2*epsilon):
+    #     initial_guess= (phi1i*.9,phi2i*1.1)
 
-        bounds = [(epsilon, phi1spin - epsilon), (phi2spin+epsilon, 1-epsilon)]
-        maxL = minimize(totalFreeEnergyVsolved, initial_guess, args=(Y,), method='SLSQP', bounds=bounds)
-        #maxL = minimize(totalFreeEnergyVsolved, initial_guess, args=(Y,), method='Powell', bounds=bounds)
+    bounds = [(epsilon, phi1spin - epsilon), (phi2spin+epsilon, 1-epsilon)]
+    maxL = minimize(totalFreeEnergyVsolved, initial_guess, args=(Y,), method='SLSQP', bounds=bounds)
+    #maxL = minimize(totalFreeEnergyVsolved, initial_guess, args=(Y,), method='Powell', bounds=bounds)
+    #maxL = minimize(totalFreeEnergyVsolved, initial_guess, args=(Y,), method='Powell', bounds=bounds)
 
-        maxparams = maxL.x
-        phi1min,phi2min = maxparams
+    maxparams = maxL.x
+    phi1min,phi2min = maxparams
 
-        if(checkPotentials(phi1min,phi2min,Y,phiS) and (np.abs(phi1min-phi1spin)>2*epsilon) and (np.abs(phi2min-phi2spin)>2*epsilon)):
-            print(initial_guess, 'THIS IS WHAT GOT US THE PASS')
-            return maxparams
-        else:
-            print('FAILED POTENTIALS, attempt', attempt + 1)
-    print('allfailed')
-    return lastphi1-scale,lastphi2+scale
+    return phi1min,phi2min
 
 def getBinodal(Yc,phiC,minY):
     phibin=phiC
@@ -257,7 +249,10 @@ def getBinodal(Yc,phiC,minY):
 
         #print(Ytest, "until", minY)
         phiLlast,phiDlast = phibin[0], phibin[-1]
-        phi1,phi2 = minFtotal(Ytest, phiC, phiLlast, phiDlast)
+        phiL2last,phiD2last=phiC,phiC
+        if len(phibin)>=5:
+            phiL2last,phiD2last = phibin[1] ,phibin[-2]
+        phi1,phi2 = minFtotal(Ytest, phiC, phiLlast, phiDlast, phiL2last,phiD2last)
         phi1=np.array([phi1])
         phi2=np.array([phi2])
         phibin = np.concatenate((phi1, phibin, phi2))
