@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from scipy.optimize import minimize
 from scipy.optimize import root_scalar
 from fgRPA_init import *
+from scipy.optimize import brute as gridsearch
 
 
 ########################FUNCTIONS################################
@@ -207,23 +208,25 @@ def totalFreeEnergyVsolved(variables,Y):
     #eqn = v * ftot(phi1,Y,phiS) + (1-v)*ftot(phi2,Y,phiS)
     eqn = v * ftot_gaussIons(phi1, Y, phiS) + (1 - v) * ftot_gaussIons(phi2, Y, phiS)
     return eqn
+
 def getInitialVsolved(Y,spinlow,spinhigh):
     bounds = [(epsilon,spinlow-epsilon),(spinhigh+epsilon, 1-epsilon)]
-    initial_guess=(spinlow*.9, spinhigh*1.1)
-    result = minimize(totalFreeEnergyVsolved, initial_guess, args=(Y,), method='Nelder-Mead', bounds=bounds)
-    #result = minimize(TotalFreeEnergyVsolved,initial_guess,args=(Y,),method='Powell',bounds=bounds)
+    initial_guess=(spinlow*.7, spinhigh*1.3)
+    #result = minimize(totalFreeEnergyVsolved, initial_guess, args=(Y,), method='Nelder-Mead', bounds=bounds)
+    result = minimize(totalFreeEnergyVsolved, initial_guess,args=(Y,),method='Powell',bounds=bounds)
     phi1i,phi2i= result.x
     return phi1i,phi2i
+
 def minFtotal(Y,phiC,lastphi1,lastphi2, last_2_phi1, last_2_phi2):
     phi1spin = findSpinlow(Y, phiC)[0]
     phi2spin = findSpinhigh(Y, phiC)[0]
-    # dphi1 = abs(last_2_phi1 - lastphi1)
-    # dphi2 = abs(lastphi2 - last_2_phi2)
-
+    #dphi1 = abs(last_2_phi1 - lastphi1)
+    #dphi2 = abs(lastphi2 - last_2_phi2)
     print(lastphi1, lastphi2, 'last 1&2')
     print(phi1spin, phi2spin, 'SPINS LEFT/RIGHT')
     phi1i, phi2i = getInitialVsolved(Y, phi1spin, phi2spin)
     initial_guess=(phi1i,phi2i)
+
     # if abs(initial_guess[1] - phi2spin)<2*epsilon:
     #     initial_guess= (phi1i,phi2i*1.1)
     # elif abs(initial_guess[0] - phi1spin)<2*epsilon:
@@ -232,12 +235,23 @@ def minFtotal(Y,phiC,lastphi1,lastphi2, last_2_phi1, last_2_phi2):
     #     initial_guess= (phi1i*.9,phi2i*1.1)
 
     bounds = [(epsilon, phi1spin - epsilon), (phi2spin+epsilon, 1-epsilon)]
-    maxL = minimize(totalFreeEnergyVsolved, initial_guess, args=(Y,), method='SLSQP', bounds=bounds)
-    #maxL = minimize(totalFreeEnergyVsolved, initial_guess, args=(Y,), method='Powell', bounds=bounds)
-    #maxL = minimize(totalFreeEnergyVsolved, initial_guess, args=(Y,), method='Powell', bounds=bounds)
+    #maxL = minimize(totalFreeEnergyVsolved, initial_guess, args=(Y,), method='SLSQP', bounds=bounds)
 
-    maxparams = maxL.x
-    phi1min,phi2min = maxparams
+    #ranges= [(phi1spin/2, phi1spin*.9), (phi2spin*1.1, phi2spin*2)]
+    ranges= [(phi2spin/4, phi1spin-epsilon), (phi2spin+epsilon, phi2spin*2.5)]
+    print('THIS IS THE RANGES: ',ranges)
+    maxL = gridsearch(totalFreeEnergyVsolved, ranges=ranges, args=(Y,), Ns=25,full_output=True)
+
+    #maxL = minimize(totalFreeEnergyVsolved, initial_guess, args=(Y,), method='Powell', bounds=bounds)
+    #maxparams = maxL.x
+    phi_min = maxL[0]
+    if isinstance(phi_min, np.ndarray) or isinstance(phi_min, (list, tuple)):
+        phi1min, phi2min = phi_min
+    else:
+        raise TypeError("The result is not iterable.")
+    #phi1min,phi2min = maxL[0]
+    v = (phiC - phi2min)/(phi1min-phi2min)
+    print('\nwe have finished minimizing for Y = ',Y, 'just cuz curious: phi1,phi2, v = ',phi1min,phi2min,v)
 
     return phi1min,phi2min
 
@@ -250,8 +264,6 @@ def getBinodal(Yc,phiC,minY):
         #print(Ytest, "until", minY)
         phiLlast,phiDlast = phibin[0], phibin[-1]
         phiL2last,phiD2last=phiC,phiC
-        if len(phibin)>=5:
-            phiL2last,phiD2last = phibin[1] ,phibin[-2]
         phi1,phi2 = minFtotal(Ytest, phiC, phiLlast, phiDlast, phiL2last,phiD2last)
         phi1=np.array([phi1])
         phi2=np.array([phi2])
