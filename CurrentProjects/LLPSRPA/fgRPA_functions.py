@@ -216,6 +216,10 @@ def getInitialVsolved(Y,spinlow,spinhigh):
     #result = minimize(totalFreeEnergyVsolved, initial_guess,args=(Y,),method='Powell',bounds=bounds)
     phi1i,phi2i= result.x
     return phi1i,phi2i
+def makeconstSLS(Y):
+    def seperated(variables):
+        return totalFreeEnergyVsolved(variables,Y) - ftot_gaussIons(phiC,Y,phiS)
+    return [{'type': 'ineq', 'fun': seperated}]
 
 def minFtotal(Y,phiC,lastphi1,lastphi2, last_2_phi1, last_2_phi2):
     phi1spin = findSpinlow(Y, phiC)[0]
@@ -227,29 +231,24 @@ def minFtotal(Y,phiC,lastphi1,lastphi2, last_2_phi1, last_2_phi2):
     phi1i, phi2i = getInitialVsolved(Y, phi1spin, phi2spin)
     initial_guess=(phi1i,phi2i)
 
-    # if abs(initial_guess[1] - phi2spin)<2*epsilon:
-    #     initial_guess= (phi1i,phi2i*1.1)
-    # elif abs(initial_guess[0] - phi1spin)<2*epsilon:
-    #     initial_guess= (phi1i*.9,phi2i)
-    # elif (abs(initial_guess[0] - phi1spin)<2*epsilon) and (abs(initial_guess[1] - phi2spin)<2*epsilon):
-    #     initial_guess= (phi1i*.9,phi2i*1.1)
-
     bounds = [(epsilon, phi1spin - epsilon), (phi2spin+epsilon, 1-epsilon)]
-    #maxL = minimize(totalFreeEnergyVsolved, initial_guess, args=(Y,), method='SLSQP', bounds=bounds)
+    const = makeconstSLS(Y)
+    maxL = minimize(totalFreeEnergyVsolved, initial_guess, args=(Y,), method='SLSQP', constraints=const,bounds=bounds)
 
     #ranges= [(phi1spin/2, phi1spin*.9), (phi2spin*1.1, phi2spin*2)]
-    ranges= [(phi2spin/4, phi1spin-epsilon), (phi2spin+epsilon, phi2spin*2.5)]
-    print('THIS IS THE RANGES: ',ranges)
-    maxL = gridsearch(totalFreeEnergyVsolved, ranges=ranges, args=(Y,), Ns=25,full_output=True)
+    #ranges= [(phi2spin/4, phi1spin-epsilon), (phi2spin+epsilon, phi2spin*2.5)]
+    #print('THIS IS THE RANGES: ',ranges)
+    #maxL = gridsearch(totalFreeEnergyVsolved, ranges=ranges, args=(Y,), Ns=25,full_output=True)
 
     #maxL = minimize(totalFreeEnergyVsolved, initial_guess, args=(Y,), method='Powell', bounds=bounds)
-    #maxparams = maxL.x
-    phi_min = maxL[0]
-    if isinstance(phi_min, np.ndarray) or isinstance(phi_min, (list, tuple)):
-        phi1min, phi2min = phi_min
-    else:
-        raise TypeError("The result is not iterable.")
-    #phi1min,phi2min = maxL[0]
+    maxparams = maxL.x
+    phi1min,phi2min = maxparams
+    # phi_min = maxL[0]
+    # if isinstance(phi_min, np.ndarray) or isinstance(phi_min, (list, tuple)):
+    #     phi1min, phi2min = phi_min
+    # else:
+    #     raise TypeError("The result is not iterable.")
+    # #phi1min,phi2min = maxL[0]
     v = (phiC - phi2min)/(phi1min-phi2min)
     print('\nwe have finished minimizing for Y = ',Y, 'just cuz curious: phi1,phi2, v = ',phi1min,phi2min,v)
 

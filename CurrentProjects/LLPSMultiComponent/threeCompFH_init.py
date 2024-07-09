@@ -1,9 +1,9 @@
 import numpy as np
 
 ################CONSTANTS######################
-#chi11= .66
-#chi22= .66
-
+chi11= .66
+chi22= .66
+chi12 = .33
 #panel1
 #chi11,chi22,chi12 = 1.3,.5,.8
 #panel2
@@ -13,15 +13,15 @@ import numpy as np
 #panel4
 #chi11,chi22,chi12 = 1.3,.9,1.3
 #panel5
-chi11,chi22,chi12 = 1.3,.9,.9
+#chi11,chi22,chi12 = 1.3,.9,.9
 
 #chi12 = np.array([.72, .645, .63])
 #chi12 = .63
 #chi12= np.sqrt(chi11)*np.sqrt(chi22)
 
 ##########LENGTHS########
-#N1, N2 = 50,50
-N1,N2 = 10,10
+N1, N2 = 50,50
+#N1,N2 = 10,10
 
 checkTernary_Flag = 1
 
