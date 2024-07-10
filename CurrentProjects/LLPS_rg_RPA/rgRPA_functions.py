@@ -5,7 +5,7 @@ from scipy.optimize import fsolve
 import matplotlib.pyplot as plt
 from scipy.optimize import minimize
 from scipy.optimize import root_scalar
-from fgRPA_init import *
+from rgRPA_init import *
 from scipy.optimize import brute as gridsearch
 import multiprocessing as mp
 
