@@ -23,12 +23,14 @@ def pH_qs(seq, ph):
             charges.append(0)
     return charges
 
-###########CONSTANTS################
+###########CONSTANTS##########################
 phiS = .0
 ph = 7
-scale= .001
+scale_init= .001
+scale_final= .02
 epsilon = 1e-12
-#################PICK SEQUENCE##################################################################
+
+#################PICK SEQUENCE/GET RELEVANTQUANTITIES###################################################
 seqs = getseq('../../OldProteinProjects/SCDtests.xlsx')
 ddx4n1 = 'MGDEDWEAEINPHMSSYVPIFEKDRYSGENGDNFNRTPASSSEMDDGPSRRDHFMKSGFASGRNFGNRDAGECNKRDNTSTMGGFGVGKSFGNRGFSNSRFEDGDSSGFWRESSNDCEDNPTRNRGFSKRGGYRDGNNSEASGPYRRGGRGSFRGCRGGFGLGSPNNDLDPDECMQRTGGLFGSRRPVLSGTGNGDTSQSRSGSGSERGGYKGLNEEVITGSGKNSWKSEAEGGES'
 ddx4n1CS = 'MGDRDWRAEINPHMSSYVPIFEKDRYSGENGRNFNDTPASSSEMRDGPSERDHFMKSGFASGDNFGNRDAGKCNERDNTSTMGGFGVGKSFGNEGFSNSRFERGDSSGFWRESSNDCRDNPTRNDGFSDRGGYEKGNNSEASGPYERGGRGSFDGCRGGFGLGSPNNRLDPRECMQRTGGLFGSDRPVLSGTGNGDTSQSRSGSGSERGGYKGLNEKVITGSGENSWKSEARGGES'
@@ -37,6 +39,10 @@ seq_of_interest = ddx4n1
 qs = pH_qs(seq_of_interest,ph)
 N = len(qs)
 qc = abs(sum(qs))/N
+
+#################FUNCTIONS OF USE#######################################
+
+
 
 
 

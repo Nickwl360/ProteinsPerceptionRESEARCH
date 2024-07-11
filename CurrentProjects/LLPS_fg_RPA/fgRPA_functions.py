@@ -11,8 +11,8 @@ import multiprocessing as mp
 
 
 ########################ConstANTS################################
-T0=100
-iterlim=250
+T0=200
+iterlim=200
 
 #############SEQUENCE SPECIFIC CHARGE/XEE###########################
 def getSigShift(qs):
@@ -216,10 +216,10 @@ def totalFreeEnergyVsolved(variables,Y,phiBulk):
     #return eqn
     return T0*(eqn - ftot_gaussIons(phiBulk,Y,phiS))
 
-def getInitialVsolved(Y,spinlow,spinhigh):
+def getInitialVsolved(Y,spinlow,spinhigh,phiBulk):
     bounds = [(epsilon,spinlow-epsilon),(spinhigh+epsilon, 1-epsilon)]
-    initial_guess=(spinlow*.9, spinhigh*1.1)
-    result = minimize(totalFreeEnergyVsolved, initial_guess, args=(Y,), method='Nelder-Mead', bounds=bounds)
+    initial_guess=(spinlow*.899, spinhigh*1.101)
+    result = minimize(totalFreeEnergyVsolved, initial_guess, args=(Y,phiBulk), method='Nelder-Mead', bounds=bounds)
     #result = minimize(totalFreeEnergyVsolved, initial_guess,args=(Y,),method='Powell',bounds=bounds)
     phi1i,phi2i= result.x
     return phi1i,phi2i
@@ -229,21 +229,24 @@ def makeconstSLS(Y,phiBulk):
     return [{'type': 'ineq', 'fun': seperated}]
 
 def minFtotal(Y,phiC,lastphi1,lastphi2):
+
     phi1spin = findSpinlow(Y, phiC)[0]
     phi2spin = findSpinhigh(Y, phiC)[0]
     print(lastphi1, lastphi2, 'last 1&2')
     print(phi1spin, phi2spin, 'SPINS LEFT/RIGHT')
-    #phi1i, phi2i = getInitialVsolved(Y, phi1spin, phi2spin)
-    #initial_guess=(phi1i,phi2i)
-    #initial_guess=(phi1spin*.9,phi2spin*1.1)
-    initial_guess=(phi1spin*.899,phi2spin*1.101)
-    phi2Max = (1-2*phiS)/(1+qc)#########FROM LIN CODE GITHUB ????
-
-
     phiB = (phi1spin+phi2spin)/2
-    bounds = [(epsilon, phi1spin - epsilon), (phi2spin+epsilon, phi2Max-epsilon)]
-    #maxL = minimize(totalFreeEnergyVsolved,initial_guess,args=(Y,phiB),method='L-BFGS-B',jac=Jac_fgRPA,bounds=bounds,options={'ftol':1e-20, 'gtol':1e-20, 'eps':1e-20} )
-    maxL = minimize(totalFreeEnergyVsolved,initial_guess,args=(Y,phiB),method='TNC',jac=Jac_fgRPA,bounds=bounds,options={'ftol':1e-20, 'gtol':1e-20, 'eps':1e-20} )
+
+    phi1i, phi2i = getInitialVsolved(Y, phi1spin, phi2spin,phiB)
+    initial_guess=(phi1i,phi2i)
+    #initial_guess=(phi1spin*.9,phi2spin*1.1)
+    #initial_guess=(phi1spin*.899,phi2spin*1.301)
+    #phi2Max = (1-2*phiS)/(1+qc)#########FROM LIN CODE GITHUB ????
+
+
+    bounds = [(epsilon, phi1spin - epsilon), (phi2spin+epsilon, 1-epsilon)]
+    maxL = minimize(totalFreeEnergyVsolved,initial_guess,args=(Y,phiB),method='L-BFGS-B',jac=Jac_fgRPA,bounds=bounds,options={'ftol':1e-20, 'gtol':1e-20, 'eps':1e-20} )
+    #maxL = minimize(totalFreeEnergyVsolved,initial_guess,args=(Y,phiB),method='SLSQP',jac=Jac_fgRPA,bounds=bounds,options={'ftol':1e-20, 'gtol':1e-20, 'eps':1e-20} )
+    #maxL = minimize(totalFreeEnergyVsolved,initial_guess,args=(Y,phiB),method='Newton-CG',jac=Jac_fgRPA,bounds=bounds,options={'ftol':1e-20, 'gtol':1e-20, 'eps':1e-20} )
 
     #const = makeconstSLS(Y)
     #maxL = minimize(totalFreeEnergyVsolved, initial_guess, args=(Y,), method='SLSQP', constraints=const,bounds=bounds)
@@ -280,18 +283,25 @@ def Jac_fgRPA(vars,Y,phiB):
 def getBinodal(Yc,phiC,minY):
     phibin=phiC
     Ybin = np.array([Yc])
-    Ytest=Yc-scale
-    while Ytest>minY:
+    Ytest= Yc - scale_init
 
+    Y_range= Yc - minY
+
+    while Ytest>minY:
+        Y_ratio_done = (Yc -Ytest)/Y_range
         #print(Ytest, "until", minY)
         phiLlast,phiDlast = phibin[0], phibin[-1]
         phi1,phi2 = minFtotal(Ytest, phiC, phiLlast, phiDlast)
-        phi1=np.array([phi1])
-        phi2=np.array([phi2])
-        phibin = np.concatenate((phi1, phibin, phi2))
-        Ybin = np.concatenate(([Ytest], Ybin, [Ytest]))
+
+        if phi1<phiLlast and phi2>phiDlast:
+            phi1=np.array([phi1])
+            phi2=np.array([phi2])
+            phibin = np.concatenate((phi1, phibin, phi2))
+            Ybin = np.concatenate(([Ytest], Ybin, [Ytest]))
+        else: print('someglitch, repeating with a skipped step')
         ####HIGHER RESOLUTION AT TOP OF PHASE DIAGRAM###################
-        resolution = scale*np.exp((Yc/Ytest)**2)/np.exp(1)
+        #resolution = scale_init * np.exp((Yc / Ytest) ** 3) / np.exp(1)
+        resolution = scale_init *(1 + Y_ratio_done*(scale_final/scale_init))
         print("NEXT YTEST CHANGED BY:", resolution, "and Ytest=", Ytest)
         Ytest-=resolution
 

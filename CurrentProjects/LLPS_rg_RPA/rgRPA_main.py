@@ -1,7 +1,7 @@
 from rgRPA_functions import *
 import numpy as np
 from matplotlib import pyplot as plt
-from rgRPA_functions import phiS, scale,epsilon,qc,N
+from rgRPA_init import phiS, scale_init,epsilon,qc,N,scale_final
 
 if __name__ == "__main__":
     minY = Yc*.98

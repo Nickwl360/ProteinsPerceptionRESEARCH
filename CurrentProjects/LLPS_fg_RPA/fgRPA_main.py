@@ -1,10 +1,10 @@
 from fgRPA_functions import *
 import numpy as np
 from matplotlib import pyplot as plt
-from fgRPA_init import phiS, scale,epsilon,qc,N
+from fgRPA_init import phiS, scale_init,epsilon,qc,N, scale_final
 
 if __name__ == "__main__":
-    minY = Yc*.7
+    minY = Yc*.65
     print('looping from ', Yc, 'to ', minY)
 
     phis,chis = getBinodal(Yc, phiC, minY)
