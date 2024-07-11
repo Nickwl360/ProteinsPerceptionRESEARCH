@@ -4,7 +4,7 @@ from matplotlib import pyplot as plt
 from fgRPA_init import phiS, scale_init,epsilon,qc,N, scale_final
 
 if __name__ == "__main__":
-    minY = Yc*.65
+    minY = Yc*.75
     print('looping from ', Yc, 'to ', minY)
 
     phis,chis = getBinodal(Yc, phiC, minY)

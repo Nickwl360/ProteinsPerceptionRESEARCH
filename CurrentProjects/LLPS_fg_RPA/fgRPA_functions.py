@@ -11,8 +11,8 @@ import multiprocessing as mp
 
 
 ########################ConstANTS################################
-T0=200
-iterlim=200
+T0=1000
+iterlim=250
 
 #############SEQUENCE SPECIFIC CHARGE/XEE###########################
 def getSigShift(qs):
@@ -218,7 +218,7 @@ def totalFreeEnergyVsolved(variables,Y,phiBulk):
 
 def getInitialVsolved(Y,spinlow,spinhigh,phiBulk):
     bounds = [(epsilon,spinlow-epsilon),(spinhigh+epsilon, 1-epsilon)]
-    initial_guess=(spinlow*.899, spinhigh*1.101)
+    initial_guess=(spinlow*.9, spinhigh*1.1)
     result = minimize(totalFreeEnergyVsolved, initial_guess, args=(Y,phiBulk), method='Nelder-Mead', bounds=bounds)
     #result = minimize(totalFreeEnergyVsolved, initial_guess,args=(Y,),method='Powell',bounds=bounds)
     phi1i,phi2i= result.x
@@ -240,10 +240,10 @@ def minFtotal(Y,phiC,lastphi1,lastphi2):
     initial_guess=(phi1i,phi2i)
     #initial_guess=(phi1spin*.9,phi2spin*1.1)
     #initial_guess=(phi1spin*.899,phi2spin*1.301)
-    #phi2Max = (1-2*phiS)/(1+qc)#########FROM LIN CODE GITHUB ????
+    phi2Max = (1-2*phiS)/(1+qc)#########FROM LIN CODE GITHUB ????
 
 
-    bounds = [(epsilon, phi1spin - epsilon), (phi2spin+epsilon, 1-epsilon)]
+    bounds = [(epsilon, phi1spin - epsilon), (phi2spin+epsilon, phi2Max-epsilon)]
     maxL = minimize(totalFreeEnergyVsolved,initial_guess,args=(Y,phiB),method='L-BFGS-B',jac=Jac_fgRPA,bounds=bounds,options={'ftol':1e-20, 'gtol':1e-20, 'eps':1e-20} )
     #maxL = minimize(totalFreeEnergyVsolved,initial_guess,args=(Y,phiB),method='SLSQP',jac=Jac_fgRPA,bounds=bounds,options={'ftol':1e-20, 'gtol':1e-20, 'eps':1e-20} )
     #maxL = minimize(totalFreeEnergyVsolved,initial_guess,args=(Y,phiB),method='Newton-CG',jac=Jac_fgRPA,bounds=bounds,options={'ftol':1e-20, 'gtol':1e-20, 'eps':1e-20} )
@@ -298,7 +298,9 @@ def getBinodal(Yc,phiC,minY):
             phi2=np.array([phi2])
             phibin = np.concatenate((phi1, phibin, phi2))
             Ybin = np.concatenate(([Ytest], Ybin, [Ytest]))
+
         else: print('someglitch, repeating with a skipped step')
+
         ####HIGHER RESOLUTION AT TOP OF PHASE DIAGRAM###################
         #resolution = scale_init * np.exp((Yc / Ytest) ** 3) / np.exp(1)
         resolution = scale_init *(1 + Y_ratio_done*(scale_final/scale_init))

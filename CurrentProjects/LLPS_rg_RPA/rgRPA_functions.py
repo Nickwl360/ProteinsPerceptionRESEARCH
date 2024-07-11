@@ -14,26 +14,58 @@ import multiprocessing as mp
 T0=200
 iterlim=200
 
-#############SEQUENCE SPECIFIC CHARGE/XEE###########################
-def getSigShift(qs):
-    sigS = []
+#############SEQUENCE SPECIFIC CHARGE/STRUCTURE FACTORS###########################
+def getSigShifts(qs):
+    sigSij = []
+    sigSi = []
+
     for i in range(len(qs)-1):
-        sigi=0
+        sigij = 0
+        sigi = 0
         for j in range(len(qs)-1):
             if (j+i)<= len(qs)-1:
-                sigi += qs[j]*qs[j+i]
+                sigij += qs[j] * qs[j + i]
+                sigi += qs[j]
         if i ==0:
-            sigS.append(sigi)
+            sigSij.append(sigij)
+            sigSi.append(sigi)
         if i!=0:
-            sigS.append(2*sigi)
-    return sigS
-sigShift = getSigShift(qs)
+            sigSij.append(2 * sigij)
+            sigSi.append(2 * sigi)
 
-def xee(k,sigS):
+    return sigSij ,sigSi
+sigShift_xe, sigShift_ck = getSigShifts(qs)
+
+def xee(k,x,sigS):
     xeesum=0
     for i in range(0,N-1):
-        xeesum += sigS[i]*np.exp((-1/6)*(k*k)*i)
+        xeesum += sigS[i]*np.exp((-1/6)*x*(k*k)*i)
     return xeesum/N
+def xee_r(k,x,sigS):
+    xeesum=0
+    for i in range(0,N-1):
+        xeesum += sigS[i]*i*i*np.exp((-1/6)*x*(k*k)*i)
+    return xeesum/N
+def gk(k,x):
+    gksum=0
+    for i in range(0,N-1):
+        gksum+= np.exp((-1/6)*x*k*k*i)
+    return gksum/N
+def gk_r(k,x):
+    gksum=0
+    for i in range(0,N-1):
+        gksum+= i*i*np.exp((-1/6)*x*k*k*i)
+    return gksum/N
+def ck(k,x,sigs):
+    cksum=0
+    for i in range(0,N-1):
+        cksum+= sigs*np.exp((-1/6)*x*k*k*i)
+    return cksum/N
+def ck_r(k,x,sigs):
+    cksum=0
+    for i in range(0,N-1):
+        cksum+= i*i*sigs*np.exp((-1/6)*x*k*k*i)
+    return cksum/N
 
 #####################SECOND DERIVATIVE FREE ENERGIES 2 VERSIONS#############################
 def dd_FPoint_Y(Y,phiM,phiS):
@@ -47,7 +79,7 @@ def dd_FPoint_Y(Y,phiM,phiS):
     else: d2s = (-1*qc -1)**2/(-1*phiS +1)
 
     def dd_fel_toint(k, Y, phiM):
-        x = xee(k, sigS=sigShift)
+        x = xee(k, sigS=sigShift_xe)
         return -1 * k * k * (4 * np.pi / Y) ** 2 * (qc + x) ** 2 / \
                (((4 * np.pi / Y) * (phiS + (qc + x) * phiM) + (k * k)) ** 2)
 
@@ -105,7 +137,7 @@ def dd_Fgauss_phiM(phiM,Y,phiS):
     return np.sqrt((d2s + d2fp + d2fion) ** 2)
 
 def dd_FP_toint(k, Y, phiM):
-    x = xee(k, sigS=sigShift)
+    x = xee(k, sigS=sigShift_xe)
     num = -16 * np.pi * np.pi * x * k * k * (k * k * Y + 4 * np.pi * phiS) * (
                     x * k * k * Y + 4 * np.pi * x * (2 * qc * phiM + phiS) + 2 * k * k * qc * Y + 8 * np.pi * qc * (
                         qc * phiM + phiS))
@@ -116,7 +148,7 @@ def dd_FP_toint(k, Y, phiM):
 
 def fel(phiM, Y, phiS):
     def felintegrand(k, Y, phiM, phiS):
-        x = xee(k, sigS=sigShift)
+        x = xee(k, sigS=sigShift_xe)
         return (k ** 2) * np.log(1 + ((4 * np.pi) / (k ** 2 * Y)) * (phiS + (qc + x) * phiM))
     upperlim = np.inf
     lowerlim = 0
@@ -126,7 +158,7 @@ def fel(phiM, Y, phiS):
 
 def fp(phiM, Y, phiS):
     def fpintegrand(k, Y, phiM, phiS):
-        x = xee(k, sigS=sigShift)
+        x = xee(k, sigS=sigShift_xe)
         return k * k * np.log(1 + (phiM * x) / ((k * k * Y / (4 * np.pi)) + phiS + qc * phiM))
     upperlim = np.inf
     lowerlim = 0
@@ -151,7 +183,7 @@ def dftotGauss_dphi(phiM,Y,phiS):
     ds_dphi =np.log(phiM)/N + 1/N - 1 + qc*np.log(qc*phiM) + (-1*qc-1)*np.log(1-qc*phiM -phiS - phiM)
     dfion_dphi= (-1*np.sqrt(np.pi)*qc*np.sqrt((qc*phiM+phiS)/Y))/(Y*(2*np.sqrt(np.pi)*np.sqrt((qc*phiM)/Y)+1))
     def dfpintegrand(k,Y,phiM,phiS):
-        x = xee(k, sigS=sigShift)
+        x = xee(k, sigS=sigShift_xe)
         a = k*k*Y/(4*np.pi)
         return k*k * (x*(phiS+ a))/((qc*phiM+phiS+a)*((qc+x)*phiM+phiS+a))
     upper,lower = 0,np.inf
@@ -215,7 +247,7 @@ def FreeEnergyD2reverse(phiM,Y,phiS):
 
     #################Electrofreeenergyd2###########
     def dd_fel_toint(k, Y, phiM):
-        x = xee(k, sigS=sigShift)
+        x = xee(k, sigS=sigShift_xe)
         return -1 * k * k * (4 * np.pi / Y) ** 2 * (qc + x) ** 2 / \
                (((4 * np.pi / Y) * (phiS + (qc + x) * phiM) + (k * k)) ** 2)
     upperlim = np.inf
