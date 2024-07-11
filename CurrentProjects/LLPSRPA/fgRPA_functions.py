@@ -237,7 +237,7 @@ def minFtotal(Y,phiC,lastphi1,lastphi2):
     #initial_guess=(phi1i,phi2i)
     #initial_guess=(phi1spin*.9,phi2spin*1.1)
     initial_guess=(phi1spin*.899,phi2spin*1.101)
-    phi2Max = (1-2*phiS)/(1+qc)
+    phi2Max = (1-2*phiS)/(1+qc)#########FROM LIN CODE GITHUB ????
 
 
     phiB = (phi1spin+phi2spin)/2
@@ -291,7 +291,7 @@ def getBinodal(Yc,phiC,minY):
         phibin = np.concatenate((phi1, phibin, phi2))
         Ybin = np.concatenate(([Ytest], Ybin, [Ytest]))
         ####HIGHER RESOLUTION AT TOP OF PHASE DIAGRAM###################
-        resolution = scale*np.exp((Yc/Ytest))/np.exp(1)
+        resolution = scale*np.exp((Yc/Ytest)**2)/np.exp(1)
         print("NEXT YTEST CHANGED BY:", resolution, "and Ytest=", Ytest)
         Ytest-=resolution
 

@@ -26,7 +26,7 @@ def pH_qs(seq, ph):
 ###########CONSTANTS################
 phiS = .0
 ph = 7
-scale= .001
+scale= .0005
 epsilon = 1e-12
 #################PICK SEQUENCE##################################################################
 seqs = getseq('../../OldProteinProjects/SCDtests.xlsx')
