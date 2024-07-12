@@ -6,8 +6,7 @@ import matplotlib.pyplot as plt
 from scipy.optimize import minimize
 from scipy.optimize import root_scalar
 from rgRPA_init import *
-from scipy.optimize import brute as gridsearch
-import multiprocessing as mp
+from scipy.optimize import brenth
 
 
 ########################ConstANTS################################
@@ -35,7 +34,6 @@ def getSigShifts(qs):
 
     return sigSij ,sigSi
 sigShift_xe, sigShift_ck = getSigShifts(qs)
-
 def xee(k,x,sigS):
     xeesum=0
     for i in range(0,N-1):
@@ -66,6 +64,17 @@ def ck_r(k,x,sigs):
     for i in range(0,N-1):
         cksum+= i*i*sigs*np.exp((-1/6)*x*k*k*i)
     return cksum/N
+
+############SOLVING FOR X #####################################################
+def x_solver(phiM,Y):
+    return
+def x_eqn(x,phiM,Y):
+    return
+def x_eqn_toint(k,phiM,Y,x):
+    return
+
+
+
 
 #####################SECOND DERIVATIVE FREE ENERGIES 2 VERSIONS#############################
 def dd_FPoint_Y(Y,phiM,phiS):
