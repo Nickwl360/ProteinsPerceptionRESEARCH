@@ -11,8 +11,8 @@ import multiprocessing as mp
 
 
 ########################ConstANTS################################
-T0=1000
-iterlim=250
+T0=10000
+iterlim=300
 
 #############SEQUENCE SPECIFIC CHARGE/XEE###########################
 def getSigShift(qs):
@@ -308,6 +308,12 @@ def getBinodal(Yc,phiC,minY):
         Ytest-=resolution
 
     return phibin,Ybin
+
+def smooth(list):
+    for i in range(1,len(list)-2):
+        if list[i]!=phiC:
+            list[i]= (list[i-1]+list[i+1])/2
+    return list
 
 
 

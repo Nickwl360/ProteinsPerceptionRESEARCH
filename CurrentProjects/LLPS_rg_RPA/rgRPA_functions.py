@@ -67,13 +67,22 @@ def ck_r(k,x,sigs):
 
 ############SOLVING FOR X #####################################################
 def x_solver(phiM,Y):
+    #BRENTH
     return
 def x_eqn(x,phiM,Y):
-    return
+    eqn = 1 - 1/x - N/(18*(N-1))* integrate.quad(x_eqn_toint,0,np.inf,args=(phiM,Y,x,),limit=iterlim) * (1/(2*np.pi*np.pi))
+    return eqn
 def x_eqn_toint(k,phiM,Y,x):
-    return
-
-
+    phic= phiM*qc
+    ex_r = xee_r(k,x,sigS=sigShift_xe)
+    ex = xee(k,x,sigS=sigShift_xe)
+    gkr = gk_r(k,x)
+    g = gk(k,x)
+    c = ck(k,x,sigs=sigShift_ck)
+    ckr = ck_r(k,x,sigs= sigShift_ck)
+    num = ex_r*(3/(4*np.pi))+(k*k*Y/(4*np.pi)+(phiS+phic))*gkr+phiM*(ex_r*g+ex*gkr-2*c*ckr)
+    den = 3*k*k*Y/(4*np.pi*4*np.pi)+ 3*phiS/(4*np.pi)+ 3*phic/(4*np.pi) + phiM*(3*ex/(4*np.pi)+g*(k*k*Y/(4*np.pi)+phiS+phic))+ phiM*phiM*(ex*g-c*c)
+    return (num/den)
 
 
 #####################SECOND DERIVATIVE FREE ENERGIES 2 VERSIONS#############################
