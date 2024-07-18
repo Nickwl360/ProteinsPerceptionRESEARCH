@@ -10,7 +10,7 @@ from scipy.optimize import brenth
 
 ########################ConstANTS################################
 T0=200
-iterlim=200
+iterlim=250
 
 #############SEQUENCE SPECIFIC CHARGE###########################
 def getSigShifts(qs):
@@ -132,11 +132,16 @@ def d2_ck_r(k,x,sigs):
 
 ############SOLVING FOR X #####################################################
 def x_solver(phiM,Y):
-    #BRENTH
-    return
+    sln = brenth(x_eqn, 1/(N*10) , 100*N,args=(phiM,Y,))
+    #sln = fsolve(x_eqn,np.array([.5]),args=(phiM,Y,))
+    #sln = root_scalar(x_eqn,x0=.5, args=(phiM,Y,))
+    #bounds=[(0,1)]
+    #sln = minimize(x_eqn, np.array([.5]),args=(phiM,Y,),method='Nelder-Mead',bounds=bounds)
+    return sln
 def x_eqn(x,phiM,Y):
-    eqn = 1 - 1/x - N/(18*(N-1))* integrate.quad(x_eqn_toint,0,np.inf,args=(phiM,Y,x,),limit=iterlim) * (1/(2*np.pi*np.pi))
+    eqn = 1 - 1/x - N/(18*(N-1))* integrate.quad(x_eqn_toint,0,np.inf,args=(phiM,Y,x,),limit=iterlim)[0]
     return eqn
+    #return np.sqrt(eqn*eqn)
 def x_eqn_toint(k,phiM,Y,x):
     phic= phiM*qc
     ex_r = xee_r(k,x,sigS=sigShift_xe)
@@ -147,16 +152,18 @@ def x_eqn_toint(k,phiM,Y,x):
     ckr = ck_r(k,x,sigs= sigShift_ck)
     num = ex_r*(3/(4*np.pi))+(k*k*Y/(4*np.pi)+(phiS+phic))*gkr+phiM*(ex_r*g+ex*gkr-2*c*ckr)
     den = 3*k*k*Y/(4*np.pi*4*np.pi)+ 3*phiS/(4*np.pi)+ 3*phic/(4*np.pi) + phiM*(3*ex/(4*np.pi)+g*(k*k*Y/(4*np.pi)+phiS+phic))+ phiM*phiM*(ex*g-c*c)
-    return (num/den)
+    return (num/den)*k*k*k*k/(2*np.pi*np.pi)
+#ans = x_solver(.5,.1)
+#print(ans)
 
 #d1
-def d1_x_solver(phiM,Y):
+def d1_x_solver(phiM,Y,x):
     #BRENTH
     return
-def d1_x_eqn(x,phiM,Y):
+def d1_x_eqn(dx,phiM,Y,x):
     eqn = 1 - 1/x - N/(18*(N-1))* integrate.quad(x_eqn_toint,0,np.inf,args=(phiM,Y,x,),limit=iterlim) * (1/(2*np.pi*np.pi))
     return eqn
-def d1_x_eqn_toint(k,phiM,Y,x):
+def d1_x_eqn_toint(k,phiM,Y,x,dx):
     phic= phiM*qc
     ex_r = xee_r(k,x,sigS=sigShift_xe)
     ex = xee(k,x,sigS=sigShift_xe)
@@ -170,7 +177,7 @@ def d1_x_eqn_toint(k,phiM,Y,x):
 
 #d2
 def d2_x_solver(phiM,Y):
-    #BRENTH
+
     return
 def d2_x_eqn(x,phiM,Y):
     eqn = 1 - 1/x - N/(18*(N-1))* integrate.quad(x_eqn_toint,0,np.inf,args=(phiM,Y,x,),limit=iterlim) * (1/(2*np.pi*np.pi))
@@ -187,6 +194,52 @@ def d2_x_eqn_toint(k,phiM,Y,x):
     den = 3*k*k*Y/(4*np.pi*4*np.pi)+ 3*phiS/(4*np.pi)+ 3*phic/(4*np.pi) + phiM*(3*ex/(4*np.pi)+g*(k*k*Y/(4*np.pi)+phiS+phic))+ phiM*phiM*(ex*g-c*c)
     return (num/den)
 
+#################FREE ENERGIES#####################################
+def ftot_gaussIons(phiM, Y, phiS):
+    return entropy(phiM, phiS) + fion(phiM, Y, phiS) + rgFP(phiM, Y, phiS)
+def rgFP(phiM, Y, phiS):
+    x = x_solver(phiM, Y)
+
+    def rgFPintegrand(k, Y, phiM, phiS):
+        xe = xee(k, x, sigS=sigShift_xe)
+        g = gk(k, x)
+        c = ck(k, x, sigs=sigShift_ck)
+        v2 = (4 * np.pi / 3) * np.exp((-1 / 6) * k * k)
+        vc = k * k * Y / (4 * np.pi) + phiS
+
+        return k * k * np.log(1 + phiM * (xe / (vc + qc * phiM) + v2 * g) + phiM * phiM * (v2 / vc) * (xe * g - c * c))
+
+    upperlim = np.inf
+    lowerlim = 0
+    result = integrate.quad(rgFPintegrand, lowerlim, upperlim, args=(Y, phiM, phiS), limit=iterlim)
+    fp = result[0] / (4 * np.pi * np.pi)
+
+    return fp
+def fion(phiM, Y, phiS):
+    kl = np.sqrt(4 * np.pi * (phiS + qc * phiM) / Y)
+    return (-1 / (4 * np.pi)) * (np.log(1 + kl) - kl + .5 * kl * kl)
+def entropy(phiM, phiS):
+    phiC = qc * phiM
+    phiW = 1 - phiM - phiS - phiC
+    #################FIGURE OUT LOGIC FOR 0s
+    if phiS != 0:
+        return (phiM / N) * np.log(phiM) + phiS * np.log(phiS) + phiC * np.log(phiC) + phiW * np.log(phiW)
+    else:
+        return (phiM / N) * np.log(phiM) + phiC * np.log(phiC) + phiW * np.log(phiW)
+
+################FIRST DERIVATIVES##############################
+def dftotGauss_dphi(phiM,Y,phiS):
+    ds_dphi =np.log(phiM)/N + 1/N - 1 + qc*np.log(qc*phiM) + (-1*qc-1)*np.log(1-qc*phiM -phiS - phiM)
+    dfion_dphi= (-1*np.sqrt(np.pi)*qc*np.sqrt((qc*phiM+phiS)/Y))/(Y*(2*np.sqrt(np.pi)*np.sqrt((qc*phiM)/Y)+1))
+    def dfpintegrand(k,Y,phiM,phiS):
+        x = xee(k, sigS=sigShift_xe)
+        a = k*k*Y/(4*np.pi)
+        return k*k * (x*(phiS+ a))/((qc*phiM+phiS+a)*((qc+x)*phiM+phiS+a))
+    upper,lower = 0,np.inf
+    result = integrate.quad(dfpintegrand, lower, upper, args=(Y,phiM,phiS,), limit=iterlim)
+    dfp_dphi = result[0] / (4 * np.pi * np.pi)
+
+    return ds_dphi+dfion_dphi+dfp_dphi
 
 #####################SECOND DERIVATIVE FREE ENERGIES 2 VERSIONS#############################
 def d2_FPoint_Y(Y,phiM,phiS):
@@ -265,50 +318,10 @@ def d2_FP_toint(k, Y, phiM):
                           4 * np.pi * (phiM * (x + qc) + phiS) + k * k * Y)
     return num / den
 
-def rgFP(phiM, Y, phiS):
-    def rgFPintegrand(k, Y, phiM, phiS):
-        x = xee(k, sigS=sigShift_xe)
-
-        v2 = (4*np.pi/3)*np.exp((-1/6)*k*k)
-        vc = k*k*Y/(4*np.pi) + phiS
 
 
-        return k * k * np.log(1 + (phiM * x) / ((k * k * Y / (4 * np.pi)) + phiS + qc * phiM))
-    upperlim = np.inf
-    lowerlim = 0
-    result = integrate.quad(rgFPintegrand, lowerlim, upperlim, args=(Y, phiM, phiS), limit=iterlim)
-    fel = result[0] / (4 * np.pi * np.pi)
-    return fel
-def fion(phiM,Y,phiS):
-    kl = np.sqrt(4*np.pi*(phiS+qc*phiM)/Y)
-    return (-1/(4*np.pi))*(np.log(1+kl)-kl + .5*kl*kl)
-def entropy(phiM,phiS):
-    phiC = qc*phiM
-    phiW = 1-phiM-phiS-phiC
-    #################FIGURE OUT LOGIC FOR 0s
-    if phiS!= 0:
-        return (phiM/N)*np.log(phiM) + phiS* np.log(phiS) + phiC*np.log(phiC) + phiW*np.log(phiW)
-    else:return (phiM/N)*np.log(phiM)+ phiC*np.log(phiC) + phiW*np.log(phiW)
 
-def ftot_gaussIons(phiM,Y,phiS):
-    return entropy(phiM, phiS) + fion(phiM, Y, phiS) + rgFP(phiM, Y, phiS)
-def dftotGauss_dphi(phiM,Y,phiS):
-    ds_dphi =np.log(phiM)/N + 1/N - 1 + qc*np.log(qc*phiM) + (-1*qc-1)*np.log(1-qc*phiM -phiS - phiM)
-    dfion_dphi= (-1*np.sqrt(np.pi)*qc*np.sqrt((qc*phiM+phiS)/Y))/(Y*(2*np.sqrt(np.pi)*np.sqrt((qc*phiM)/Y)+1))
-    def dfpintegrand(k,Y,phiM,phiS):
-        x = xee(k, sigS=sigShift_xe)
-        a = k*k*Y/(4*np.pi)
-        return k*k * (x*(phiS+ a))/((qc*phiM+phiS+a)*((qc+x)*phiM+phiS+a))
-    upper,lower = 0,np.inf
-    result = integrate.quad(dfpintegrand, lower, upper, args=(Y,phiM,phiS,), limit=iterlim)
-    dfp_dphi = result[0] / (4 * np.pi * np.pi)
 
-    return ds_dphi+dfion_dphi+dfp_dphi
-def checkPotentials(phi1,phi2,Y,phiS):
-    thresh = .09
-    if(np.abs(dftotGauss_dphi(phi1,Y,phiS)-dftotGauss_dphi(phi2,Y,phiS)) < thresh):
-        return True
-    else: return False
 def getSpinodal(phiMs):
     Ys=[]
     for j in range(len(phiMs)):
@@ -317,6 +330,7 @@ def getSpinodal(phiMs):
         print(i,y.root)
         Ys.append(y.root)
     return Ys
+
 def spin_yfromphi(phiM,phiS,guess):
     guess1 = guess
     y = fsolve(d2_FGauss_Y, args=(phiM, phiS,), x0=guess1)
@@ -345,32 +359,11 @@ def findSpinhigh(Y,phiC):
 
     #result = fsolve(FreeEnergyD2reverse, x0=initial, args=(Y,phiS))
     return result.x
-def FreeEnergyD2reverse(phiM,Y,phiS):
-    d2s =0
-    #################Entropyd2##########
-    if phiM!=0:
-        if phiM != (phiS-1)/(-1*qc -1):
-            d2s = 1/(N*phiM)+ qc/phiM + ((-qc-1)**2)/(-1*qc*phiM-phiS-phiM + 1)
-        elif phiM == (phiS-1)/(-1*qc -1):
-            d2s = qc/phiM + 1/(N*phiM)
-    else: d2s = (-1*qc -1)**2/(-1*phiS +1)
 
-    #################Electrofreeenergyd2###########
-    def dd_fel_toint(k, Y, phiM):
-        x = xee(k, sigS=sigShift_xe)
-        return -1 * k * k * (4 * np.pi / Y) ** 2 * (qc + x) ** 2 / \
-               (((4 * np.pi / Y) * (phiS + (qc + x) * phiM) + (k * k)) ** 2)
-    upperlim = np.inf
-    lowerlim = 0
-    result = integrate.quad(dd_fel_toint,lowerlim,upperlim,args=(Y,phiM,),limit=150)
-    d2fel= result[0]/(4*np.pi*np.pi)
-    return np.sqrt((d2s + d2fel)**2)
-    #return d2s + d2fel
 def FBINODAL(variables,Y,phiBulk):
     phi1,phi2 = variables
-    # v = (phiC-phi2)/(phi1-phi2)
-    #v = (phi2-phiC)/(phi2-phi1)
     v = (phi2-phiBulk)/(phi2-phi1)
+
 
     #eqn = v * ftot(phi1,Y,phiS) + (1-v)*ftot(phi2,Y,phiS)
     eqn = v * ftot_gaussIons(phi1, Y, phiS) + (1 - v) * ftot_gaussIons(phi2, Y, phiS)
