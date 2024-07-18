@@ -5,34 +5,191 @@ from scipy.optimize import fsolve
 import matplotlib.pyplot as plt
 from scipy.optimize import minimize
 from scipy.optimize import root_scalar
-from fgRPA_init import *
-from scipy.optimize import brute as gridsearch
-import multiprocessing as mp
+from rgRPA_init import *
+from scipy.optimize import brenth
 
 ########################ConstANTS################################
-T0=3000
-iterlim=250
-#############SEQUENCE SPECIFIC CHARGE/XEE###########################
-def getSigShift(qs):
-    sigS = []
+T0=200
+iterlim=200
+
+#############SEQUENCE SPECIFIC CHARGE###########################
+def getSigShifts(qs):
+    sigSij = []
+    sigSi = []
+
     for i in range(len(qs)-1):
-        sigi=0
+        sigij = 0
+        sigi = 0
         for j in range(len(qs)-1):
             if (j+i)<= len(qs)-1:
-                sigi += qs[j]*qs[j+i]
+                sigij += qs[j] * qs[j + i]
+                sigi += qs[j]
         if i ==0:
-            sigS.append(sigi)
+            sigSij.append(sigij)
+            sigSi.append(sigi)
         if i!=0:
-            sigS.append(2*sigi)
-    return sigS
-sigShift = getSigShift(qs)
-def xee(k,sigS):
+            sigSij.append(2 * sigij)
+            sigSi.append(2 * sigi)
+
+    return sigSij ,sigSi
+sigShift_xe, sigShift_ck = getSigShifts(qs)
+
+##############STRUCTURE FACTORS & DERIVATIVES###########################
+def xee(k,x,sigS):
     xeesum=0
     for i in range(0,N-1):
-        xeesum += sigS[i]*np.exp((-1/6)*(k*k)*i)
+        xeesum += sigS[i]*np.exp((-1/6)*x*(k*k)*i)
     return xeesum/N
+def xee_r(k,x,sigS):
+    xeesum=0
+    for i in range(0,N-1):
+        xeesum += sigS[i]*i*i*np.exp((-1/6)*x*(k*k)*i)
+    return xeesum/N
+def gk(k,x):
+    gksum=0
+    for i in range(0,N-1):
+        gksum+= np.exp((-1/6)*x*k*k*i)
+    return gksum/N
+def gk_r(k,x):
+    gksum=0
+    for i in range(0,N-1):
+        gksum+= i*i*np.exp((-1/6)*x*k*k*i)
+    return gksum/N
+def ck(k,x,sigs):
+    cksum=0
+    for i in range(0,N-1):
+        cksum+= sigs[i]*np.exp((-1/6)*x*k*k*i)
+    return cksum/N
+def ck_r(k,x,sigs):
+    cksum=0
+    for i in range(0,N-1):
+        cksum+= i*i*sigs[i]*np.exp((-1/6)*x*k*k*i)
+    return cksum/N
+
+#d1
+def d1_xee(k,x,sigS):
+    xeesum=0
+    for i in range(0,N-1):
+        xeesum += sigS[i]*np.exp((-1/6)*x*(k*k)*i) *(-1/6)*(k*k)*i
+    return xeesum/N
+def d1_xee_r(k,x,sigS):
+    xeesum=0
+    for i in range(0,N-1):
+        xeesum += sigS[i]*i*i*np.exp((-1/6)*x*(k*k)*i) *(-1/6)*(k*k)*i
+    return xeesum/N
+def d1_gk(k,x):
+    gksum=0
+    for i in range(0,N-1):
+        gksum+= np.exp((-1/6)*x*k*k*i) *(-1/6)*(k*k)*i
+    return gksum/N
+def d1_gk_r(k,x):
+    gksum=0
+    for i in range(0,N-1):
+        gksum+= i*i*np.exp((-1/6)*x*k*k*i)*(-1/6)*(k*k)*i
+    return gksum/N
+def d1_ck(k,x,sigs):
+    cksum=0
+    for i in range(0,N-1):
+        cksum+= sigs[i]*np.exp((-1/6)*x*k*k*i)*(-1/6)*(k*k)*i
+    return cksum/N
+def d1_ck_r(k,x,sigs):
+    cksum=0
+    for i in range(0,N-1):
+        cksum+= i*i*sigs[i]*np.exp((-1/6)*x*k*k*i)*(-1/6)*(k*k)*i
+    return cksum/N
+
+#d2
+def d2_xee(k,x,sigS):
+    xeesum=0
+    for i in range(0,N-1):
+        xeesum += sigS[i]*np.exp((-1/6)*x*(k*k)*i) *(-1/6)*(k*k)*i*(-1/6)*(k*k)*i
+    return xeesum/N
+def d2_xee_r(k,x,sigS):
+    xeesum=0
+    for i in range(0,N-1):
+        xeesum += sigS[i]*i*i*np.exp((-1/6)*x*(k*k)*i)*(-1/6)*(k*k)*i*(-1/6)*(k*k)*i
+    return xeesum/N
+def d2_gk(k,x):
+    gksum=0
+    for i in range(0,N-1):
+        gksum+= np.exp((-1/6)*x*k*k*i)*(-1/6)*(k*k)*i*(-1/6)*(k*k)*i
+    return gksum/N
+def d2_gk_r(k,x):
+    gksum=0
+    for i in range(0,N-1):
+        gksum+= i*i*np.exp((-1/6)*x*k*k*i)*(-1/6)*(k*k)*i*(-1/6)*(k*k)*i
+    return gksum/N
+def d2_ck(k,x,sigs):
+    cksum=0
+    for i in range(0,N-1):
+        cksum+= sigs[i]*np.exp((-1/6)*x*k*k*i)*(-1/6)*(k*k)*i*(-1/6)*(k*k)*i
+    return cksum/N
+def d2_ck_r(k,x,sigs):
+    cksum=0
+    for i in range(0,N-1):
+        cksum+= i*i*sigs[i]*np.exp((-1/6)*x*k*k*i)*(-1/6)*(k*k)*i*(-1/6)*(k*k)*i
+    return cksum/N
+
+############SOLVING FOR X #####################################################
+def x_solver(phiM,Y):
+    #BRENTH
+    return
+def x_eqn(x,phiM,Y):
+    eqn = 1 - 1/x - N/(18*(N-1))* integrate.quad(x_eqn_toint,0,np.inf,args=(phiM,Y,x,),limit=iterlim) * (1/(2*np.pi*np.pi))
+    return eqn
+def x_eqn_toint(k,phiM,Y,x):
+    phic= phiM*qc
+    ex_r = xee_r(k,x,sigS=sigShift_xe)
+    ex = xee(k,x,sigS=sigShift_xe)
+    gkr = gk_r(k,x)
+    g = gk(k,x)
+    c = ck(k,x,sigs=sigShift_ck)
+    ckr = ck_r(k,x,sigs= sigShift_ck)
+    num = ex_r*(3/(4*np.pi))+(k*k*Y/(4*np.pi)+(phiS+phic))*gkr+phiM*(ex_r*g+ex*gkr-2*c*ckr)
+    den = 3*k*k*Y/(4*np.pi*4*np.pi)+ 3*phiS/(4*np.pi)+ 3*phic/(4*np.pi) + phiM*(3*ex/(4*np.pi)+g*(k*k*Y/(4*np.pi)+phiS+phic))+ phiM*phiM*(ex*g-c*c)
+    return (num/den)
+
+#d1
+def d1_x_solver(phiM,Y):
+    #BRENTH
+    return
+def d1_x_eqn(x,phiM,Y):
+    eqn = 1 - 1/x - N/(18*(N-1))* integrate.quad(x_eqn_toint,0,np.inf,args=(phiM,Y,x,),limit=iterlim) * (1/(2*np.pi*np.pi))
+    return eqn
+def d1_x_eqn_toint(k,phiM,Y,x):
+    phic= phiM*qc
+    ex_r = xee_r(k,x,sigS=sigShift_xe)
+    ex = xee(k,x,sigS=sigShift_xe)
+    gkr = gk_r(k,x)
+    g = gk(k,x)
+    c = ck(k,x,sigs=sigShift_ck)
+    ckr = ck_r(k,x,sigs= sigShift_ck)
+    num = ex_r*(3/(4*np.pi))+(k*k*Y/(4*np.pi)+(phiS+phic))*gkr+phiM*(ex_r*g+ex*gkr-2*c*ckr)
+    den = 3*k*k*Y/(4*np.pi*4*np.pi)+ 3*phiS/(4*np.pi)+ 3*phic/(4*np.pi) + phiM*(3*ex/(4*np.pi)+g*(k*k*Y/(4*np.pi)+phiS+phic))+ phiM*phiM*(ex*g-c*c)
+    return (num/den)
+
+#d2
+def d2_x_solver(phiM,Y):
+    #BRENTH
+    return
+def d2_x_eqn(x,phiM,Y):
+    eqn = 1 - 1/x - N/(18*(N-1))* integrate.quad(x_eqn_toint,0,np.inf,args=(phiM,Y,x,),limit=iterlim) * (1/(2*np.pi*np.pi))
+    return eqn
+def d2_x_eqn_toint(k,phiM,Y,x):
+    phic= phiM*qc
+    ex_r = xee_r(k,x,sigS=sigShift_xe)
+    ex = xee(k,x,sigS=sigShift_xe)
+    gkr = gk_r(k,x)
+    g = gk(k,x)
+    c = ck(k,x,sigs=sigShift_ck)
+    ckr = ck_r(k,x,sigs= sigShift_ck)
+    num = ex_r*(3/(4*np.pi))+(k*k*Y/(4*np.pi)+(phiS+phic))*gkr+phiM*(ex_r*g+ex*gkr-2*c*ckr)
+    den = 3*k*k*Y/(4*np.pi*4*np.pi)+ 3*phiS/(4*np.pi)+ 3*phic/(4*np.pi) + phiM*(3*ex/(4*np.pi)+g*(k*k*Y/(4*np.pi)+phiS+phic))+ phiM*phiM*(ex*g-c*c)
+    return (num/den)
+
+
 #####################SECOND DERIVATIVE FREE ENERGIES 2 VERSIONS#############################
-def FreeEnergyD2FEL(Y,phiM,phiS):
+def d2_FPoint_Y(Y,phiM,phiS):
     d2s =0
     #################Entropyd2##########
     if phiM!=0:
@@ -42,17 +199,18 @@ def FreeEnergyD2FEL(Y,phiM,phiS):
             d2s = qc/phiM + 1/(N*phiM)
     else: d2s = (-1*qc -1)**2/(-1*phiS +1)
 
+    def dd_fel_toint(k, Y, phiM):
+        x = xee(k, sigS=sigShift_xe)
+        return -1 * k * k * (4 * np.pi / Y) ** 2 * (qc + x) ** 2 / \
+               (((4 * np.pi / Y) * (phiS + (qc + x) * phiM) + (k * k)) ** 2)
+
     #################Electrofreeenergyd2###########
     upperlim = np.inf
     lowerlim = 0
-    result = integrate.quad(felD2integrand, lowerlim, upperlim, args=(Y,phiM), limit=iterlim)
+    result = integrate.quad(dd_fel_toint, lowerlim, upperlim, args=(Y, phiM), limit=iterlim)
     d2fel= result[0]/(4*np.pi*np.pi)
     return d2s + d2fel
-def felD2integrand(k,Y,phiM):
-    x = xee(k,sigS=sigShift)
-    return -1 * k * k * (4 * np.pi / Y)**2 * (qc + x)**2 / \
-           (((4 * np.pi / Y) * (phiS + (qc + x) * phiM) + (k * k))**2)
-def FreeEnergyD2FP(Y,phiM,phiS):
+def d2_FGauss_Y(Y,phiM,phiS):
     d2s =0
     #################Entropyd2##########
     if phiM!=0:
@@ -71,16 +229,12 @@ def FreeEnergyD2FP(Y,phiM,phiS):
     #################Electrofreeenergyd2###########
     upperlim = np.inf
     lowerlim = 0
-    result = integrate.quad(fpD2integrand, lowerlim, upperlim, args=(Y,phiM), limit=iterlim)
+    result = integrate.quad(d2_FP_toint, lowerlim, upperlim, args=(Y, phiM), limit=iterlim)
     d2fp= result[0]/(4*np.pi*np.pi)
     #print('ent', d2s, 'fp', d2fp, 'fion', d2fion)
     return d2s + d2fp + d2fion
-def fpD2integrand(k,Y,phiM):
-    x = xee(k,sigS=sigShift)
-    num = -16*np.pi*np.pi*x*k*k*(k*k*Y+ 4*np.pi*phiS)*(x*k*k*Y+4*np.pi*x*(2*qc*phiM+ phiS)+ 2*k*k*qc*Y+8*np.pi*qc*(qc*phiM+phiS))
-    den = (k*k*Y+ 4*np.pi*(qc*phiM+ phiS))*(k*k*Y+ 4*np.pi*(qc*phiM+ phiS))*(4*np.pi*(phiM*(x+qc)+phiS)+k*k*Y)*(4*np.pi*(phiM*(x+qc)+phiS)+k*k*Y)
-    return num/den
-def FreeEnergyD2reverseFP(phiM,Y,phiS):
+
+def d2_Fgauss_phiM(phiM,Y,phiS):
     d2s =0
     #################Entropyd2##########
     if phiM!=0:
@@ -98,25 +252,31 @@ def FreeEnergyD2reverseFP(phiM,Y,phiS):
     #################Electrofreeenergyd2###########
     upperlim = np.inf
     lowerlim = 0
-    result = integrate.quad(fpD2integrand, lowerlim, upperlim, args=(Y,phiM,), limit=iterlim)
+    result = integrate.quad(d2_FP_toint, lowerlim, upperlim, args=(Y, phiM,), limit=iterlim)
     d2fp= result[0] / (4 * np.pi * np.pi)
     return np.sqrt((d2s + d2fp + d2fion) ** 2)
-def felintegrand(k,Y,phiM,phiS):
-    x = xee(k,sigS=sigShift)
-    return (k**2)*np.log(1 + ((4*np.pi)/(k**2*Y))*(phiS+(qc+x)*phiM))
-def fel(phiM, Y, phiS):
+def d2_FP_toint(k, Y, phiM):
+    x = xee(k, sigS=sigShift_xe)
+    num = -16 * np.pi * np.pi * x * k * k * (k * k * Y + 4 * np.pi * phiS) * (
+                    x * k * k * Y + 4 * np.pi * x * (2 * qc * phiM + phiS) + 2 * k * k * qc * Y + 8 * np.pi * qc * (
+                        qc * phiM + phiS))
+    den = (k * k * Y + 4 * np.pi * (qc * phiM + phiS)) * (k * k * Y + 4 * np.pi * (qc * phiM + phiS)) * (
+                    4 * np.pi * (phiM * (x + qc) + phiS) + k * k * Y) * (
+                          4 * np.pi * (phiM * (x + qc) + phiS) + k * k * Y)
+    return num / den
+
+def rgFP(phiM, Y, phiS):
+    def rgFPintegrand(k, Y, phiM, phiS):
+        x = xee(k, sigS=sigShift_xe)
+
+        v2 = (4*np.pi/3)*np.exp((-1/6)*k*k)
+        vc = k*k*Y/(4*np.pi) + phiS
+
+
+        return k * k * np.log(1 + (phiM * x) / ((k * k * Y / (4 * np.pi)) + phiS + qc * phiM))
     upperlim = np.inf
     lowerlim = 0
-    result = integrate.quad(felintegrand, lowerlim, upperlim, args=(Y, phiM,phiS), limit=iterlim)
-    fel = result[0] / (4 * np.pi * np.pi)
-    return fel
-def fpintegrand(k,Y,phiM,phiS):
-    x = xee(k, sigS=sigShift)
-    return k*k*np.log(1+ (phiM*x)/((k*k*Y/(4*np.pi))+phiS+qc*phiM))
-def fp(phiM, Y, phiS):
-    upperlim = np.inf
-    lowerlim = 0
-    result = integrate.quad(fpintegrand, lowerlim, upperlim, args=(Y, phiM,phiS), limit=iterlim)
+    result = integrate.quad(rgFPintegrand, lowerlim, upperlim, args=(Y, phiM, phiS), limit=iterlim)
     fel = result[0] / (4 * np.pi * np.pi)
     return fel
 def fion(phiM,Y,phiS):
@@ -129,15 +289,14 @@ def entropy(phiM,phiS):
     if phiS!= 0:
         return (phiM/N)*np.log(phiM) + phiS* np.log(phiS) + phiC*np.log(phiC) + phiW*np.log(phiW)
     else:return (phiM/N)*np.log(phiM)+ phiC*np.log(phiC) + phiW*np.log(phiW)
-def ftot_pointIons(phiM,Y,phiS):
-    return entropy(phiM, phiS) + fel(phiM, Y, phiS)
+
 def ftot_gaussIons(phiM,Y,phiS):
-    return entropy(phiM, phiS) + fion(phiM, Y, phiS) + fp(phiM, Y, phiS)
+    return entropy(phiM, phiS) + fion(phiM, Y, phiS) + rgFP(phiM, Y, phiS)
 def dftotGauss_dphi(phiM,Y,phiS):
     ds_dphi =np.log(phiM)/N + 1/N - 1 + qc*np.log(qc*phiM) + (-1*qc-1)*np.log(1-qc*phiM -phiS - phiM)
     dfion_dphi= (-1*np.sqrt(np.pi)*qc*np.sqrt((qc*phiM+phiS)/Y))/(Y*(2*np.sqrt(np.pi)*np.sqrt((qc*phiM)/Y)+1))
     def dfpintegrand(k,Y,phiM,phiS):
-        x = xee(k, sigS=sigShift)
+        x = xee(k, sigS=sigShift_xe)
         a = k*k*Y/(4*np.pi)
         return k*k * (x*(phiS+ a))/((qc*phiM+phiS+a)*((qc+x)*phiM+phiS+a))
     upper,lower = 0,np.inf
@@ -154,35 +313,35 @@ def getSpinodal(phiMs):
     Ys=[]
     for j in range(len(phiMs)):
         i = phiMs[j]
-        y = root_scalar(FreeEnergyD2FP, args=(i, phiS,), x0=.5, bracket=[1e-3, .99])
+        y = root_scalar(d2_FGauss_Y, args=(i, phiS,), x0=.5, bracket=[1e-3, .99])
         print(i,y.root)
         Ys.append(y.root)
     return Ys
-def SpinodalY(phiM,phiS,guess):
+def spin_yfromphi(phiM,phiS,guess):
     guess1 = guess
-    y = fsolve(FreeEnergyD2FP, args=(phiM, phiS,), x0=guess1)
+    y = fsolve(d2_FGauss_Y, args=(phiM, phiS,), x0=guess1)
     print('phi', phiM, 'l/lb', y)
     return -1*y
-def findCrits(phiS,guess):
+def findCrit(phiS,guess):
     phiC=0
     Yc=0
     bounds = [(.001,.49)]
-    Yc = minimize(SpinodalY, x0=guess, args=(phiS,guess,),method='Powell', bounds=bounds)
+    Yc = minimize(spin_yfromphi, x0=guess, args=(phiS, guess,), method='Powell', bounds=bounds)
     phiC = Yc.x
     return phiC, -1*Yc.fun
-phiC,Yc = findCrits(phiS,guess=.025)
+phiC,Yc = findCrit(phiS, guess=.025)
 def findSpinlow(Y,phiC):
     initial = phiC/2
     bounds = [(epsilon, phiC-epsilon)]
     #result = minimize(FreeEnergyD2reverse, initial, args=(Y,phiS,),method='Powell',bounds=bounds)
-    result = minimize(FreeEnergyD2reverseFP, initial, args=(Y,phiS,),method='Powell',bounds=bounds)
+    result = minimize(d2_Fgauss_phiM, initial, args=(Y, phiS,), method='Powell', bounds=bounds)
     #result = fsolve(FreeEnergyD2reverse, x0=initial, args=(Y,phiS))
     return result.x
 def findSpinhigh(Y,phiC):
     initial = phiC+ phiC/2
     bounds = [(phiC+epsilon, 1-epsilon)]
     #result = minimize(FreeEnergyD2reverse, initial, args=(Y,phiS),method='Powell',bounds=bounds)
-    result = minimize(FreeEnergyD2reverseFP, initial, args=(Y,phiS),method='Nelder-Mead',bounds=bounds)
+    result = minimize(d2_Fgauss_phiM, initial, args=(Y, phiS), method='Nelder-Mead', bounds=bounds)
 
     #result = fsolve(FreeEnergyD2reverse, x0=initial, args=(Y,phiS))
     return result.x
@@ -197,13 +356,17 @@ def FreeEnergyD2reverse(phiM,Y,phiS):
     else: d2s = (-1*qc -1)**2/(-1*phiS +1)
 
     #################Electrofreeenergyd2###########
+    def dd_fel_toint(k, Y, phiM):
+        x = xee(k, sigS=sigShift_xe)
+        return -1 * k * k * (4 * np.pi / Y) ** 2 * (qc + x) ** 2 / \
+               (((4 * np.pi / Y) * (phiS + (qc + x) * phiM) + (k * k)) ** 2)
     upperlim = np.inf
     lowerlim = 0
-    result = integrate.quad(felD2integrand,lowerlim,upperlim,args=(Y,phiM,),limit=150)
+    result = integrate.quad(dd_fel_toint,lowerlim,upperlim,args=(Y,phiM,),limit=150)
     d2fel= result[0]/(4*np.pi*np.pi)
     return np.sqrt((d2s + d2fel)**2)
     #return d2s + d2fel
-def totalFreeEnergyVsolved(variables,Y,phiBulk):
+def FBINODAL(variables,Y,phiBulk):
     phi1,phi2 = variables
     # v = (phiC-phi2)/(phi1-phi2)
     #v = (phi2-phiC)/(phi2-phi1)
@@ -215,34 +378,32 @@ def totalFreeEnergyVsolved(variables,Y,phiBulk):
     return T0*(eqn - ftot_gaussIons(phiBulk,Y,phiS))
 def getInitialVsolved(Y,spinlow,spinhigh,phiBulk):
     bounds = [(epsilon,spinlow-epsilon),(spinhigh+epsilon, 1-epsilon)]
-    initial_guess=(spinlow*.85, spinhigh*1.15)
-    result = minimize(totalFreeEnergyVsolved, initial_guess, args=(Y,phiBulk), method='Nelder-Mead', bounds=bounds)
+    initial_guess=(spinlow*.899, spinhigh*1.101)
+    result = minimize(FBINODAL, initial_guess, args=(Y, phiBulk), method='Nelder-Mead', bounds=bounds)
     #result = minimize(totalFreeEnergyVsolved, initial_guess,args=(Y,),method='Powell',bounds=bounds)
     phi1i,phi2i= result.x
     return phi1i,phi2i
 def makeconstSLS(Y,phiBulk):
     def seperated(variables):
-        return totalFreeEnergyVsolved(variables,Y,phiBulk) - ftot_gaussIons(phiC,Y,phiS)
+        return FBINODAL(variables, Y, phiBulk) - ftot_gaussIons(phiC, Y, phiS)
     return [{'type': 'ineq', 'fun': seperated}]
-def minFtotal(Y,phiC,lastphi1,lastphi2,dY):
+def minFtotal(Y,phiC,lastphi1,lastphi2):
 
     phi1spin = findSpinlow(Y, phiC)[0]
     phi2spin = findSpinhigh(Y, phiC)[0]
     print(lastphi1, lastphi2, 'last 1&2')
     print(phi1spin, phi2spin, 'SPINS LEFT/RIGHT')
     phiB = (phi1spin+phi2spin)/2
-    #if lastphi1 == phiC:
+
     phi1i, phi2i = getInitialVsolved(Y, phi1spin, phi2spin,phiB)
     initial_guess=(phi1i,phi2i)
-    #else:initial_guess=(lastphi1-dY*1.5,lastphi2+dY*1.5)
-
     #initial_guess=(phi1spin*.9,phi2spin*1.1)
     #initial_guess=(phi1spin*.899,phi2spin*1.301)
-    phi2Max = (1-2*phiS)/(1+qc)#########FROM LIN CODE GITHUB ????
+    #phi2Max = (1-2*phiS)/(1+qc)#########FROM LIN CODE GITHUB ????
 
 
-    bounds = [(epsilon, phi1spin - epsilon), (phi2spin+epsilon, phi2Max-epsilon)]
-    maxL = minimize(totalFreeEnergyVsolved, initial_guess, args=(Y,phiB), method='L-BFGS-B', jac=Jac_fgRPA, bounds=bounds, options={'ftol':1e-20, 'gtol':1e-20, 'eps':1e-20})
+    bounds = [(epsilon, phi1spin - epsilon), (phi2spin+epsilon, 1-epsilon)]
+    maxL = minimize(FBINODAL, initial_guess, args=(Y, phiB), method='L-BFGS-B', jac=Jac_fgRPA, bounds=bounds, options={'ftol':1e-20, 'gtol':1e-20, 'eps':1e-20})
     #maxL = minimize(totalFreeEnergyVsolved,initial_guess,args=(Y,phiB),method='SLSQP',jac=Jac_fgRPA,bounds=bounds,options={'ftol':1e-20, 'gtol':1e-20, 'eps':1e-20} )
     #maxL = minimize(totalFreeEnergyVsolved,initial_guess,args=(Y,phiB),method='Newton-CG',jac=Jac_fgRPA,bounds=bounds,options={'ftol':1e-20, 'gtol':1e-20, 'eps':1e-20} )
 
@@ -278,23 +439,21 @@ def getBinodal(Yc,phiC,minY):
     phibin=phiC
     Ybin = np.array([Yc])
     Ytest= Yc - scale_init
+
     Y_range= Yc - minY
-    resolution = scale_init
 
     while Ytest>minY:
         Y_ratio_done = (Yc -Ytest)/Y_range
         #print(Ytest, "until", minY)
         phiLlast,phiDlast = phibin[0], phibin[-1]
-        phi1,phi2 = minFtotal(Ytest, phiC, phiLlast, phiDlast,resolution)
+        phi1,phi2 = minFtotal(Ytest, phiC, phiLlast, phiDlast)
 
         if phi1<phiLlast and phi2>phiDlast:
             phi1=np.array([phi1])
             phi2=np.array([phi2])
             phibin = np.concatenate((phi1, phibin, phi2))
             Ybin = np.concatenate(([Ytest], Ybin, [Ytest]))
-
         else: print('someglitch, repeating with a skipped step')
-
         ####HIGHER RESOLUTION AT TOP OF PHASE DIAGRAM###################
         #resolution = scale_init * np.exp((Yc / Ytest) ** 3) / np.exp(1)
         resolution = scale_init *(1 + Y_ratio_done*(scale_final/scale_init))
@@ -302,11 +461,6 @@ def getBinodal(Yc,phiC,minY):
         Ytest-=resolution
 
     return phibin,Ybin
-def smooth(list):
-    for i in range(1,len(list)-2):
-        if list[i]!=phiC:
-            list[i]= (list[i-1]+list[i+1])/2
-    return list
 
 
 

@@ -8,7 +8,6 @@ from scipy.optimize import root_scalar
 from rgRPA_init import *
 from scipy.optimize import brenth
 
-
 ########################ConstANTS################################
 T0=200
 iterlim=200
@@ -84,7 +83,6 @@ def x_eqn_toint(k,phiM,Y,x):
     den = 3*k*k*Y/(4*np.pi*4*np.pi)+ 3*phiS/(4*np.pi)+ 3*phic/(4*np.pi) + phiM*(3*ex/(4*np.pi)+g*(k*k*Y/(4*np.pi)+phiS+phic))+ phiM*phiM*(ex*g-c*c)
     return (num/den)
 
-
 #####################SECOND DERIVATIVE FREE ENERGIES 2 VERSIONS#############################
 def dd_FPoint_Y(Y,phiM,phiS):
     d2s =0
@@ -107,7 +105,6 @@ def dd_FPoint_Y(Y,phiM,phiS):
     result = integrate.quad(dd_fel_toint, lowerlim, upperlim, args=(Y, phiM), limit=iterlim)
     d2fel= result[0]/(4*np.pi*np.pi)
     return d2s + d2fel
-
 def dd_FGauss_Y(Y,phiM,phiS):
     d2s =0
     #################Entropyd2##########
@@ -131,7 +128,6 @@ def dd_FGauss_Y(Y,phiM,phiS):
     d2fp= result[0]/(4*np.pi*np.pi)
     #print('ent', d2s, 'fp', d2fp, 'fion', d2fion)
     return d2s + d2fp + d2fion
-
 def dd_Fgauss_phiM(phiM,Y,phiS):
     d2s =0
     #################Entropyd2##########
@@ -153,7 +149,6 @@ def dd_Fgauss_phiM(phiM,Y,phiS):
     result = integrate.quad(dd_FP_toint, lowerlim, upperlim, args=(Y,phiM,), limit=iterlim)
     d2fp= result[0] / (4 * np.pi * np.pi)
     return np.sqrt((d2s + d2fp + d2fion) ** 2)
-
 def dd_FP_toint(k, Y, phiM):
     x = xee(k, sigS=sigShift_xe)
     num = -16 * np.pi * np.pi * x * k * k * (k * k * Y + 4 * np.pi * phiS) * (
@@ -163,17 +158,6 @@ def dd_FP_toint(k, Y, phiM):
                     4 * np.pi * (phiM * (x + qc) + phiS) + k * k * Y) * (
                           4 * np.pi * (phiM * (x + qc) + phiS) + k * k * Y)
     return num / den
-
-def fel(phiM, Y, phiS):
-    def felintegrand(k, Y, phiM, phiS):
-        x = xee(k, sigS=sigShift_xe)
-        return (k ** 2) * np.log(1 + ((4 * np.pi) / (k ** 2 * Y)) * (phiS + (qc + x) * phiM))
-    upperlim = np.inf
-    lowerlim = 0
-    result = integrate.quad(felintegrand, lowerlim, upperlim, args=(Y, phiM,phiS), limit=iterlim)
-    fel = result[0] / (4 * np.pi * np.pi)
-    return fel
-
 def fp(phiM, Y, phiS):
     def fpintegrand(k, Y, phiM, phiS):
         x = xee(k, sigS=sigShift_xe)
@@ -193,8 +177,6 @@ def entropy(phiM,phiS):
     if phiS!= 0:
         return (phiM/N)*np.log(phiM) + phiS* np.log(phiS) + phiC*np.log(phiC) + phiW*np.log(phiW)
     else:return (phiM/N)*np.log(phiM)+ phiC*np.log(phiC) + phiW*np.log(phiW)
-def ftot_pointIons(phiM,Y,phiS):
-    return entropy(phiM, phiS) + fel(phiM, Y, phiS)
 def ftot_gaussIons(phiM,Y,phiS):
     return entropy(phiM, phiS) + fion(phiM, Y, phiS) + fp(phiM, Y, phiS)
 def dftotGauss_dphi(phiM,Y,phiS):
@@ -214,7 +196,6 @@ def checkPotentials(phi1,phi2,Y,phiS):
     if(np.abs(dftotGauss_dphi(phi1,Y,phiS)-dftotGauss_dphi(phi2,Y,phiS)) < thresh):
         return True
     else: return False
-
 def getSpinodal(phiMs):
     Ys=[]
     for j in range(len(phiMs)):
@@ -228,7 +209,6 @@ def spin_yfromphi(phiM,phiS,guess):
     y = fsolve(dd_FGauss_Y, args=(phiM, phiS,), x0=guess1)
     print('phi', phiM, 'l/lb', y)
     return -1*y
-
 def findCrit(phiS,guess):
     phiC=0
     Yc=0
@@ -237,7 +217,6 @@ def findCrit(phiS,guess):
     phiC = Yc.x
     return phiC, -1*Yc.fun
 phiC,Yc = findCrit(phiS, guess=.025)
-
 def findSpinlow(Y,phiC):
     initial = phiC/2
     bounds = [(epsilon, phiC-epsilon)]
@@ -284,7 +263,6 @@ def FBINODAL(variables,Y,phiBulk):
     eqn = v * ftot_gaussIons(phi1, Y, phiS) + (1 - v) * ftot_gaussIons(phi2, Y, phiS)
     #return eqn
     return T0*(eqn - ftot_gaussIons(phiBulk,Y,phiS))
-
 def getInitialVsolved(Y,spinlow,spinhigh,phiBulk):
     bounds = [(epsilon,spinlow-epsilon),(spinhigh+epsilon, 1-epsilon)]
     initial_guess=(spinlow*.899, spinhigh*1.101)
@@ -296,7 +274,6 @@ def makeconstSLS(Y,phiBulk):
     def seperated(variables):
         return FBINODAL(variables, Y, phiBulk) - ftot_gaussIons(phiC, Y, phiS)
     return [{'type': 'ineq', 'fun': seperated}]
-
 def minFtotal(Y,phiC,lastphi1,lastphi2):
 
     phi1spin = findSpinlow(Y, phiC)[0]
@@ -330,8 +307,6 @@ def minFtotal(Y,phiC,lastphi1,lastphi2):
     print('\nwe have finished minimizing for Y = ',Y, 'just cuz curious: phi1,phi2, v = ',phi1min,phi2min,v)
 
     return phi1min,phi2min
-
-#TryJacobianVersion
 def Jac_fgRPA(vars,Y,phiB):
     phi1=vars[0]
     phi2=vars[1]
@@ -347,8 +322,6 @@ def Jac_fgRPA(vars,Y,phiB):
     J[1] = (1-v)*( (f1-f2)/(phi2-phi1) + df2 )
 
     return J*T0
-
-
 def getBinodal(Yc,phiC,minY):
     phibin=phiC
     Ybin = np.array([Yc])
