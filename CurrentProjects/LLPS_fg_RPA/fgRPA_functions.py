@@ -9,9 +9,11 @@ from fgRPA_init import *
 from scipy.optimize import brute as gridsearch
 import multiprocessing as mp
 
+
 ########################ConstANTS################################
-T0=3000
-iterlim=250
+T0=10000
+iterlim=300
+
 #############SEQUENCE SPECIFIC CHARGE/XEE###########################
 def getSigShift(qs):
     sigS = []
@@ -213,9 +215,10 @@ def totalFreeEnergyVsolved(variables,Y,phiBulk):
     eqn = v * ftot_gaussIons(phi1, Y, phiS) + (1 - v) * ftot_gaussIons(phi2, Y, phiS)
     #return eqn
     return T0*(eqn - ftot_gaussIons(phiBulk,Y,phiS))
+
 def getInitialVsolved(Y,spinlow,spinhigh,phiBulk):
     bounds = [(epsilon,spinlow-epsilon),(spinhigh+epsilon, 1-epsilon)]
-    initial_guess=(spinlow*.85, spinhigh*1.15)
+    initial_guess=(spinlow*.9, spinhigh*1.1)
     result = minimize(totalFreeEnergyVsolved, initial_guess, args=(Y,phiBulk), method='Nelder-Mead', bounds=bounds)
     #result = minimize(totalFreeEnergyVsolved, initial_guess,args=(Y,),method='Powell',bounds=bounds)
     phi1i,phi2i= result.x
@@ -224,25 +227,24 @@ def makeconstSLS(Y,phiBulk):
     def seperated(variables):
         return totalFreeEnergyVsolved(variables,Y,phiBulk) - ftot_gaussIons(phiC,Y,phiS)
     return [{'type': 'ineq', 'fun': seperated}]
-def minFtotal(Y,phiC,lastphi1,lastphi2,dY):
+
+def minFtotal(Y,phiC,lastphi1,lastphi2):
 
     phi1spin = findSpinlow(Y, phiC)[0]
     phi2spin = findSpinhigh(Y, phiC)[0]
     print(lastphi1, lastphi2, 'last 1&2')
     print(phi1spin, phi2spin, 'SPINS LEFT/RIGHT')
     phiB = (phi1spin+phi2spin)/2
-    #if lastphi1 == phiC:
+
     phi1i, phi2i = getInitialVsolved(Y, phi1spin, phi2spin,phiB)
     initial_guess=(phi1i,phi2i)
-    #else:initial_guess=(lastphi1-dY*1.5,lastphi2+dY*1.5)
-
     #initial_guess=(phi1spin*.9,phi2spin*1.1)
     #initial_guess=(phi1spin*.899,phi2spin*1.301)
     phi2Max = (1-2*phiS)/(1+qc)#########FROM LIN CODE GITHUB ????
 
 
     bounds = [(epsilon, phi1spin - epsilon), (phi2spin+epsilon, phi2Max-epsilon)]
-    maxL = minimize(totalFreeEnergyVsolved, initial_guess, args=(Y,phiB), method='L-BFGS-B', jac=Jac_fgRPA, bounds=bounds, options={'ftol':1e-20, 'gtol':1e-20, 'eps':1e-20})
+    maxL = minimize(totalFreeEnergyVsolved,initial_guess,args=(Y,phiB),method='L-BFGS-B',jac=Jac_fgRPA,bounds=bounds,options={'ftol':1e-20, 'gtol':1e-20, 'eps':1e-20} )
     #maxL = minimize(totalFreeEnergyVsolved,initial_guess,args=(Y,phiB),method='SLSQP',jac=Jac_fgRPA,bounds=bounds,options={'ftol':1e-20, 'gtol':1e-20, 'eps':1e-20} )
     #maxL = minimize(totalFreeEnergyVsolved,initial_guess,args=(Y,phiB),method='Newton-CG',jac=Jac_fgRPA,bounds=bounds,options={'ftol':1e-20, 'gtol':1e-20, 'eps':1e-20} )
 
@@ -259,6 +261,8 @@ def minFtotal(Y,phiC,lastphi1,lastphi2,dY):
     print('\nwe have finished minimizing for Y = ',Y, 'just cuz curious: phi1,phi2, v = ',phi1min,phi2min,v)
 
     return phi1min,phi2min
+
+#TryJacobianVersion
 def Jac_fgRPA(vars,Y,phiB):
     phi1=vars[0]
     phi2=vars[1]
@@ -274,18 +278,20 @@ def Jac_fgRPA(vars,Y,phiB):
     J[1] = (1-v)*( (f1-f2)/(phi2-phi1) + df2 )
 
     return J*T0
+
+
 def getBinodal(Yc,phiC,minY):
     phibin=phiC
     Ybin = np.array([Yc])
     Ytest= Yc - scale_init
+
     Y_range= Yc - minY
-    resolution = scale_init
 
     while Ytest>minY:
         Y_ratio_done = (Yc -Ytest)/Y_range
         #print(Ytest, "until", minY)
         phiLlast,phiDlast = phibin[0], phibin[-1]
-        phi1,phi2 = minFtotal(Ytest, phiC, phiLlast, phiDlast,resolution)
+        phi1,phi2 = minFtotal(Ytest, phiC, phiLlast, phiDlast)
 
         if phi1<phiLlast and phi2>phiDlast:
             phi1=np.array([phi1])
@@ -302,6 +308,7 @@ def getBinodal(Yc,phiC,minY):
         Ytest-=resolution
 
     return phibin,Ybin
+
 def smooth(list):
     for i in range(1,len(list)-2):
         if list[i]!=phiC:

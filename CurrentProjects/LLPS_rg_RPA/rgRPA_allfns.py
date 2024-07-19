@@ -157,49 +157,127 @@ def x_eqn_toint(k,phiM,Y,x):
 #print(ans)
 
 #d1
-def d1_x_solver(phiM,Y,x):
-    #BRENTH
-    return
-def d1_x_eqn(dx,phiM,Y,x):
-    eqn = 1 - 1/x - N/(18*(N-1))* integrate.quad(x_eqn_toint,0,np.inf,args=(phiM,Y,x,),limit=iterlim) * (1/(2*np.pi*np.pi))
-    return eqn
-def d1_x_eqn_toint(k,phiM,Y,x,dx):
-    phic= phiM*qc
-    ex_r = xee_r(k,x,sigS=sigShift_xe)
+def d1_x_solver(phiM,Y,x=None):
+    x=x_solver(phiM,Y) if x==None else x
+    Nconst = N/(18*(N-1))
+    lower,upper=0,np.inf
+    I1,I2 = integrate.quad(d1_x_eqn_I1int,lower,upper, args=(phiM,Y,x,),limit=iterlim)[0] ,integrate.quad(d1_x_eqn_I1int,lower,upper, args=(phiM,Y,x,),limit=iterlim)[0]
+
+    return Nconst*I1/((1/(x*x))-Nconst*I2)
+def d1_x_eqn_I1int(k,phiM,Y,x):
+    exr = xee_r(k, x, sigS=sigShift_xe)
     ex = xee(k,x,sigS=sigShift_xe)
     gkr = gk_r(k,x)
     g = gk(k,x)
     c = ck(k,x,sigs=sigShift_ck)
     ckr = ck_r(k,x,sigs= sigShift_ck)
-    num = ex_r*(3/(4*np.pi))+(k*k*Y/(4*np.pi)+(phiS+phic))*gkr+phiM*(ex_r*g+ex*gkr-2*c*ckr)
-    den = 3*k*k*Y/(4*np.pi*4*np.pi)+ 3*phiS/(4*np.pi)+ 3*phic/(4*np.pi) + phiM*(3*ex/(4*np.pi)+g*(k*k*Y/(4*np.pi)+phiS+phic))+ phiM*phiM*(ex*g-c*c)
-    return (num/den)
+
+    ionConst = k*k*Y/(4*np.pi) + phiS
+    b0 = ex*gkr + g*exr - 2*c*ckr + qc*gkr
+    c0 = phiM*(g*(ionConst+qc*phiM)+3*ex/(4*np.pi)) + (3/(4*np.pi))*(ionConst+qc*phiM) + phiM*phiM*(ex*g-c*c)
+    f0 = -phiM*qc*g - g*(ionConst+qc*phiM) - 2*phiM*ex*g + 2*phiM*c*c - 3*ex/(4*np.pi) - 3*qc/(4*np.pi) - (gkr*(ionConst+qc*phiM)+phiM*(ex*gkr+g*exr-2*c*ckr)+3*exr/(4*np.pi))
+
+    return k*k*k*k*((b0*c0 + f0)/(c0*c0))*(1/(2*np.pi*np.pi))
+def d1_x_eqn_I2int(k,phiM,Y,x):
+    exr = xee_r(k, x, sigS=sigShift_xe)
+    ex = xee(k,x,sigS=sigShift_xe)
+    gkr = gk_r(k,x)
+    g = gk(k,x)
+    c = ck(k,x,sigs=sigShift_ck)
+    ckr = ck_r(k,x,sigs= sigShift_ck)
+
+    d1exr = d1_xee_r(k, x, sigS=sigShift_xe)
+    d1ex = d1_xee(k, x, sigS=sigShift_xe)
+    d1gkr = d1_gk_r(k, x)
+    d1g = d1_gk(k, x)
+    d1c = d1_ck(k, x, sigs=sigShift_ck)
+    d1ckr = d1_ck_r(k, x, sigs=sigShift_ck)
+
+    ionConst = k*k*Y/(4*np.pi) + phiS
+    a0 = d1gkr*(ionConst+qc*phiM)+phiM*(gkr*d1ex+ex*d1gkr+exr*d1g+g*d1exr-2*ckr*d1c-2*c*d1ckr)+3*d1exr/(4*np.pi)
+    c0 = phiM*(g*(ionConst+qc*phiM)+3*ex/(4*np.pi)) + (3/(4*np.pi))*(ionConst+qc*phiM) + phiM*phiM*(ex*g-c*c)
+    e0 = -phiM*d1g*(ionConst+qc*phiM) - 3*d1exr*phiM/(4*np.pi) - phiM*phiM*g*d1ex - phiM*phiM*ex*d1g +2*phiM*phiM*c*d1c
+
+    return k*k*k*k*((a0*c0 + e0)/(c0*c0))*(1/(2*np.pi*np.pi))
+
 
 #d2
-def d2_x_solver(phiM,Y):
+def d2_x_solver(phiM,Y,x=None,dx=None):
+    x=x_solver(phiM,Y) if x==None else x
+    dx=d1_x_solver(phiM,Y ,x) if dx==None else dx
 
-    return
-def d2_x_eqn(x,phiM,Y):
-    eqn = 1 - 1/x - N/(18*(N-1))* integrate.quad(x_eqn_toint,0,np.inf,args=(phiM,Y,x,),limit=iterlim) * (1/(2*np.pi*np.pi))
-    return eqn
-def d2_x_eqn_toint(k,phiM,Y,x):
-    phic= phiM*qc
-    ex_r = xee_r(k,x,sigS=sigShift_xe)
-    ex = xee(k,x,sigS=sigShift_xe)
-    gkr = gk_r(k,x)
-    g = gk(k,x)
-    c = ck(k,x,sigs=sigShift_ck)
-    ckr = ck_r(k,x,sigs= sigShift_ck)
-    num = ex_r*(3/(4*np.pi))+(k*k*Y/(4*np.pi)+(phiS+phic))*gkr+phiM*(ex_r*g+ex*gkr-2*c*ckr)
-    den = 3*k*k*Y/(4*np.pi*4*np.pi)+ 3*phiS/(4*np.pi)+ 3*phic/(4*np.pi) + phiM*(3*ex/(4*np.pi)+g*(k*k*Y/(4*np.pi)+phiS+phic))+ phiM*phiM*(ex*g-c*c)
-    return (num/den)
+    Nconst = N/(18*(N-1))
+    lower,upper=0,np.inf
+    I1,I2 = integrate.quad(d2_x_eqn_I1int,lower,upper, args=(phiM,Y,x,dx,),limit=iterlim)[0] ,integrate.quad(d2_x_eqn_I2int,lower,upper, args=(phiM,Y,x,dx,),limit=iterlim)[0]
+
+    return (Nconst*I1 + 2*dx*dx/(x*x*x))/((1/(x*x))-Nconst*I2)
+def d2_x_eqn_I1int(k,phiM,Y,x,dx):
+    exr = xee_r(k, x, sigS=sigShift_xe)
+    ex = xee(k, x, sigS=sigShift_xe)
+    gkr = gk_r(k, x)
+    g = gk(k, x)
+    c = ck(k, x, sigs=sigShift_ck)
+    ckr = ck_r(k, x, sigs=sigShift_ck)
+
+    d1exr = d1_xee_r(k, x, sigS=sigShift_xe)
+    d1ex = d1_xee(k, x, sigS=sigShift_xe)
+    d1gkr = d1_gk_r(k, x)
+    d1g = d1_gk(k, x)
+    d1c = d1_ck(k, x, sigs=sigShift_ck)
+    d1ckr = d1_ck_r(k, x, sigs=sigShift_ck)
+
+    d2exr = d2_xee_r(k, x, sigS=sigShift_xe)
+    d2ex = d2_xee(k, x, sigS=sigShift_xe)
+    d2gkr = d2_gk_r(k, x)
+    d2g = d2_gk(k, x)
+    d2c = d2_ck(k, x, sigs=sigShift_ck)
+    d2ckr = d2_ck_r(k, x, sigs=sigShift_ck)
+
+    ionConst = k * k * Y / (4 * np.pi) + phiS
+    ##########DOUBLE CHECK THIS TERM!!!!!!!!!!!!!!
+    a0 = -1*(2*(phiM*phiM*(g*d1ex*dx+ex*d1g*dx-2*c*d1c*dx)+2*phiM*(ex*g-c*c)+phiM*(qc*g+3*d1ex*dx/(4*np.pi)+d1g*dx*(ionConst+qc*phiM))+(3/(4*np.pi))*(qc+ex)+g*(ionConst+qc*phiM))*(g*exr + qc*gkr + ex*gkr -2*c*ckr + 3*d1exr*dx/(np.pi*4)+ d1gkr*dx*(ionConst+qc*phiM)+phiM*(gkr*d1ex*dx+exr*d1g*dx-2*ckr*d1c*dx+g*d1exr*dx+ex*d1gkr*dx-2*c*d1ckr*dx)))
+    b0 = phiM*phiM*(ex*g-c*c)+phiM*(3*ex/(4*np.pi)+g*(ionConst+qc*phiM))+(3/(4*np.pi))*(ionConst+qc*phiM)
+    c0 = (3*exr/(4*np.pi)+gkr*(ionConst+qc*phiM) + phiM*(g*exr+ex*gkr-2*c*ckr))*(2*(phiM*phiM*(g*d1ex*dx+ex*d1g*dx-2*c*d1c*dx)+2*phiM*(ex*g-c*c)+phiM*(qc*g +3*d1ex*dx/(4*np.pi)+d1g*dx*(ionConst+qc*phiM))+3*(qc+ex)/(4*np.pi)+g*(ionConst+qc*phiM))*(phiM*phiM*(g*d1ex*dx+ex*d1g*dx-2*c*d1c*dx)+2*phiM*(ex*g-c*c)+phiM*(qc*g +3*d1ex*dx/(4*np.pi)+d1g*dx*(ionConst+qc*phiM))+3*(qc+ex)/(4*np.pi)+g*(ionConst+qc*phiM)))
+    #d0 = -1*phiM*phiM*g*d1ex - phiM*phiM*d1g*ex +2*c*d1c*phiM*phiM +phiM*3*d1ex/(4*np.pi)+phiM*(ionConst+qc*phiM)*d1g
+    e0 =-1*(phiM*phiM*(2*d1ex*d1g*dx*dx-2*d1c*d1c*dx*dx+g*d2ex*dx*dx+ex*d2g*dx*dx-2*c*d2c*dx*dx)+4*phiM*(g*d1ex*dx+ex*d1g*dx-2*c*d1c*dx)+phiM*(2*qc*d1g*dx+3*d2ex*dx*dx/(4*np.pi)+ d2g*dx*dx*(ionConst+qc*phiM))+2*qc*g+2*(ex*g-c*c)+3*d1ex*dx/(2*np.pi)+2*d1g*dx*(ionConst+qc*phiM))
+    #f0 = 3*ex/(4*np.pi)+d1gkr*(ionConst+qc*phiM) +phiM*(gkr*d1ex+exr*d1g-2*ckr*d1c+g*d1exr+ex*d1gkr-2*c*ckr)
+    g0 = 2*qc*d1gkr*dx+2*(gkr*d1ex*dx+exr*d1g*dx-2*ckr*d1c*dx+g*d1exr*dx+ex*d1gkr*dx-2*c*d1ckr*dx)+3*d2ex*dx*dx/(4*np.pi) +d2gkr*dx*dx*(ionConst+qc*phiM)+phiM*(2*d1g*d1exr*dx*dx+2*d1ex*d1gkr*dx*dx-4*d1c*d1ckr*dx*dx+gkr*d2ex*dx*dx+exr*d2g*dx*dx-2*ckr*d2c*dx*dx+g*d2exr*dx*dx+ex*d2gkr*dx*dx-2*c*d2ckr*dx*dx)
+
+    return k*k*k*k*((a0*b0 + c0 +e0*b0 +g0*b0*b0)/(b0*b0*b0))*(1/(2*np.pi*np.pi))
+def d2_x_eqn_I2int(k, phiM, Y, x, dx):
+    exr = xee_r(k, x, sigS=sigShift_xe)
+    ex = xee(k, x, sigS=sigShift_xe)
+    gkr = gk_r(k, x)
+    g = gk(k, x)
+    c = ck(k, x, sigs=sigShift_ck)
+    ckr = ck_r(k, x, sigs=sigShift_ck)
+
+    d1exr = d1_xee_r(k, x, sigS=sigShift_xe)
+    d1ex = d1_xee(k, x, sigS=sigShift_xe)
+    d1gkr = d1_gk_r(k, x)
+    d1g = d1_gk(k, x)
+    d1c = d1_ck(k, x, sigs=sigShift_ck)
+
+    ionConst = k * k * Y / (4 * np.pi) + phiS
+
+    b0 = phiM * phiM * (ex * g - c * c) + phiM * (3 * ex / (4 * np.pi) + g * (ionConst + qc * phiM)) + (
+                3 / (4 * np.pi)) * (ionConst + qc * phiM)
+
+    d0 = -1 * phiM * phiM * g * d1ex - phiM * phiM * d1g * ex + 2 * c * d1c * phiM * phiM + phiM * 3 * d1ex / (
+                4 * np.pi) + phiM * (ionConst + qc * phiM) * d1g
+
+    f0 = 3 * ex / (4 * np.pi) + d1gkr * (ionConst + qc * phiM) + phiM * (gkr * d1ex + exr * d1g - 2 * ckr * d1c + g * d1exr + ex * d1gkr - 2 * c * ckr)
+
+    return k * k * k * k * ((d0 * b0 + f0 * b0 * b0) / (b0 * b0 * b0)) * (1 / (2 * np.pi * np.pi))
+
+ddx = d2_x_solver(.025,.7)
+print(ddx)
 
 #################FREE ENERGIES#####################################
 def ftot_gaussIons(phiM, Y, phiS):
     return entropy(phiM, phiS) + fion(phiM, Y, phiS) + rgFP(phiM, Y, phiS)
 def rgFP(phiM, Y, phiS):
     x = x_solver(phiM, Y)
-
     def rgFPintegrand(k, Y, phiM, phiS):
         xe = xee(k, x, sigS=sigShift_xe)
         g = gk(k, x)
@@ -213,7 +291,6 @@ def rgFP(phiM, Y, phiS):
     lowerlim = 0
     result = integrate.quad(rgFPintegrand, lowerlim, upperlim, args=(Y, phiM, phiS), limit=iterlim)
     fp = result[0] / (4 * np.pi * np.pi)
-
     return fp
 def fion(phiM, Y, phiS):
     kl = np.sqrt(4 * np.pi * (phiS + qc * phiM) / Y)
