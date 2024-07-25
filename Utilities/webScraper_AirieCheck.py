@@ -2,15 +2,13 @@ import requests
 from lxml import html
 import schedule
 import time
-import smtplib,ssl
+import smtplib
 from email.mime.text import MIMEText
 import logging
 import os
-import re
 from datetime import datetime
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from html import unescape
 
