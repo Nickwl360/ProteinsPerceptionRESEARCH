@@ -2,15 +2,13 @@ import requests
 from lxml import html
 import schedule
 import time
-import smtplib,ssl
+import smtplib
 from email.mime.text import MIMEText
 import logging
 import os
-import re
 from datetime import datetime
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from html import unescape
 
@@ -27,11 +25,17 @@ logging.basicConfig(filename=log_file_path, level=logging.INFO,
 
 # Function to check the website
 def check_website():
+    print('checking')
     url = 'https://www.airiedenver.com/floor-plans'
 
     chrome_options = Options()
     chrome_options.add_argument("--headless")  # Ensure the browser runs in headless mode
-    chrome_service = Service('C:/Users/Nickl/OneDrive/Desktop/chromedriver/chromedriver-win64/chromedriver.exe')  # Replace with the path to your ChromeDriver
+
+    #laptop
+    #chrome_service = Service('C:/Users/Nickl/OneDrive/Desktop/chromedriver/chromedriver-win64/chromedriver.exe')  # Replace with the path to your ChromeDriver
+    #HomePC
+    chrome_service = Service('C:/Users/Nick/Desktop/chromedriver-win64/chromedriver-win64/chromedriver.exe')  # Replace with the path to your ChromeDriver
+
     driver = webdriver.Chrome(service=chrome_service, options=chrome_options)
 
     driver.get(url)
@@ -43,14 +47,16 @@ def check_website():
 
     tree = html.fromstring(page_source)
     apartments = tree.xpath('//div[@id="all_available_tab"]//div[contains(@class, "pro-sec rracFloorplan available")]')
-    print(apartments)
     available_apartments = []
     # Define the date range
-    start_date = datetime.strptime('2024-07-25', '%Y-%m-%d')
-    end_date = datetime.strptime('2024-12-14', '%Y-%m-%d')
+    start_date = datetime.strptime('2024-08-14', '%Y-%m-%d')
+    end_date = datetime.strptime('2024-09-14', '%Y-%m-%d')
     for apartment in apartments:
         room_type= apartment.xpath('.//@data-room-type')[0]
         dates_str = apartment.xpath('.//@data-available-date')[0]
+        type = apartment.xpath('.//@data-fpname')[0]
+        price = apartment.xpath('.//@data-min-price')[0]
+
         #fixes non-html syntax
         dates_str = unescape(dates_str)
         dates_str = dates_str.strip('[]"')
@@ -58,7 +64,7 @@ def check_website():
 
         for date in dates:
             if start_date<= date < end_date and (room_type == '4962' or room_type == '4961'):
-                available_apartments.append((date.strftime('%Y-%m-%d'),room_type))
+                available_apartments.append((date.strftime('%Y-%m-%d'),type,price))
 
 
     # Check if new apartments are available
@@ -71,35 +77,26 @@ def check_website():
 
 # Function to send email
 def send_email(apartments):
-
-    smtpserver = "smtp.gmail.com"
-    port = 587
+    password = 'wiiqviujxztyisxq'
+    subject = 'APARTMENT ALERT: GO APPLY NOW'
+    body = 'Possible move in date, type, price:\n'+''.join([str(apartment) for apartment in apartments])
     sender = 'Nickwl360@gmail.com'
-    receiver = 'Nickwl360@gmail.com'
-    password = 'KoolKar5115'
-    message = f"""\
-        Subject: NEW APARTMENTS????
-        To: {receiver}
-        From: {sender}
+    reciever = 'ejonwl22@gmail.com'
+    smtpserver = "smtp.gmail.com"
+    msg = MIMEText(body)
+    msg['Subject']=subject
+    msg['From']=sender
+    msg['To']=reciever
 
-        New apartments within your requested dates."""
-
-    context = ssl.create_default_context()
-    with smtplib.SMTP_SSL(smtpserver, port, context=context) as server:
-        server.starttls(context=context)
-
+    with smtplib.SMTP_SSL(smtpserver, 465) as server:
+        # server.starttls()
         server.login("Nickwl360@gmail.com", password)
-        server.sendmail(sender, receiver, message)
+        server.send_message(msg)
+        logging.info('success')
+        server.quit()
 
-
-
-
-
-
-# Schedule the script to run every hour
-#schedule.every().hour.do(check_website)
 check_website()
-# Main loop
-# while True:
-#     schedule.run_pending()
-#     time.sleep(1)
+schedule.every(20).minutes.do(check_website)
+while True:
+    schedule.run_pending()
+    time.sleep(1)

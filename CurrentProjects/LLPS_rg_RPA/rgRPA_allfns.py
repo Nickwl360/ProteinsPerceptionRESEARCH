@@ -605,7 +605,3 @@ def getBinodal(Yc,phiC,minY):
         Ytest-=resolution
 
     return phibin,Ybin
-
-
-
-
