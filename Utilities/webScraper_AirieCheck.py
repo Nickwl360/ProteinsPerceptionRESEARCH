@@ -11,6 +11,7 @@ from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from html import unescape
+from twilio.rest import Client
 
 # Create a directory for logs if it doesn't exist
 log_directory = 'OutputLogsAirie'
@@ -70,12 +71,10 @@ def check_website():
     # Check if new apartments are available
     if available_apartments:
         send_email(available_apartments)
+        send_sms(available_apartments)
         logging.info(f'New apartments found: {available_apartments}')
     else:
         logging.info('No new apartments found within the requested date')
-
-
-# Function to send email
 def send_email(apartments):
     password = 'wiiqviujxztyisxq'
     subject = 'APARTMENT ALERT: GO APPLY NOW'
@@ -94,9 +93,26 @@ def send_email(apartments):
         server.send_message(msg)
         logging.info('success')
         server.quit()
+def send_sms(apartments):
+    account_sid = 'AC5005f86fb6682875c396ea9d651f3404'
+    auth_token = '18902be4efed073979d569c636971e24'
+    twilio_number = '+18557255216'
+    myphone_number = '+13178641468'
 
+    client = Client(account_sid, auth_token)
+    body = 'NEW APT: Possible move in date, type, price:\n'+''.join([str(apartment) for apartment in apartments])
+    try:
+        message = client.messages.create(
+            body=body,
+            from_=twilio_number,
+            to=myphone_number
+        )
+        logging.info('SMS sent successfully')
+    except Exception as e:
+        logging.error(f'Error sending SMS: {e}')
+    return
 check_website()
-schedule.every(20).minutes.do(check_website)
+schedule.every().hour.do(check_website)
 while True:
     schedule.run_pending()
     time.sleep(1)
