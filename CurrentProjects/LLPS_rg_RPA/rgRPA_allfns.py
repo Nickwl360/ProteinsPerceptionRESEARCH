@@ -297,10 +297,10 @@ def d2_x_eqn_I2int(k, phiM, Y, x, dx):
 
     return k * k * k * k * ((h0*c0*c0 - d0*f0*c0) / (c0 * c0 * c0)) * (1 / (2 * np.pi * np.pi))
 
-# x = x_solver(.3,.1)
-# dx = d1_x_solver(.3,.1,x)
-# ddx = d2_x_solver(.3,.1,x,dx)
-# print(x,dx,ddx)
+x = x_solver(.3,.1)
+dx = d1_x_solver(.3,.1,x)
+ddx = d2_x_solver(.3,.1,x,dx)
+print(x,dx,ddx)
 
 #################FREE ENERGIES#####################################
 def ftot_gaussIons(phiM, Y, phiS):
@@ -413,7 +413,7 @@ def d2_FGauss_Y(Y,phiM,phiS,x = None, dx = None, ddx = None):
                     d1xe * dx / ionConst - qc * xe / (
                         ionConst * ionConst) + v2 * d1g * dx) - qc * v2 * phiM * phiM * secondOrder / (
                             ionConst * ionConst) + 2 * v2 * phiM * secondOrder / ionConst + xe / ionConst + v2 * g)
-        return k*k*(Num1 / Den - (Num2 * Num2) / (Den * Den))
+        return k*k* (Num1 / Den - (Num2 * Num2) / (Den * Den))
 
     upperlim = np.inf
     lowerlim = 0
