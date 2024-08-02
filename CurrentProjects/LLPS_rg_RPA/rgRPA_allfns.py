@@ -115,32 +115,32 @@ def d1_ck_r(k,x,sigs):
 def d2_xee(k,x,sigS):
     xeesum=0
     for i in range(0,N-1):
-        xeesum += sigS[i]*np.exp((-1/6)*x*(k*k)*i) *(-1/6)*(k*k)*i*(-1/6)*(k*k)*i
+        xeesum += sigS[i]*np.exp((-1/6)*x*(k*k)*i) *(1/36)*(k*k)*i*(k*k)*i
     return xeesum/N
 def d2_xee_r(k,x,sigS):
     xeesum=0
     for i in range(0,N-1):
-        xeesum += sigS[i]*i*i*np.exp((-1/6)*x*(k*k)*i)*(-1/6)*(k*k)*i*(-1/6)*(k*k)*i
+        xeesum += sigS[i]*i*i*np.exp((-1/6)*x*(k*k)*i)*(1/36)*(k*k)*i*(k*k)*i
     return xeesum/N
 def d2_gk(k,x):
     gksum=0
     for i in range(0,N-1):
-        gksum+= sigShift_gk[i]*np.exp((-1/6)*x*k*k*i)*(-1/6)*(k*k)*i*(-1/6)*(k*k)*i
+        gksum+= sigShift_gk[i]*np.exp((-1/6)*x*k*k*i)*(1/36)*(k*k)*i*(k*k)*i
     return gksum/N
 def d2_gk_r(k,x):
     gksum=0
     for i in range(0,N-1):
-        gksum+= sigShift_gk[i]*i*i*np.exp((-1/6)*x*k*k*i)*(-1/6)*(k*k)*i*(-1/6)*(k*k)*i
+        gksum+= sigShift_gk[i]*i*i*np.exp((-1/6)*x*k*k*i)*(1/36)*(k*k)*i*(k*k)*i
     return gksum/N
 def d2_ck(k,x,sigs):
     cksum=0
     for i in range(0,N-1):
-        cksum+= sigs[i]*np.exp((-1/6)*x*k*k*i)*(-1/6)*(k*k)*i*(-1/6)*(k*k)*i
+        cksum+= sigs[i]*np.exp((-1/6)*x*k*k*i)*(1/36)*(k*k)*i*(k*k)*i
     return cksum/N
 def d2_ck_r(k,x,sigs):
     cksum=0
     for i in range(0,N-1):
-        cksum+= i*i*sigs[i]*np.exp((-1/6)*x*k*k*i)*(-1/6)*(k*k)*i*(-1/6)*(k*k)*i
+        cksum+= i*i*sigs[i]*np.exp((-1/6)*x*k*k*i)*(1/36)*(k*k)*i*(k*k)*i
     return cksum/N
 
 ############SOLVING FOR X #####################################################
@@ -227,9 +227,9 @@ def d2_x_solver(phiM,Y,x=None,dx=None):
 
     Nconst = N/(18*(N-1))
     lower,upper=0,np.inf
-    I1,I2 = integrate.quad(d2_x_eqn_I1int,lower,upper, args=(phiM,Y,x,dx,),limit=iterlim)[0] ,integrate.quad(d2_x_eqn_I2int,lower,upper, args=(phiM,Y,x,dx,),limit=iterlim)[0]
+    I1,I2 = integrate.quad(d2_x_eqn_Bint,lower,upper, args=(phiM,Y,x,dx,),limit=iterlim)[0] ,integrate.quad(d2_x_eqn_Aint,lower,upper, args=(phiM,Y,x,dx,),limit=iterlim)[0]
 
-    return (Nconst*I1 + 2*dx*dx/(x*x*x))/((1/(x*x)) - Nconst*I2)
+    return (Nconst*I1 + 2*dx*dx/x/x/x)/(1/x/x - Nconst*I2)
 def d2_x_eqn_I1int(k,phiM,Y,x,dx):
     exr = xee_r(k, x, sigS=sigShift_xe)
     ex = xee(k, x, sigS=sigShift_xe)
@@ -266,6 +266,50 @@ def d2_x_eqn_I1int(k,phiM,Y,x,dx):
     i0 = 2*qc*d1gkr*dx + 2*(gkr*d1ex*dx + exr*d1g*dx - 2*ckr*d1c*dx + g*d1exr*dx + ex*d1gkr*dx - 2*c*d1ckr*dx) + 3*d2exr*dx*dx/(4*np.pi) +d2gkr*dx*dx*(ionConst) + phiM*(2*d1g*d1exr*dx*dx + 2*d1ex*d1gkr*dx*dx - 4*d1c*d1ckr*dx*dx + gkr*d2ex*dx*dx + exr*d2g*dx*dx - 2*ckr*d2c*dx*dx + g*d2exr*dx*dx + ex*d2gkr*dx*dx - 2*c*d2ckr*dx*dx)
 
     return k*k*k*k*((2*d0*e0*e0 - d0*g0*c0 - 2*a0*b0*c0 + i0*c0*c0)/(c0*c0*c0))*(1/(2*np.pi*np.pi))
+def d2_x_eqn_Bint(k,phiM,Y,x,dx):
+    exr = xee_r(k, x, sigS=sigShift_xe)
+    ex = xee(k, x, sigS=sigShift_xe)
+    gkr = gk_r(k, x)
+    g = gk(k, x)
+    c = ck(k, x, sigs=sigShift_ck)
+    ckr = ck_r(k, x, sigs=sigShift_ck)
+
+    d1exr = d1_xee_r(k, x, sigS=sigShift_xe)*dx
+    d1ex = d1_xee(k, x, sigS=sigShift_xe)*dx
+    d1gkr = d1_gk_r(k, x)*dx
+    d1g = d1_gk(k, x)*dx
+    d1c = d1_ck(k, x, sigs=sigShift_ck)*dx
+    d1ckr = d1_ck_r(k, x, sigs=sigShift_ck)*dx
+
+    d2exr = d2_xee_r(k, x, sigS=sigShift_xe)*dx*dx
+    d2ex = d2_xee(k, x, sigS=sigShift_xe)*dx*dx
+    d2gkr = d2_gk_r(k, x)*dx*dx
+    d2g = d2_gk(k, x)*dx*dx
+    d2c = d2_ck(k, x, sigs=sigShift_ck)*dx*dx
+    d2ckr = d2_ck_r(k, x, sigs=sigShift_ck)*dx*dx
+
+    rho = k * k * Y / (4 * np.pi) + phiS + qc * phiM
+    v = 4 * np.pi / 3
+    r12 = ex * g - c * c
+    d12 = g*d1ex + ex*d1g - 2*c*d1c
+
+    D = exr/v + rho*gkr + phiM*(g*exr + ex*gkr - 2*c*ckr)
+    O = phiM*phiM*r12 + phiM*(ex/v + rho*g) + rho/v
+
+    tri_coef = phiM*phiM*(d12) + 2*phiM*r12 + phiM*(qc*g + d1ex/v + rho*d1g) + (qc+ex)/v + rho*g
+    sq_coef = g*exr + qc*gkr + ex*gkr - 2*c*ckr + d1exr/v + rho*d1gkr + phiM*(gkr*d1ex + exr*d1g - 2*ckr*d1c + g*d1exr + ex*d1gkr - 2*c*d1ckr)
+    T1 = -1*2*tri_coef*sq_coef/O/O
+
+    EE = tri_coef*tri_coef
+    T2 = 2*D*EE/O/O/O
+
+    sq_coef2 = phiM*phiM*(-2*d1c*d1c + 2*d1ex*d1g + g*d2ex + ex*d2g - 2*c*d2c) + 4*phiM*d12 + phiM*(2*qc*d1g + d2ex/v + rho*d2g) + 2*qc*g + 2*r12 + 2*d1ex/v + 2*rho*d1g
+    T3 = -1*D*sq_coef2/O/O
+
+    tri_coef2 = 2*qc*d1gkr + 2*(gkr*d1ex + exr*d1g - 2*ckr*d1c + g*d1exr + ex*d1gkr - 2*c*d1ckr) + d2exr/v + rho*d2gkr + phiM*(2*d1g*d1exr + 2*d1ex*d1gkr - 4*d1c*d1ckr + gkr*d2ex + exr*d2g - 2*ckr*d2c + g*d2exr + ex*d2gkr - 2*c*d2ckr)
+    T4 = tri_coef2/O
+
+    return (T1 + T2 +T3 + T4)*k*k*k*k/(2*np.pi*np.pi)
 def d2_x_eqn_I2int(k, phiM, Y, x, dx):
     exr = xee_r(k, x, sigS=sigShift_xe)
     ex = xee(k, x, sigS=sigShift_xe)
@@ -296,11 +340,37 @@ def d2_x_eqn_I2int(k, phiM, Y, x, dx):
     #i0 = 2*qc*d1gkr*dx+2*(gkr*d1ex*dx+exr*d1g*dx-2*ckr*d1c*dx+g*d1exr*dx+ex*d1gkr*dx-2*c*d1ckr*dx)+3*d2ex*dx*dx/(4*np.pi) +d2gkr*dx*dx*(ionConst+qc*phiM)+phiM*(2*d1g*d1exr*dx*dx+2*d1ex*d1gkr*dx*dx-4*d1c*d1ckr*dx*dx+gkr*d2ex*dx*dx+exr*d2g*dx*dx-2*ckr*d2c*dx*dx+g*d2exr*dx*dx+ex*d2gkr*dx*dx-2*c*d2ckr*dx*dx)
 
     return k * k * k * k * ((h0*c0*c0 - d0*f0*c0) / (c0 * c0 * c0)) * (1 / (2 * np.pi * np.pi))
+def d2_x_eqn_Aint(k,phiM,Y,x,dx):
+    exr = xee_r(k, x, sigS=sigShift_xe)
+    ex = xee(k, x, sigS=sigShift_xe)
+    gkr = gk_r(k, x)
+    g = gk(k, x)
+    c = ck(k, x, sigs=sigShift_ck)
+    ckr = ck_r(k, x, sigs=sigShift_ck)
 
-x = x_solver(.3,.1)
-dx = d1_x_solver(.3,.1,x)
-ddx = d2_x_solver(.3,.1,x,dx)
-print(x,dx,ddx)
+    d1exr = d1_xee_r(k, x, sigS=sigShift_xe)
+    d1ex = d1_xee(k, x, sigS=sigShift_xe)
+    d1gkr = d1_gk_r(k, x)
+    d1g = d1_gk(k, x)
+    d1c = d1_ck(k, x, sigs=sigShift_ck)
+    d1ckr = d1_ck_r(k, x, sigs=sigShift_ck)
+
+    rho = k * k * Y / (4 * np.pi) + phiS + qc*phiM
+    v = 4*np.pi/3
+    r12 = ex*g - c*c
+
+    D = exr/v + rho*gkr + phiM*(g*exr + ex*gkr - 2*c*ckr)
+    O = phiM*phiM*r12 + phiM*(ex/v + rho*g) + rho/v
+
+    sq_coef = phiM*phiM*(g*d1ex + ex*d1g - 2*c*d1c) + phiM*(d1ex/v + rho*d1g)
+    tri_coef = d1exr/v + rho*d1g + phiM*(gkr*d1ex + exr*d1g - 2*ckr*d1c + g*d1exr + ex*d1gkr - 2*c*d1ckr)
+
+    return (-1*sq_coef*D/O/O + tri_coef/O)*k*k*k*k/(2*np.pi*np.pi)
+
+# x = x_solver(.3,.1)
+# dx = d1_x_solver(.3,.1,x)
+# ddx = d2_x_solver(.3,.1,x,dx)
+# print(x,dx,ddx)
 
 #################FREE ENERGIES#####################################
 def ftot_gaussIons(phiM, Y, phiS):
@@ -375,14 +445,18 @@ def d2_FGauss_Y(Y,phiM,phiS,x = None, dx = None, ddx = None):
     else:
         d2s = (-1 * qc - 1) ** 2 / (-1 * phiS + 1)
 
-    d2fion_pt1num = qc * qc * Y * (np.sqrt(Y / (qc * phiM + phiS)) + 4 * np.sqrt(np.pi))
-    d2fion_pt1den = 8 * np.sqrt(np.pi) * (qc * phiM + phiS) * (
-            2 * np.sqrt(np.pi) * np.sqrt(Y * (qc * phiM + phiS)) + Y) ** 2
-    d2fion_pt2 = (-1 * qc * qc) / (8 * np.sqrt(np.pi) * np.sqrt(Y) * (qc * phiM + phiS) ** (3 / 2))
-    d2fion = d2fion_pt1num / d2fion_pt1den + d2fion_pt2
+    #####d2Fion#################
+    c = 4*np.pi/Y
+    rho = qc*phiM + phiS
+
+    k = np.sqrt((c)*(rho))
+    dk = (qc/2)*np.sqrt(c/rho)
+    ddk = (-1*qc*qc/4)*np.sqrt(c/(rho*rho*rho))
+
+    d2fion = (-1/(4*np.pi))*(k*(k*(k+1)*ddk + (k+2)*dk*dk))/((k+1)*(k+1))
 
     #################Electrofreeenergyd2###########
-
+    #oldversion
     def d2_FP_toint(k, Y, phiM):
         xe = xee(k, x, sigS=sigShift_xe)
         d1xe = d1_xee(k, x, sigS=sigShift_xe)
@@ -415,9 +489,38 @@ def d2_FGauss_Y(Y,phiM,phiS,x = None, dx = None, ddx = None):
                             ionConst * ionConst) + 2 * v2 * phiM * secondOrder / ionConst + xe / ionConst + v2 * g)
         return k*k* (Num1 / Den - (Num2 * Num2) / (Den * Den))
 
+    def d2_fp_toint(k,Y,phiM):
+        xe = xee(k, x, sigS=sigShift_xe)
+        d1xe = d1_xee(k, x, sigS=sigShift_xe)*dx
+        d2xe = d2_xee(k, x, sigS=sigShift_xe)*dx*dx + d1_xee(k,x,sigShift_xe)*ddx
+        g = gk(k, x)
+        d1g = d1_gk(k, x)*dx
+        d2g = d2_gk(k, x)*dx*dx + d1_gk(k,x)*ddx
+        c = ck(k, x, sigs=sigShift_ck)
+        d1c = d1_ck(k, x, sigs=sigShift_ck)*dx
+        d2c = d2_ck(k, x, sigs=sigShift_ck)*dx*dx + d1_ck(k,x,sigShift_ck)*ddx
+
+        D = k*k*Y/(4*np.pi) + phiS + qc*phiM
+        v = (4*np.pi/3)*np.exp(-1*k*k/6)
+        d12 = g*d1xe + xe*d1g - 2*c*d1c
+        r12 = xe*g - c*c
+
+        N1 = -2*qc*v*phiM*phiM*(d12)/D/D
+        N2 = 4*v*phiM*(d12)/D + 2*d1xe/D
+        N3 = phiM*(d2xe/D - 2*qc*d1xe/D/D + 2*qc*qc*xe/D/D/D + v*d2g)
+        N4 = v*phiM*phiM*(g*d2xe + 2*d1xe*d1g + xe*d2g - 2*c*d2c - 2*d1c*d1c)/D
+        N5 = 2*qc*qc*v*phiM*(r12)/D/D/D - 4*qc*v*phiM*r12/D/D
+        N6 = 2*v*r12/D - 2*qc*xe/D/D + 2*v*d1g
+        DD = v*phiM*phiM*r12/D + phiM*(xe/D + v*g) + 1
+        T1 = (N1+N2+N3+N4+N5+N6)/DD
+
+        M1 = v*phiM*phiM*d12/D + phiM*(xe/D - qc*xe/D/D + v*d1g) - qc*phiM*phiM*r12/D/D + 2*v*phiM*r12/D + xe/D + v*g
+        T2 = M1*M1/(DD*DD)
+        return (T1 - T2)
+
     upperlim = np.inf
     lowerlim = 0
-    result = integrate.quad(d2_FP_toint, lowerlim, upperlim, args=(Y, phiM,), limit=iterlim)
+    result = integrate.quad(d2_fp_toint, lowerlim, upperlim, args=(Y, phiM,), limit=iterlim)
 
     d2fp = result[0] / (4 * np.pi * np.pi)
     print(d2s,d2fp,d2fion, Y)
