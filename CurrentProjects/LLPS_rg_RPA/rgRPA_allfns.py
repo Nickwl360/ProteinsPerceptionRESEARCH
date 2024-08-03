@@ -36,18 +36,10 @@ def getSigShifts(qs):
 
     return sigSij ,sigSi ,sigGs
 sigShift_xe, sigShift_ck ,sigShift_gk = getSigShifts(qs)
-#############SEQUENCE SPECIFIC CHARGE###########################
-
-#FROM LIN TO TEST
-# mel = np.kron(qs, qs).reshape((N, N))
-# Tel = np.array([ np.sum(mel.diagonal(n) + mel.diagonal(-n)) \
-#                     for n in range(N)])
-# Tel[0] /= 2
-#
-# Tex = 2*np.arange(N,0,-1)
-# Tex[0] /= 2
 
 ##############STRUCTURE FACTORS & DERIVATIVES###########################
+
+###############STRUCTURE FACTORS#############################
 def xee(k,x,sigS):
     xeesum=0
     for i in range(0,N-1):
@@ -227,7 +219,7 @@ def d2_x_solver(phiM,Y,x=None,dx=None):
 
     Nconst = N/(18*(N-1))
     lower,upper=0,np.inf
-    I1,I2 = integrate.quad(d2_x_eqn_Bint,lower,upper, args=(phiM,Y,x,dx,),limit=iterlim)[0] ,integrate.quad(d2_x_eqn_Aint,lower,upper, args=(phiM,Y,x,dx,),limit=iterlim)[0]
+    I1,I2 = integrate.quad(d2_x_eqn_I1int,lower,upper, args=(phiM,Y,x,dx,),limit=iterlim)[0] ,integrate.quad(d2_x_eqn_I2int,lower,upper, args=(phiM,Y,x,dx,),limit=iterlim)[0]
 
     return (Nconst*I1 + 2*dx*dx/x/x/x)/(1/x/x - Nconst*I2)
 def d2_x_eqn_I1int(k,phiM,Y,x,dx):
@@ -252,20 +244,25 @@ def d2_x_eqn_I1int(k,phiM,Y,x,dx):
     d2c = d2_ck(k, x, sigs=sigShift_ck)
     d2ckr = d2_ck_r(k, x, sigs=sigShift_ck)
 
-    ionConst = k * k * Y / (4 * np.pi) + phiS + qc*phiM
+    rho = k * k * Y / (4 * np.pi) + phiS + qc * phiM
+    v = 4*np.pi/3
+    DD = g*d1ex*dx + ex*d1g*dx - 2*c*d1c*dx
+    r12 = ex*g-c*c
+    phi2,dx2 = phiM*phiM, dx*dx
+    ddel =qc * g + d1ex * dx / v + d1g * dx * (rho)
+
     ##########DOUBLE CHECK THIS TERM!!!!!!!!!!!!!!
-    a0 = (phiM*phiM*(g*d1ex*dx + ex*d1g*dx - 2*c*d1c*dx) + 2*phiM*(ex*g-c*c) + phiM*(qc*g + 3*d1ex*dx/(4*np.pi) +d1g*dx*(ionConst)) + (3/(4*np.pi))*(qc+ex) + g*(ionConst))#
-    b0=  (g*exr + qc*gkr + ex*gkr -2*c*ckr + 3*d1exr*dx/(np.pi*4)+ d1gkr*dx*(ionConst)+phiM*(gkr*d1ex*dx+exr*d1g*dx-2*ckr*d1c*dx+g*d1exr*dx+ex*d1gkr*dx-2*c*d1ckr*dx))
-    c0 = phiM*phiM*(ex*g-c*c)+phiM*(3*ex/(4*np.pi)+g*(ionConst))+(3/(4*np.pi))*(ionConst)
-    d0 = (3*exr/(4*np.pi)+gkr*(ionConst) + phiM*(g*exr+ex*gkr-2*c*ckr))
-    e0 = (phiM*phiM*(g*d1ex*dx + ex*d1g*dx - 2*c*d1c*dx)+ 2*phiM*(ex*g-c*c) + phiM*(qc*g +3*d1ex*dx/(4*np.pi) + d1g*dx*(ionConst))+3*(qc+ex)/(4*np.pi)+g*(ionConst))
+    a0 = (phi2 * (DD) + 2 * phiM * (r12) + phiM * (ddel) +  (qc + ex)/v + g * (rho))#
+    b0=  (g * exr + qc * gkr + ex * gkr - 2 * c * ckr +  d1exr * dx / v + d1gkr * dx * (rho) + phiM * (gkr * d1ex * dx + exr * d1g * dx - 2 * ckr * d1c * dx + g * d1exr * dx + ex * d1gkr * dx - 2 * c * d1ckr * dx))
+    c0 = phi2 * (r12) + phiM * (ex / v + g * (rho)) +  (rho)/v
+    d0 = (exr / v + gkr * (rho) + phiM * (g * exr + ex * gkr - 2 * c * ckr))
 
-    #f0 = phiM*phiM*g*d1ex + phiM*phiM*d1g*ex - 2*c*d1c*phiM*phiM - phiM*3*d1ex/(4*np.pi) - phiM*(ionConst+qc*phiM)*d1g
-    g0 = (phiM*phiM*(2*d1ex*d1g*dx*dx - 2*d1c*d1c*dx*dx + g*d2ex*dx*dx + ex*d2g*dx*dx - 2*c*d2c*dx*dx) + 4*phiM*(g*d1ex*dx + ex*d1g*dx - 2*c*d1c*dx) + phiM*(2*qc*d1g*dx + 3*d2ex*dx*dx/(4*np.pi) + d2g*dx*dx*(ionConst)) + 2*qc*g + 2*(ex*g-c*c) + 3*d1ex*dx/(2*np.pi) + 2*d1g*dx*(ionConst))
-    #h0 = 3*ex/(4*np.pi)+d1gkr*(ionConst+qc*phiM) +phiM*(gkr*d1ex+exr*d1g-2*ckr*d1c+g*d1exr+ex*d1gkr-2*c*ckr)
-    i0 = 2*qc*d1gkr*dx + 2*(gkr*d1ex*dx + exr*d1g*dx - 2*ckr*d1c*dx + g*d1exr*dx + ex*d1gkr*dx - 2*c*d1ckr*dx) + 3*d2exr*dx*dx/(4*np.pi) +d2gkr*dx*dx*(ionConst) + phiM*(2*d1g*d1exr*dx*dx + 2*d1ex*d1gkr*dx*dx - 4*d1c*d1ckr*dx*dx + gkr*d2ex*dx*dx + exr*d2g*dx*dx - 2*ckr*d2c*dx*dx + g*d2exr*dx*dx + ex*d2gkr*dx*dx - 2*c*d2ckr*dx*dx)
+    #f0 = phiM*phiM*g*d1ex + phiM*phiM*d1g*ex - 2*c*d1c*phiM*phiM - phiM*3*d1ex/(4*np.pi) - phiM*(rho+qc*phiM)*d1g
+    g0 = (phi2 * (2*d1ex*d1g*dx2 - 2*d1c*d1c*dx2 + g*d2ex*dx2 + ex*d2g*dx2 - 2*c*d2c*dx2) + 4 * phiM * (DD) + phiM * (2 * qc * d1g * dx + d2ex * dx2 / v + d2g * dx2 * (rho)) + 2 * qc * g + 2 * (r12) + 2 * d1ex * dx / v + 2 * d1g * dx * (rho))
+    #h0 = 3*ex/(4*np.pi)+d1gkr*(rho+qc*phiM) +phiM*(gkr*d1ex+exr*d1g-2*ckr*d1c+g*d1exr+ex*d1gkr-2*c*ckr)
+    i0 = 2 * qc * d1gkr * dx + 2 * (gkr*d1ex*dx + exr*d1g*dx - 2*ckr*d1c*dx + g*d1exr*dx + ex*d1gkr*dx - 2*c*d1ckr*dx) + d2exr * dx2 / v + d2gkr * dx2 * (rho) + phiM * (2 * d1g * d1exr * dx2 + 2 * d1ex * d1gkr * dx2 - 4 * d1c * d1ckr * dx2 + gkr * d2ex * dx2 + exr * d2g * dx2 - 2 * ckr * d2c * dx2 + g * d2exr * dx2 + ex * d2gkr * dx2 - 2 * c * d2ckr * dx2)
 
-    return k*k*k*k*((2*d0*e0*e0 - d0*g0*c0 - 2*a0*b0*c0 + i0*c0*c0)/(c0*c0*c0))*(1/(2*np.pi*np.pi))
+    return k*k*k*k*((2*d0*a0*a0 - d0*g0*c0 - 2*a0*b0*c0 + i0*c0*c0)/(c0*c0*c0))*(1/(2*np.pi*np.pi))
 def d2_x_eqn_Bint(k,phiM,Y,x,dx):
     exr = xee_r(k, x, sigS=sigShift_xe)
     ex = xee(k, x, sigS=sigShift_xe)
@@ -373,8 +370,8 @@ def d2_x_eqn_Aint(k,phiM,Y,x,dx):
 # print(x,dx,ddx)
 
 #################FREE ENERGIES#####################################
-def ftot_gaussIons(phiM, Y, phiS):
-    return entropy(phiM, phiS) + fion(phiM, Y, phiS) + rgFP(phiM, Y, phiS)
+def ftot_rg(phiM, Y, phiS):
+    return entropy(phiM, phiS) + fion(phiM, Y, phiS) + rgFP(phiM, Y, phiS) + 2*np.pi*phiM*phiM/3 ##f0 term
 def rgFP(phiM, Y, phiS,x=None):
     x = x_solver(phiM, Y) if x==None else x
 
@@ -405,7 +402,7 @@ def entropy(phiM, phiS):
         return (phiM / N) * np.log(phiM) + phiC * np.log(phiC) + phiW * np.log(phiW)
 
 ################FIRST DERIVATIVES##############################
-def d1ftotGauss_dphi(phiM,Y,phiS,x=None, dx = None):
+def d1_Frg_dphi(phiM,Y,phiS,x=None, dx = None):
     x = x_solver(phiM,Y) if x==None else x
     dx = d1_x_solver(phiM,Y) if dx ==None else dx
     ds_dphi =np.log(phiM)/N + 1/N - 1 + qc*np.log(qc*phiM) + (-1*qc-1)*np.log(1-qc*phiM -phiS - phiM)
@@ -427,10 +424,10 @@ def d1ftotGauss_dphi(phiM,Y,phiS,x=None, dx = None):
     result = integrate.quad(dfpintegrand, lower, upper, args=(Y,phiM,phiS,), limit=iterlim)
     dfp_dphi = result[0] / (4 * np.pi * np.pi)
 
-    return ds_dphi+dfion_dphi+dfp_dphi
+    return ds_dphi+dfion_dphi+dfp_dphi + 4*np.pi*phiM/3 #d1f0
 
 #####################SECOND DERIVATIVE FREE ENERGIES 2 VERSIONS#############################
-def d2_FGauss_Y(Y,phiM,phiS,x = None, dx = None, ddx = None):
+def d2_Frg_Y(Y,phiM,phiS,x = None, dx = None, ddx = None):
     x = x_solver(phiM, Y) if x == None else x
     dx = d1_x_solver(phiM, Y) if dx == None else dx
     ddx = d2_x_solver(phiM, Y) if ddx == None else ddx
@@ -455,6 +452,9 @@ def d2_FGauss_Y(Y,phiM,phiS,x = None, dx = None, ddx = None):
 
     d2fion = (-1/(4*np.pi))*(k*(k*(k+1)*ddk + (k+2)*dk*dk))/((k+1)*(k+1))
 
+    #d2f0
+    d2f0 = 4*np.pi/3
+
     #################Electrofreeenergyd2###########
     #oldversion
     def d2_FP_toint(k, Y, phiM):
@@ -467,122 +467,133 @@ def d2_FGauss_Y(Y,phiM,phiS,x = None, dx = None, ddx = None):
         c = ck(k, x, sigs=sigShift_ck)
         d1c = d1_ck(k, x, sigs=sigShift_ck)
         d2c = d2_ck(k, x, sigs=sigShift_ck)
-        ionConst = k * k * Y / (4 * np.pi) + phiS + qc * phiM
-        v2 = (4 * np.pi / 3) * np.exp(-1* k * k / 6)
-        D2BIG = g * d2xe * dx * dx + g * d1xe * ddx + 2 * d1xe * d1g * dx * dx + xe * d2g * dx * dx + xe * d1g * ddx - 2 * c * d2c * dx * dx - 2 * c * d1c * ddx - 2 * d1c * d1c * dx * dx
-        secondOrder = xe * g - c * c
 
-        Num1 = (-2 * qc * v2 * phiM * phiM * (g * d1xe * dx + xe * d1g * dx - 2 * c * d1c * dx) / (
-                    ionConst * ionConst) + 4 * v2 * phiM * (
-                            g * d1xe * dx + xe * d1g * dx - 2 * c * d1c * dx) / ionConst + 2 * d1xe * dx / ionConst + phiM * (
-                            d2xe * dx * dx / ionConst + d1xe * ddx / ionConst - 2 * qc * d1xe * dx / (
-                                ionConst * ionConst) + 2 * qc * qc * xe / (ionConst * ionConst * ionConst) + v2 * (
-                                        d2g * dx * dx + d1g * ddx)) + v2 * phiM * phiM * (
-                    D2BIG) / ionConst + 2 * qc * qc * v2 * phiM * phiM * (secondOrder) / (
-                            ionConst * ionConst * ionConst) - 4 * qc * v2 * phiM * (secondOrder) / (
-                            ionConst * ionConst) + 2 * v2 * secondOrder / ionConst - 2 * qc * xe / (
-                            ionConst * ionConst) + 2 * v2 * d1g * dx)
-        Den = (v2 * phiM * phiM * secondOrder / ionConst + phiM * (xe / ionConst + v2 * g) + 1)
-        Num2 = (v2 * phiM * phiM * (g * d1xe * dx + xe * d1g * dx - 2 * c * d1c * dx) / ionConst + phiM * (
-                    d1xe * dx / ionConst - qc * xe / (
-                        ionConst * ionConst) + v2 * d1g * dx) - qc * v2 * phiM * phiM * secondOrder / (
-                            ionConst * ionConst) + 2 * v2 * phiM * secondOrder / ionConst + xe / ionConst + v2 * g)
-        return k*k* (Num1 / Den - (Num2 * Num2) / (Den * Den))
+        rho = k * k * Y / (4 * np.pi) + phiS + qc * phiM
+        dx2, qc2, phi2, rho2 = dx * dx, qc * qc, phiM * phiM, rho * rho
 
-    def d2_fp_toint(k,Y,phiM):
-        xe = xee(k, x, sigS=sigShift_xe)
-        d1xe = d1_xee(k, x, sigS=sigShift_xe)*dx
-        d2xe = d2_xee(k, x, sigS=sigShift_xe)*dx*dx + d1_xee(k,x,sigShift_xe)*ddx
-        g = gk(k, x)
-        d1g = d1_gk(k, x)*dx
-        d2g = d2_gk(k, x)*dx*dx + d1_gk(k,x)*ddx
-        c = ck(k, x, sigs=sigShift_ck)
-        d1c = d1_ck(k, x, sigs=sigShift_ck)*dx
-        d2c = d2_ck(k, x, sigs=sigShift_ck)*dx*dx + d1_ck(k,x,sigShift_ck)*ddx
+        v2 = (4 * np.pi / 3) * np.exp(-1 * k * k / 6)
+        D2BIG = g * d2xe * dx2 + g * d1xe * ddx + 2 * d1xe * d1g * dx2 + xe * d2g * dx2 + xe * d1g * ddx - 2 * c * d2c * dx2 - 2 * c * d1c * ddx - 2 * d1c * d1c * dx2
+        D = xe * g - c * c
+        DD = g * d1xe * dx + xe * d1g * dx - 2 * c * d1c * dx
 
-        D = k*k*Y/(4*np.pi) + phiS + qc*phiM
-        v = (4*np.pi/3)*np.exp(-1*k*k/6)
-        d12 = g*d1xe + xe*d1g - 2*c*d1c
-        r12 = xe*g - c*c
+        Num1 = (-2 * qc * v2 * phi2 * (DD) / (
+            rho2) + 4 * v2 * phiM * (
+                    DD) / rho + 2 * d1xe * dx / rho + phiM * (
+                        d2xe * dx2 / rho + d1xe * ddx / rho - 2 * qc * d1xe * dx / (
+                    rho2) + 2 * qc2 * xe / (rho * rho2) + v2 * (
+                                d2g * dx2 + d1g * ddx)) + v2 * phi2 * (
+                    D2BIG) / rho + 2 * qc2 * v2 * phi2 * (D) / (
+                        rho * rho2) - 4 * qc * v2 * phiM * (D) / (
+                    rho2) + 2 * v2 * D / rho - 2 * qc * xe / (
+                    rho2) + 2 * v2 * d1g * dx)
 
-        N1 = -2*qc*v*phiM*phiM*(d12)/D/D
-        N2 = 4*v*phiM*(d12)/D + 2*d1xe/D
-        N3 = phiM*(d2xe/D - 2*qc*d1xe/D/D + 2*qc*qc*xe/D/D/D + v*d2g)
-        N4 = v*phiM*phiM*(g*d2xe + 2*d1xe*d1g + xe*d2g - 2*c*d2c - 2*d1c*d1c)/D
-        N5 = 2*qc*qc*v*phiM*(r12)/D/D/D - 4*qc*v*phiM*r12/D/D
-        N6 = 2*v*r12/D - 2*qc*xe/D/D + 2*v*d1g
-        DD = v*phiM*phiM*r12/D + phiM*(xe/D + v*g) + 1
-        T1 = (N1+N2+N3+N4+N5+N6)/DD
+        Den = (v2 * phi2 * D / rho + phiM * (xe / rho + v2 * g) + 1)
 
-        M1 = v*phiM*phiM*d12/D + phiM*(xe/D - qc*xe/D/D + v*d1g) - qc*phiM*phiM*r12/D/D + 2*v*phiM*r12/D + xe/D + v*g
-        T2 = M1*M1/(DD*DD)
-        return (T1 - T2)
+        Num2 = (v2 * phi2 * (DD) / rho + phiM * (
+                d1xe * dx / rho - qc * xe / (
+            rho2) + v2 * d1g * dx) - qc * v2 * phi2 * D / (
+                    rho2) + 2 * v2 * phiM * D / rho + xe / rho + v2 * g)
+        return k * k * (Num1 / Den - (Num2 * Num2) / (Den * Den))
 
-    upperlim = np.inf
-    lowerlim = 0
-    result = integrate.quad(d2_fp_toint, lowerlim, upperlim, args=(Y, phiM,), limit=iterlim)
-
-    d2fp = result[0] / (4 * np.pi * np.pi)
-    print(d2s,d2fp,d2fion, Y)
-    return (d2s + d2fp + d2fion)
-def d2_Fgauss_phiM(phiM,Y,phiS,x=None,dx=None,ddx=None):
-    x = x_solver(phiM,Y) if x ==None else x
-    dx = d1_x_solver(phiM,Y) if dx ==None else dx
-    ddx = d2_x_solver(phiM,Y) if ddx ==None else ddx
-
-    d2s =0
-    #################Entropyd2##########
-    if phiM!=0:
-        if phiM != (phiS-1)/(-1*qc -1):
-            d2s = 1/(N*phiM)+ qc/phiM + ((-qc-1)**2)/(-1*qc*phiM-phiS-phiM + 1)
-        elif phiM == (phiS-1)/(-1*qc -1):
-            d2s = qc/phiM + 1/(N*phiM)
-    else: d2s = (-1*qc -1)**2/(-1*phiS +1)
-
-    d2fion_pt1num = qc * qc * Y * (np.sqrt(Y / (qc * phiM + phiS)) + 4 * np.sqrt(np.pi))
-    d2fion_pt1den = 8 * np.sqrt(np.pi) * (qc * phiM + phiS) * (
-                2 * np.sqrt(np.pi) * np.sqrt(Y * (qc * phiM + phiS)) + Y) ** 2
-    d2fion_pt2 = (-1 * qc * qc) / (8 * np.sqrt(np.pi) * np.sqrt(Y) * (qc * phiM + phiS) ** (3 / 2))
-    d2fion = d2fion_pt1num / d2fion_pt1den + d2fion_pt2
-    #################Electrofreeenergyd2###########
-
-    def d2_FP_toint(k, Y, phiM):
-        xe = xee(k, x, sigS=sigShift_xe)
-        d1xe = d1_xee(k, x, sigS=sigShift_xe)
-        d2xe = d2_xee(k,x,sigS=sigShift_xe)
-        g = gk(k, x)
-        d1g = d1_gk(k, x)
-        d2g = d2_gk(k,x)
-        c = ck(k, x, sigs=sigShift_ck)
-        d1c = d1_ck(k, x, sigs=sigShift_ck)
-        d2c = d2_ck(k,x,sigs=sigShift_ck)
-        ionConst = k * k * Y / (4 * np.pi) + phiS + qc * phiM
-        v2 = (4 * np.pi / 3) * np.exp(-k * k / 6)
-        D2BIG = g*d2xe*dx*dx + g*d1xe*ddx + 2*d1xe*d1g*dx*dx + xe*d2g*dx*dx + xe*d1g*ddx - 2*c*d2c*dx*dx - 2*c*d1c*ddx - 2*d1c*d1c*dx*dx
-        secondOrder = xe*g-c*c
-        Num1 = (-2*qc*v2*phiM*phiM*(g*d1xe*dx+ xe*d1g*dx - 2*c*d1c*dx)/(ionConst*ionConst) + 4*v2*phiM*(g*d1xe*dx + xe*d1g*dx - 2*c*d1c*dx)/ionConst + 2*d1xe*dx/ionConst + phiM*(d2xe*dx*dx/ionConst + d1xe*ddx/ionConst -2*qc*d1xe*dx/(ionConst*ionConst)+2*qc*qc*xe/(ionConst*ionConst*ionConst)+v2*(d2g*dx*dx+d1g*ddx))+ v2*phiM*phiM*(D2BIG)/ionConst + 2*qc*qc*v2*phiM*phiM*(secondOrder)/(ionConst*ionConst*ionConst) - 4*qc*v2*phiM*(secondOrder)/(ionConst*ionConst) + 2*v2*secondOrder/ionConst - 2*qc*xe/(ionConst*ionConst)+ 2*v2*d1g*dx)
-        Den = (v2*phiM*phiM*secondOrder/ionConst + phiM*(xe/ionConst+ v2*g) +1)
-        Num2 = (v2*phiM*phiM*(g*d1xe*dx + xe*d1g*dx - 2*c*d1c*dx)/ionConst + phiM*(d1xe*dx/ionConst - qc*xe/(ionConst*ionConst) +v2*d1g*dx) - qc*v2*phiM*phiM*secondOrder/(ionConst*ionConst) + 2*v2*phiM*secondOrder/ionConst + xe/ionConst + v2*g)
-        return (Num1/Den - Num2*Num2/(Den*Den))*k*k
     upperlim = np.inf
     lowerlim = 0
     result = integrate.quad(d2_FP_toint, lowerlim, upperlim, args=(Y, phiM,), limit=iterlim)
-    d2fp= result[0] / (4 * np.pi * np.pi)
-    return np.sqrt((d2s + d2fp + d2fion) ** 2)
 
+    d2fp = result[0] / (4 * np.pi * np.pi)
+    #print(d2s+d2f0,d2fp,d2fion, Y)
+    return (d2s + d2fp + d2fion +d2f0)
+def d2_Frg_phiM(phiM,Y,phiS,x=None,dx=None,ddx=None):
+    x = x_solver(phiM, Y) if x == None else x
+    dx = d1_x_solver(phiM, Y) if dx == None else dx
+    ddx = d2_x_solver(phiM, Y) if ddx == None else ddx
 
-def getSpinodal(phiMs):
+    d2s = 0
+    #################Entropyd2##########
+    if phiM != 0:
+        if phiM != (phiS - 1) / (-1 * qc - 1):
+            d2s = 1 / (N * phiM) + qc / phiM + ((-qc - 1) ** 2) / (-1 * qc * phiM - phiS - phiM + 1)
+        elif phiM == (phiS - 1) / (-1 * qc - 1):
+            d2s = qc / phiM + 1 / (N * phiM)
+    else:
+        d2s = (-1 * qc - 1) ** 2 / (-1 * phiS + 1)
+
+    #####d2Fion#################
+    c = 4 * np.pi / Y
+    rho = qc * phiM + phiS
+
+    k = np.sqrt((c) * (rho))
+    dk = (qc / 2) * np.sqrt(c / rho)
+    ddk = (-1 * qc * qc / 4) * np.sqrt(c / (rho * rho * rho))
+
+    d2fion = (-1 / (4 * np.pi)) * (k * (k * (k + 1) * ddk + (k + 2) * dk * dk)) / ((k + 1) * (k + 1))
+
+    # d2f0
+    d2f0 = 4 * np.pi / 3
+
+    #################Electrofreeenergyd2###########
+    # oldversion
+    def d2_FP_toint(k, Y, phiM):
+        xe = xee(k, x, sigS=sigShift_xe)
+        d1xe = d1_xee(k, x, sigS=sigShift_xe)
+        d2xe = d2_xee(k, x, sigS=sigShift_xe)
+        g = gk(k, x)
+        d1g = d1_gk(k, x)
+        d2g = d2_gk(k, x)
+        c = ck(k, x, sigs=sigShift_ck)
+        d1c = d1_ck(k, x, sigs=sigShift_ck)
+        d2c = d2_ck(k, x, sigs=sigShift_ck)
+
+        rho = k * k * Y / (4 * np.pi) + phiS + qc * phiM
+        dx2,qc2,phi2,rho2 = dx*dx, qc*qc, phiM*phiM,rho*rho
+
+        v2 = (4 * np.pi / 3) * np.exp(-1 * k * k / 6)
+        D2BIG = g * d2xe * dx2 + g * d1xe * ddx + 2 * d1xe * d1g * dx2 + xe * d2g * dx2 + xe * d1g * ddx - 2 * c * d2c * dx2 - 2 * c * d1c * ddx - 2 * d1c * d1c * dx2
+        D = xe * g - c * c
+        DD =g * d1xe * dx + xe * d1g * dx - 2 * c * d1c * dx
+
+        Num1 = (-2 * qc * v2 * phi2 * (DD) / (
+                rho2) + 4 * v2 * phiM * (
+                        DD) / rho + 2 * d1xe * dx / rho + phiM * (
+                        d2xe * dx2 / rho + d1xe * ddx / rho - 2 * qc * d1xe * dx / (
+                        rho2) + 2 * qc2 * xe / (rho * rho2) + v2 * (
+                                d2g * dx2 + d1g * ddx)) + v2 * phi2 * (
+                    D2BIG) / rho + 2 * qc2 * v2 * phi2 * (D) / (
+                        rho * rho2) - 4 * qc * v2 * phiM * (D) / (
+                        rho2) + 2 * v2 * D / rho - 2 * qc * xe / (
+                        rho2) + 2 * v2 * d1g * dx)
+
+        Den = (v2 * phi2 * D / rho + phiM * (xe / rho + v2 * g) + 1)
+
+        Num2 = (v2 * phi2 * (DD) / rho + phiM * (
+                d1xe * dx / rho - qc * xe / (
+                rho2) + v2 * d1g * dx) - qc * v2 * phi2 * D / (
+                        rho2) + 2 * v2 * phiM * D / rho + xe / rho + v2 * g)
+        return k * k * (Num1 / Den - (Num2 * Num2) / (Den * Den))
+
+    upperlim = np.inf
+    lowerlim = 0
+    result = integrate.quad(d2_FP_toint, lowerlim, upperlim, args=(Y, phiM,), limit=iterlim)
+
+    d2fp = result[0] / (4 * np.pi * np.pi)
+    print(d2s + d2f0, d2fp, d2fion, Y)
+    return (d2s + d2fp + d2fion + d2f0)
+
+##########################################################################
+#######SOLVER METHODS BELOW###############################################
+##########################################################################
+
+def getSpinodalrg(phiMs):
     Ys=[]
     for j in range(len(phiMs)):
         i = phiMs[j]
-        y = root_scalar(d2_FGauss_Y, args=(i, phiS,), x0=.5, bracket=[1e-3, .99])
-        print(i,y.root)
-        Ys.append(y.root)
+        y = brenth(d2_Frg_Y, .01, 10, args=(i, phiS,))
+        print('phi', i, 'l/lb', y)
+        Ys.append(y)
     return Ys
 def spin_yfromphi(phiM,phiS,guess):
     guess1 = guess
     #y = fsolve(d2_FGauss_Y, args=(phiM, phiS,), x0=guess1)
-    y = brenth(d2_FGauss_Y,.01, 10, args=(phiM,phiS,))
+    y = brenth(d2_Frg_Y, .01, 10, args=(phiM, phiS,))
     print('phi', phiM, 'l/lb', y)
     return -1*y
 def findCrit(phiS,guess):
@@ -599,21 +610,20 @@ def findCrit(phiS,guess):
     #phiC = Yc
     return phiC, -1*Yc.fun
     #return phiC, Yc
-phiC,Yc = findCrit(phiS, guess=.02)
-print(phiC,Yc)
-
+# phiC,Yc = findCrit(phiS, guess=.019875) #IP5 ph5.5  Yc = .2494158
+# print(phiC,Yc)
 def findSpinlow(Y,phiC):
     initial = phiC/2
     bounds = [(epsilon, phiC-epsilon)]
     #result = minimize(FreeEnergyD2reverse, initial, args=(Y,phiS,),method='Powell',bounds=bounds)
-    result = minimize(d2_Fgauss_phiM, initial, args=(Y, phiS,), method='Powell', bounds=bounds)
+    result = minimize(d2_Frg_phiM, initial, args=(Y, phiS,), method='Powell', bounds=bounds)
     #result = fsolve(FreeEnergyD2reverse, x0=initial, args=(Y,phiS))
     return result.x
 def findSpinhigh(Y,phiC):
     initial = phiC+ phiC/2
     bounds = [(phiC+epsilon, 1-epsilon)]
     #result = minimize(FreeEnergyD2reverse, initial, args=(Y,phiS),method='Powell',bounds=bounds)
-    result = minimize(d2_Fgauss_phiM, initial, args=(Y, phiS), method='Nelder-Mead', bounds=bounds)
+    result = minimize(d2_Frg_phiM, initial, args=(Y, phiS), method='Nelder-Mead', bounds=bounds)
 
     #result = fsolve(FreeEnergyD2reverse, x0=initial, args=(Y,phiS))
     return result.x
@@ -624,9 +634,9 @@ def FBINODAL(variables,Y,phiBulk):
 
 
     #eqn = v * ftot(phi1,Y,phiS) + (1-v)*ftot(phi2,Y,phiS)
-    eqn = v * ftot_gaussIons(phi1, Y, phiS) + (1 - v) * ftot_gaussIons(phi2, Y, phiS)
+    eqn = v * ftot_rg(phi1, Y, phiS) + (1 - v) * ftot_rg(phi2, Y, phiS)
     #return eqn
-    return T0*(eqn - ftot_gaussIons(phiBulk,Y,phiS))
+    return T0*(eqn - ftot_rg(phiBulk, Y, phiS))
 def getInitialVsolved(Y,spinlow,spinhigh,phiBulk):
     bounds = [(epsilon,spinlow-epsilon),(spinhigh+epsilon, 1-epsilon)]
     initial_guess=(spinlow*.899, spinhigh*1.101)
@@ -636,7 +646,7 @@ def getInitialVsolved(Y,spinlow,spinhigh,phiBulk):
     return phi1i,phi2i
 def makeconstSLS(Y,phiBulk):
     def seperated(variables):
-        return FBINODAL(variables, Y, phiBulk) - ftot_gaussIons(phiC, Y, phiS)
+        return FBINODAL(variables, Y, phiBulk) - ftot_rg(phiC, Y, phiS)
     return [{'type': 'ineq', 'fun': seperated}]
 def minFtotal(Y,phiC,lastphi1,lastphi2):
 
@@ -676,10 +686,10 @@ def Jac_fgRPA(vars,Y,phiB):
     phi2=vars[1]
     v = (phi2-phiB)/(phi2-phi1)
 
-    f1 = ftot_gaussIons(phi1,Y,phiS)
-    f2 = ftot_gaussIons(phi2,Y,phiS)
-    df1 = d1ftotGauss_dphi(phi1,Y,phiS)
-    df2 = d1ftotGauss_dphi(phi2,Y,phiS)
+    f1 = ftot_rg(phi1, Y, phiS)
+    f2 = ftot_rg(phi2, Y, phiS)
+    df1 = d1_Frg_dphi(phi1, Y, phiS)
+    df2 = d1_Frg_dphi(phi2, Y, phiS)
 
     J = np.empty(2)
     J[0] = v*( (f1-f2)/(phi2-phi1) + df1 )
