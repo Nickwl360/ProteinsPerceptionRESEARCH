@@ -10,7 +10,7 @@ from scipy.optimize import brenth, brent
 
 ########################ConstANTS################################
 T0=1e5
-iterlim=200
+iterlim=250
 
 def getSigShifts(qs):
     sigSij = []
@@ -138,7 +138,7 @@ def d2_ck_r(k,x,sigs):
 ############SOLVING FOR X #####################################################
 def x_solver(phiM,Y):
     #print(x_eqn(1/(N*1000),phiM,Y),'lowbound', x_eqn(100*N,phiM,Y), 'upper')
-    sln = brenth(x_eqn, 1/100/N, 1000*N, args=(phiM,Y))
+    sln = brenth(x_eqn, 1/1000/N, 1000*N, args=(phiM,Y))
     #sln = fsolve(x_eqn,np.array([.5]),args=(phiM,Y,))
     #sln = root_scalar(x_eqn,x0=.5, args=(phiM,Y,))
     #bounds=[(0,1)]
@@ -146,6 +146,8 @@ def x_solver(phiM,Y):
     return sln
 def x_eqn(x,phiM,Y):
     eqn = 1 - 1/x - (N/(18*(N-1))) * integrate.quad(x_eqn_toint,epsilon,np.inf,args=(phiM,Y,x),limit=iterlim)[0]
+    if eqn == 'NaN':
+        eqn = 0
     return T0*eqn
     #return np.sqrt(eqn*eqn)
 def x_eqn_toint(k,phiM,Y,x):
@@ -211,7 +213,6 @@ def d1_x_eqn_I2int(k,phiM,Y,x):
 
     return k*k*k*k*((a0*c0 - d0*f0)/(c0*c0))*(1/(2*np.pi*np.pi))
 
-#####MY VERSION
 #d2
 def d2_x_solver(phiM,Y,x=None,dx=None):
     x=x_solver(phiM,Y) if x==None else x
@@ -371,7 +372,7 @@ def d2_x_eqn_Aint(k,phiM,Y,x,dx):
 
 #################FREE ENERGIES#####################################
 def ftot_rg(phiM, Y, phiS):
-    return entropy(phiM, phiS) + fion(phiM, Y, phiS) + rgFP(phiM, Y, phiS) + 2*np.pi*phiM*phiM/3 ##f0 term
+    return entropy(phiM, phiS) + fion(phiM, Y, phiS) + rgFP(phiM, Y, phiS) + 2*np.pi*phiM*phiM/3  ##f0 term
 def rgFP(phiM, Y, phiS,x=None):
     x = x_solver(phiM, Y) if x==None else x
 
@@ -544,30 +545,30 @@ def d2_Frg_phiM(phiM,Y,phiS,x=None,dx=None,ddx=None):
         d2c = d2_ck(k, x, sigs=sigShift_ck)
 
         rho = k * k * Y / (4 * np.pi) + phiS + qc * phiM
-        dx2,qc2,phi2,rho2 = dx*dx, qc*qc, phiM*phiM,rho*rho
+        dx2, qc2, phi2, rho2 = dx * dx, qc * qc, phiM * phiM, rho * rho
 
         v2 = (4 * np.pi / 3) * np.exp(-1 * k * k / 6)
         D2BIG = g * d2xe * dx2 + g * d1xe * ddx + 2 * d1xe * d1g * dx2 + xe * d2g * dx2 + xe * d1g * ddx - 2 * c * d2c * dx2 - 2 * c * d1c * ddx - 2 * d1c * d1c * dx2
         D = xe * g - c * c
-        DD =g * d1xe * dx + xe * d1g * dx - 2 * c * d1c * dx
+        DD = g * d1xe * dx + xe * d1g * dx - 2 * c * d1c * dx
 
         Num1 = (-2 * qc * v2 * phi2 * (DD) / (
-                rho2) + 4 * v2 * phiM * (
-                        DD) / rho + 2 * d1xe * dx / rho + phiM * (
+            rho2) + 4 * v2 * phiM * (
+                    DD) / rho + 2 * d1xe * dx / rho + phiM * (
                         d2xe * dx2 / rho + d1xe * ddx / rho - 2 * qc * d1xe * dx / (
-                        rho2) + 2 * qc2 * xe / (rho * rho2) + v2 * (
+                    rho2) + 2 * qc2 * xe / (rho * rho2) + v2 * (
                                 d2g * dx2 + d1g * ddx)) + v2 * phi2 * (
                     D2BIG) / rho + 2 * qc2 * v2 * phi2 * (D) / (
                         rho * rho2) - 4 * qc * v2 * phiM * (D) / (
-                        rho2) + 2 * v2 * D / rho - 2 * qc * xe / (
-                        rho2) + 2 * v2 * d1g * dx)
+                    rho2) + 2 * v2 * D / rho - 2 * qc * xe / (
+                    rho2) + 2 * v2 * d1g * dx)
 
         Den = (v2 * phi2 * D / rho + phiM * (xe / rho + v2 * g) + 1)
 
         Num2 = (v2 * phi2 * (DD) / rho + phiM * (
                 d1xe * dx / rho - qc * xe / (
-                rho2) + v2 * d1g * dx) - qc * v2 * phi2 * D / (
-                        rho2) + 2 * v2 * phiM * D / rho + xe / rho + v2 * g)
+            rho2) + v2 * d1g * dx) - qc * v2 * phi2 * D / (
+                    rho2) + 2 * v2 * phiM * D / rho + xe / rho + v2 * g)
         return k * k * (Num1 / Den - (Num2 * Num2) / (Den * Den))
 
     upperlim = np.inf
@@ -575,7 +576,7 @@ def d2_Frg_phiM(phiM,Y,phiS,x=None,dx=None,ddx=None):
     result = integrate.quad(d2_FP_toint, lowerlim, upperlim, args=(Y, phiM,), limit=iterlim)
 
     d2fp = result[0] / (4 * np.pi * np.pi)
-    print(d2s + d2f0, d2fp, d2fion, Y)
+    # print(d2s+d2f0,d2fp,d2fion, Y)
     return (d2s + d2fp + d2fion + d2f0)
 
 ##########################################################################
@@ -610,8 +611,8 @@ def findCrit(phiS,guess):
     #phiC = Yc
     return phiC, -1*Yc.fun
     #return phiC, Yc
-# phiC,Yc = findCrit(phiS, guess=.019875) #IP5 ph5.5  Yc = .2494158
-# print(phiC,Yc)
+phiC,Yc = findCrit(phiS, guess=.019875) #IP5 ph5.5  Yc = .2494158
+print(phiC,Yc)
 def findSpinlow(Y,phiC):
     initial = phiC/2
     bounds = [(epsilon, phiC-epsilon)]
@@ -632,8 +633,6 @@ def FBINODAL(variables,Y,phiBulk):
     phi1,phi2 = variables
     v = (phi2-phiBulk)/(phi2-phi1)
 
-
-    #eqn = v * ftot(phi1,Y,phiS) + (1-v)*ftot(phi2,Y,phiS)
     eqn = v * ftot_rg(phi1, Y, phiS) + (1 - v) * ftot_rg(phi2, Y, phiS)
     #return eqn
     return T0*(eqn - ftot_rg(phiBulk, Y, phiS))
@@ -656,8 +655,8 @@ def minFtotal(Y,phiC,lastphi1,lastphi2):
     print(phi1spin, phi2spin, 'SPINS LEFT/RIGHT')
     phiB = (phi1spin+phi2spin)/2
 
-    phi1i, phi2i = getInitialVsolved(Y, phi1spin, phi2spin,phiB)
-    initial_guess=(phi1i,phi2i)
+    #phi1i, phi2i = getInitialVsolved(Y, phi1spin, phi2spin,phiB)
+    initial_guess=(phi1spin/2,phi2spin*1.5)
     #initial_guess=(phi1spin*.9,phi2spin*1.1)
     #initial_guess=(phi1spin*.899,phi2spin*1.301)
     #phi2Max = (1-2*phiS)/(1+qc)#########FROM LIN CODE GITHUB ????
