@@ -4,16 +4,16 @@ from matplotlib import pyplot as plt
 from rgRPA_init import phiS, scale_init,epsilon,qc,N,scale_final
 
 if __name__ == "__main__":
-    minY = Yc*.98
+    minY = Yc*.4
     print('looping from ', Yc, 'to ', minY)
 
-    phis,chis = getBinodal(Yc, phiC, minY)
-    phiMs = np.linspace(1e-3, .15, 40)
-    Ys = getSpinodalrg(phiMs)
+    spins, phis,Ys = getBinodal(Yc, phiC, minY)
+    #phiMs = np.linspace(1e-3, .15, 45)
+    #YsSpin = getSpinodalrg(phiMs)
 
     ###################PLOTTING########################
-    plt.plot(phis, chis, label='Binodal')
-    plt.plot(phiMs,Ys,label='Spinodal')
+    plt.plot(phis, Ys, label='Binodal')
+    plt.plot(spins,Ys,label='Spinodal')
     plt.xlim((0,1))
 
     plt.legend()

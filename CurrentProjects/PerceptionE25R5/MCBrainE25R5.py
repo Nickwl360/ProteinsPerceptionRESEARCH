@@ -58,9 +58,12 @@ def CalcPEndState(params, ns, prog_path):
     halpha, ha, hbeta,hb,hgamma,hc,hdelta,hd, kcoop,kcomp,kdu,kud, kx = params
     ctx = cl.create_some_context()
     queue = cl.CommandQueue(ctx)
+    platform = cl.get_platforms()
+    device = platform.get_devices()
     with open(prog_path, "r") as f:
         program_source = f.read()
     program = cl.Program(ctx, program_source).build()
+
     NextPmnop = np.zeros(((MAXTOP*MAXTOP*MAXBOT*MAXBOT)),dtype=np.float64)
     Pmnop_buf = cl.Buffer(ctx, cl.mem_flags.WRITE_ONLY, NextPmnop.nbytes)
     global_size = ((MAXTOP*MAXTOP*MAXBOT*MAXBOT),)

@@ -26,8 +26,8 @@ def pH_qs(seq, ph):
 ###########CONSTANTS##########################
 phiS = .0
 ph = 5.5
-scale_init= .001
-scale_final= .02
+scale_init= .0005
+scale_final= .01
 epsilon = 1e-15
 
 #################PICK SEQUENCE/GET RELEVANTQUANTITIES###################################################
@@ -36,8 +36,8 @@ ddx4n1 = 'MGDEDWEAEINPHMSSYVPIFEKDRYSGENGDNFNRTPASSSEMDDGPSRRDHFMKSGFASGRNFGNRDA
 ddx4n1CS = 'MGDRDWRAEINPHMSSYVPIFEKDRYSGENGRNFNDTPASSSEMRDGPSERDHFMKSGFASGDNFGNRDAGKCNERDNTSTMGGFGVGKSFGNEGFSNSRFERGDSSGFWRESSNDCRDNPTRNDGFSDRGGYEKGNNSEASGPYERGGRGSFDGCRGGFGLGSPNNRLDPRECMQRTGGLFGSDRPVLSGTGNGDTSQSRSGSGSERGGYKGLNEKVITGSGENSWKSEARGGES'
 IP5 = 'HAQGTFTSDKSKYLDERAAQDFVQWLLDGGPSSGAPPPS'
 seq_of_interest = IP5
-qs = pH_qs(seq_of_interest,ph)
-#qs = getcharges(seq_of_interest) #regular way
+#qs = pH_qs(seq_of_interest,ph)
+qs = getcharges(seq_of_interest) #regular way
 N = len(qs)
 qc = abs(sum(qs))/N
 
