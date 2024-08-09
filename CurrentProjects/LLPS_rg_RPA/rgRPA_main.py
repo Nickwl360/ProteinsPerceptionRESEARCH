@@ -4,7 +4,8 @@ from matplotlib import pyplot as plt
 from rgRPA_init import phiS, scale_init,epsilon,qc,N,scale_final
 
 if __name__ == "__main__":
-    minY = Yc*.4
+    minY = Yc*.75
+
     print('looping from ', Yc, 'to ', minY)
 
     spins, phis,Ys = getBinodal(Yc, phiC, minY)
