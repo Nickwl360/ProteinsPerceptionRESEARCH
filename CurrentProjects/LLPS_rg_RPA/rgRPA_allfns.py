@@ -11,7 +11,7 @@ import math
 import time
 
 ########################ConstANTS################################
-T0=100
+T0=1e9
 iterlim=200
 qL = np.array(qs)
 Q = np.sum(qL*qL)/N
@@ -524,7 +524,7 @@ def findSpins(Y,phiC):
 
 def FBINODAL(variables,Y,phiBulk):
     phi1,phi2 = variables
-    print('testing phi1,phi2: ' ,phi1, phi2)
+    print('testing phi1,phi2: ' ,phi1, phi2, 'Y= ', Y )
     if math.isnan(phi1) or math.isnan(phi2): return 1e20
     v = (phi2-phiBulk)/(phi2-phi1)
     eqn = v * ftot_rg(phi1, Y, phiS) + (1 - v) * ftot_rg(phi2, Y, phiS)
@@ -532,8 +532,8 @@ def FBINODAL(variables,Y,phiBulk):
     return T0*(eqn - ftot_rg(phiBulk, Y, phiS))
 def getInitialVsolved(Y,spinlow,spinhigh,phiBulk):
     bounds = [(epsilon,spinlow-epsilon),(spinhigh+epsilon, 1-epsilon)]
-    initial_guess=(spinlow*.899, spinhigh*1.101)
-    result = minimize(FBINODAL, initial_guess, args=(Y, phiBulk), method='Nelder-Mead', bounds=bounds)
+    initial_guess=(spinlow*.9, spinhigh*1.10)
+    result = minimize(FBINODAL, initial_guess, args=(Y, phiBulk), method='Nelder-Mead', bounds=bounds)#, options = {'fatol': 1e-3, 'xatol': 1e-3})
     #result = minimize(totalFreeEnergyVsolved, initial_guess,args=(Y,),method='Powell',bounds=bounds)
     phi1i,phi2i= result.x
     return phi1i,phi2i
@@ -562,9 +562,11 @@ def minFtotal(Y,phiC,lastphi1,lastphi2):
     assert np.isfinite(phi2spin), "phi2spin is not a finite number"
 
     #phi1i, phi2i = getInitialVsolved(Y, phi1spin, phi2spin,phiB)
-    #if lastphi1==phiC:
-    initial_guess=(np.float64(phi1spin*.9),np.float64(phi2spin*1.1))
-    #else: initial_guess=(lastphi1*.95, lastphi2*1.05)
+    #initial_guess=(np.float64(phi1spin*.9),np.float64(phi2spin*1.1))
+    initial_guess=(np.float64(lastphi1*.8),np.float64(lastphi2*1.2))
+
+    #initial_guess=(np.float64(phi1i),np.float64(phi2i))
+
     #initial_guess=(phi1spin*.9,phi2spin*1.1)
     #initial_guess=(phi1spin*.899,phi2spin*1.301)
     #phi2Max = (1-2*phiS)/(1+qc)#########FROM LIN CODE GITHUB ????
@@ -572,10 +574,11 @@ def minFtotal(Y,phiC,lastphi1,lastphi2):
     const = makeconstSLS(Y,phiB, phi1spin,phi2spin)
     #phiMax = (1-2*phiS)/(1 + qc) - epsilon
     #bounds = [(epsilon, phi1spin - epsilon), (phi2spin+epsilon, 1-epsilon)]
-    bounds = [(epsilon, phi1spin - epsilon), (phi2spin+epsilon, min(phi2spin*3, 1-epsilon))]
+    phi2Max = (1 - 2 * phiS) / (1 + qc)
+    bounds = [(epsilon, phi1spin - epsilon), (phi2spin+epsilon,  phi2Max-epsilon)]
 
-    maxL = minimize(FBINODAL, initial_guess, args=(Y, phiB), method='SLSQP', jac=Jac_fgRPA , bounds=bounds, constraints= const, options={'ftol':1e-15, 'gtol':1e-15, 'eps':1e-7})
-    #maxL = minimize(FBINODAL, initial_guess, args=(Y, phiB), method='L-BFGS-B', jac=Jac_fgRPA , bounds=bounds, options={'ftol':1e-20, 'gtol':1e-20, 'eps':1e-20})
+    #maxL = minimize(FBINODAL, initial_guess, args=(Y, phiB), method='SLSQP', jac=Jac_fgRPA , bounds=bounds,  options={'ftol':1e-20, 'gtol':1e-20})#, 'eps':1e-20})
+    maxL = minimize(FBINODAL, initial_guess, args=(Y, phiB), method='L-BFGS-B', jac=Jac_fgRPA , bounds=bounds, options={'ftol':1e-20, 'gtol':1e-20})#, 'eps':1e-20})
 
     #maxL = minimize(FBINODAL, initial_guess, args=(Y,phiB), method='SLSQP', constraints=const,bounds=bounds)
     #maxparams = maxL.x
@@ -625,7 +628,8 @@ def getBinodal(Yc,phiC,minY):
         spin1,spin2, phi1,phi2 = minFtotal(Ytest, phiC, phiLlast, phiDlast)
         print(spin1,spin2, 'these were spins')
 
-        if phi1<phiLlast and phi2>phiDlast:
+        #if phi1<phiLlast and phi2>phiDlast:
+        if True:
             phi1=np.array([phi1])
             phi2=np.array([phi2])
             spin1 = np.array([spin1])

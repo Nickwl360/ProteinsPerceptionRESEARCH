@@ -26,8 +26,8 @@ def pH_qs(seq, ph):
 ###########CONSTANTS##########################
 phiS = .0
 ph = 5.5
-scale_init= .0005
-scale_final= .01
+scale_init= .001
+scale_final= .005
 epsilon = 1e-15
 
 #################PICK SEQUENCE/GET RELEVANTQUANTITIES###################################################

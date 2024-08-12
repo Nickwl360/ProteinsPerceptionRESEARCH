@@ -15,7 +15,7 @@ if __name__ == "__main__":
     ###################PLOTTING########################
     plt.plot(phis, Ys, label='Binodal')
     plt.plot(spins,Ys,label='Spinodal')
-    plt.xlim((0,1))
+    plt.xlim((0,.2))
 
     plt.legend()
     plt.show()
