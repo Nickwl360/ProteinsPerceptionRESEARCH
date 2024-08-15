@@ -11,12 +11,13 @@ import math
 import time
 
 ########################ConstANTS################################
-T0=1e9
-iterlim=200
+T0=1e6
+iterlim=10000
 qL = np.array(qs)
 Q = np.sum(qL*qL)/N
 L = np.arange(N)
 L2 = L*L
+ConstRay = np.array([2,2])
 
 def getSigShifts(qs):
     sigSij = []
@@ -282,7 +283,6 @@ def d2_x_eqn_I2int(k, phiM, Y, x, dx):
 # ddx = d2_x_solver(.3,.1,x,dx)
 # print(x,dx,ddx)
 
-
 #################FREE ENERGIES#####################################
 def ftot_rg(phiM, Y, phiS, x=None):
     x=x_solver(phiM,Y) if x==None else x
@@ -299,7 +299,7 @@ def rgFPint(k,Y,phiM,phiS,x):
     nu = k*k*Y/4/np.pi + qc*phiM + phiS
     N1 = nu + phiM*(g*nu*v + xe) +v*phiM*phiM*(g*xe-c*c)
     A = N1/nu
-    B= 1+ Q/nu
+    B= 1 + Q/nu
     return (k*k/4/np.pi/np.pi)*np.log(A/B)
 def rgFP(phiM, Y, phiS,x=None):
     x = x_solver(phiM, Y) if x==None else x
@@ -475,10 +475,8 @@ def spin_yfromphi(phiM,phiS,guess):
     print('phi', phiM, 'l/lb', ans)
     return -1*ans
 def findCrit(phiS,guess):
-
     #bounds = [(guess*.75,guess*1.25)]
     bounds = [(epsilon,1-epsilon)]
-
     #brentTrip= (guess/2, guess*1.01, guess*4)
     #brentDub =(guess*.9, guess*2)
     #Yc = minimize_scalar(spin_yfromphi,args=(phiS,guess,),bracket=brentTrip,method='Brent')
@@ -487,15 +485,11 @@ def findCrit(phiS,guess):
     Yc = minimize(spin_yfromphi, x0=guess, args=(phiS, guess), method='SLSQP', bounds=bounds)
     #Yc = minimize(spin_yfromphi, x0=guess, args=(phiS, guess), method='L-BFGS-B', bounds=bounds)
 
-    #result = brent(spin_yfromphi, args=(phiS,guess), brack = brentTrip, full_output=1)
-    #phiC,Yc = result[0], result[1]
     phiC = Yc.x
-    #phiC = Yc
     return phiC, -1*Yc.fun
-    #return phiC, -1*Yc
 
 t1 = time.time()
-phiC,Yc = findCrit(phiS, guess=.02)
+phiC,Yc = findCrit(phiS, guess=.020014)
 t2 = time.time()
 # Yc= -1* spin_yfromphi(phiC,phiS,guess=phiC)
 print(phiC,Yc,'crit found in ', (t2-t1), ' s \n')
@@ -524,12 +518,16 @@ def findSpins(Y,phiC):
 
 def FBINODAL(variables,Y,phiBulk):
     phi1,phi2 = variables
-    print('testing phi1,phi2: ' ,phi1, phi2, 'Y= ', Y )
+    print('testing phi1,phi2: ' ,phi1, phi2, 'Y= ', Y, flush=True )
     if math.isnan(phi1) or math.isnan(phi2): return 1e20
     v = (phi2-phiBulk)/(phi2-phi1)
     eqn = v * ftot_rg(phi1, Y, phiS) + (1 - v) * ftot_rg(phi2, Y, phiS)
+
+    ftot = T0 * (eqn - ftot_rg(phiBulk, Y, phiS))
+    ftot_differentiable = sum((ftot - ConstRay)**2)  ###########TRYING TO MAKE SLSQP WORK
+
     #return eqn
-    return T0*(eqn - ftot_rg(phiBulk, Y, phiS))
+    return ftot_differentiable
 def getInitialVsolved(Y,spinlow,spinhigh,phiBulk):
     bounds = [(epsilon,spinlow-epsilon),(spinhigh+epsilon, 1-epsilon)]
     initial_guess=(spinlow*.9, spinhigh*1.10)
@@ -537,19 +535,23 @@ def getInitialVsolved(Y,spinlow,spinhigh,phiBulk):
     #result = minimize(totalFreeEnergyVsolved, initial_guess,args=(Y,),method='Powell',bounds=bounds)
     phi1i,phi2i= result.x
     return phi1i,phi2i
-def makeconstSLS(Y,phiBulk,s1,s2):
+def makeconstSLS(Y,phiBulk,s1,s2,l1,l2):
     def seperated(variables):
-        return FBINODAL(variables, Y, phiBulk) - ftot_rg(phiC, Y, phiS)
+        return FBINODAL(variables, Y, phiBulk) - ftot_rg(phiBulk, Y, phiS)
     def minPhi1(variables):
-        return variables[0]
+        return variables[0] - l1/10
     def minPhi2(variables):
-        return s2 - variables[1]
+        return variables[1] - s2*1.05 - epsilon
     def maxPhi1(variables):
-        return s1-variables[0]
+        return s1*.975 - epsilon - variables[0]
     def maxPhi2(variables):
-        return 1-variables[1]
+        return min(l2*2.5,1-epsilon) - variables[1]
+    def phi1Lessphi2(variables):
+        return variables[1] - variables[0]
+    def equPotential(variables):
+        return d1_Frg_dphi(variables[0],Y,phiS) - d1_Frg_dphi(variables[1],Y,phiS)
 
-    return [{'type': 'ineq', 'fun': seperated},{'type': 'ineq', 'fun': minPhi1},{'type': 'ineq', 'fun': minPhi2},{'type': 'ineq', 'fun': maxPhi1},{'type': 'ineq', 'fun': maxPhi2}]
+    return [{'type': 'ineq', 'fun': seperated},{'type': 'ineq', 'fun': minPhi1},{'type': 'ineq', 'fun': minPhi2},{'type': 'ineq', 'fun': maxPhi1},{'type': 'ineq', 'fun': maxPhi2},{'type': 'ineq', 'fun': phi1Lessphi2},{'type': 'eq', 'fun': equPotential}]
 def minFtotal(Y,phiC,lastphi1,lastphi2):
 
     # phi1spin = findSpinlow(Y, phiC)[0]
@@ -562,29 +564,38 @@ def minFtotal(Y,phiC,lastphi1,lastphi2):
     assert np.isfinite(phi2spin), "phi2spin is not a finite number"
 
     #phi1i, phi2i = getInitialVsolved(Y, phi1spin, phi2spin,phiB)
-    #initial_guess=(np.float64(phi1spin*.9),np.float64(phi2spin*1.1))
-    initial_guess=(np.float64(lastphi1*.8),np.float64(lastphi2*1.2))
-
+    #initial_guess=(np.float64(phi1spin*.8),np.float64(phi2spin*1.1))
+    initial_guess=(np.float64(lastphi1*.9),np.float64(lastphi2*1.15))
+    phi1min,phi2min = 0,0
     #initial_guess=(np.float64(phi1i),np.float64(phi2i))
 
     #initial_guess=(phi1spin*.9,phi2spin*1.1)
     #initial_guess=(phi1spin*.899,phi2spin*1.301)
     #phi2Max = (1-2*phiS)/(1+qc)#########FROM LIN CODE GITHUB ????
     print(initial_guess)
-    const = makeconstSLS(Y,phiB, phi1spin,phi2spin)
+    const = makeconstSLS(Y,phiB, phi1spin,phi2spin,lastphi1,lastphi2)
     #phiMax = (1-2*phiS)/(1 + qc) - epsilon
     #bounds = [(epsilon, phi1spin - epsilon), (phi2spin+epsilon, 1-epsilon)]
     phi2Max = (1 - 2 * phiS) / (1 + qc)
-    bounds = [(epsilon, phi1spin - epsilon), (phi2spin+epsilon,  phi2Max-epsilon)]
+    #bounds = [(epsilon, phi1spin - epsilon), (phi2spin+epsilon,  phi2Max-epsilon)]
+    bounds = [(phi1spin/10, phi1spin*.98 - epsilon), (phi2spin*1.02+epsilon,  phi2spin*3.5-epsilon)]
 
-    #maxL = minimize(FBINODAL, initial_guess, args=(Y, phiB), method='SLSQP', jac=Jac_fgRPA , bounds=bounds,  options={'ftol':1e-20, 'gtol':1e-20})#, 'eps':1e-20})
-    maxL = minimize(FBINODAL, initial_guess, args=(Y, phiB), method='L-BFGS-B', jac=Jac_fgRPA , bounds=bounds, options={'ftol':1e-20, 'gtol':1e-20})#, 'eps':1e-20})
+    maxL1 = minimize(FBINODAL, initial_guess, args=(Y, phiB), method='SLSQP', jac=Jac_fgRPA , bounds=bounds, constraints= const)
+    #maxL = minimize(FBINODAL, initial_guess, args=(Y, phiB), method='SLSQP', jac=Jac_fgRPA ,bounds=bounds, constraints=const)#,  options={'ftol':1e-20, 'gtol':1e-20, 'eps':1e-20 })
 
-    #maxL = minimize(FBINODAL, initial_guess, args=(Y,phiB), method='SLSQP', constraints=const,bounds=bounds)
-    #maxparams = maxL.x
-    #phi1min,phi2min = maxparams
-    phi1min = min(maxL.x)
-    phi2min = max(maxL.x)
+    maxL2 = minimize(FBINODAL, initial_guess, args=(Y, phiB), method='L-BFGS-B', jac=Jac_fgRPA , bounds=bounds, options={'ftol':1e-20, 'gtol':1e-20, 'eps':1e-20})
+
+    if(maxL1.fun<=maxL2.fun):
+        print('SLSQP was more accurate', maxL1.fun, 'vs.', maxL2.fun)
+        phi1min = min(maxL1.x)
+        phi2min = max(maxL1.x)
+
+    else:
+        print('L-BFGS-B was more accurate', maxL2.fun, 'vs.', maxL1.fun)
+        phi1min = min(maxL2.x)
+        phi2min = max(maxL2.x)
+
+
     v = (phi2min-phiB)/(phi2min-phi1min)
 
     print('\nwe have finished minimizing for Y = ',Y, 'just cuz curious: phi1,phi2, v = ',phi1min,phi2min,v)
@@ -615,6 +626,7 @@ def Jac_fgRPA(vars,Y,phiB):
 def getBinodal(Yc,phiC,minY):
     biphibin= np.array([phiC])
     sphibin = np.array([phiC])
+
     Ybin = np.array([Yc])
     Ytest= Yc - scale_init
 
@@ -625,6 +637,7 @@ def getBinodal(Yc,phiC,minY):
         #print(Ytest, "until", minY)
         phiLlast,phiDlast = biphibin[0], biphibin[-1]
         biphibin, sphibin = biphibin.flatten(), sphibin.flatten()
+        #to avoid dimension bs
         spin1,spin2, phi1,phi2 = minFtotal(Ytest, phiC, phiLlast, phiDlast)
         print(spin1,spin2, 'these were spins')
 
