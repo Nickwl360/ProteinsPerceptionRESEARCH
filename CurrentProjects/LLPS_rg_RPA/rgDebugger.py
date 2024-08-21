@@ -8,8 +8,8 @@ from scipy.optimize import root_scalar
 from rgRPA_init import *
 from scipy.optimize import brenth
 
-test1= np.linspace(epsilon, .2, 100)
-test2= np.linspace(epsilon, .2, 100)
+test1= np.linspace(epsilon, .01, 20)
+test2= np.linspace(.09, .11, 50)
 
 def getEnergyLandscape(phi1ray, phi2ray ):
     Phi1, Phi2 = np.meshgrid(phi1ray, phi2ray)
@@ -17,7 +17,7 @@ def getEnergyLandscape(phi1ray, phi2ray ):
     for i in range(Phi1.shape[0]):
         print(i)
         for j in range(Phi1.shape[1]):
-            Energy[i, j] = FBINODAL((Phi1[i, j], Phi2[i, j]),.240,.02)
+            Energy[i, j] = 100*FBINODAL((Phi1[i, j], Phi2[i, j]),.240,.02)
 
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')

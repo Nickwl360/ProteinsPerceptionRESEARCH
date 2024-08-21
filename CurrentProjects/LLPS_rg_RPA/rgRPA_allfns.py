@@ -11,8 +11,8 @@ import math
 import time
 
 ########################ConstANTS################################
-T0=1e6
-iterlim=10000
+T0=100
+iterlim=200
 qL = np.array(qs)
 Q = np.sum(qL*qL)/N
 L = np.arange(N)
@@ -524,17 +524,20 @@ def FBINODAL(variables,Y,phiBulk):
     eqn = v * ftot_rg(phi1, Y, phiS) + (1 - v) * ftot_rg(phi2, Y, phiS)
 
     ftot = T0 * (eqn - ftot_rg(phiBulk, Y, phiS))
-    ftot_differentiable = sum((ftot - ConstRay)**2)  ###########TRYING TO MAKE SLSQP WORK
+    #ftot_differentiable = sum((ftot - ConstRay)**2)  ###########TRYING TO MAKE SLSQP WORK
 
     #return eqn
-    return ftot_differentiable
+    return ftot#_differentiable
 def getInitialVsolved(Y,spinlow,spinhigh,phiBulk):
     bounds = [(epsilon,spinlow-epsilon),(spinhigh+epsilon, 1-epsilon)]
     initial_guess=(spinlow*.9, spinhigh*1.10)
     result = minimize(FBINODAL, initial_guess, args=(Y, phiBulk), method='Nelder-Mead', bounds=bounds)#, options = {'fatol': 1e-3, 'xatol': 1e-3})
     #result = minimize(totalFreeEnergyVsolved, initial_guess,args=(Y,),method='Powell',bounds=bounds)
     phi1i,phi2i= result.x
-    return phi1i,phi2i
+    if phi2i>spinhigh*1.5:
+        return spinlow*.9, spinhigh*1.1
+
+    else:return phi1i,phi2i
 def makeconstSLS(Y,phiBulk,s1,s2,l1,l2):
     def seperated(variables):
         return FBINODAL(variables, Y, phiBulk) - ftot_rg(phiBulk, Y, phiS)
@@ -564,41 +567,47 @@ def minFtotal(Y,phiC,lastphi1,lastphi2):
     assert np.isfinite(phi2spin), "phi2spin is not a finite number"
 
     #phi1i, phi2i = getInitialVsolved(Y, phi1spin, phi2spin,phiB)
-    #initial_guess=(np.float64(phi1spin*.8),np.float64(phi2spin*1.1))
-    initial_guess=(np.float64(lastphi1*.9),np.float64(lastphi2*1.15))
+    if lastphi1==phiC:
+        initial_guess=(np.float64(phi1spin*.9),np.float64(phi2spin*1.1))
+    else:
+        initial_guess=(np.float64(lastphi1*.89),np.float64(lastphi2*1.12))
     phi1min,phi2min = 0,0
     #initial_guess=(np.float64(phi1i),np.float64(phi2i))
 
     #initial_guess=(phi1spin*.9,phi2spin*1.1)
     #initial_guess=(phi1spin*.899,phi2spin*1.301)
     #phi2Max = (1-2*phiS)/(1+qc)#########FROM LIN CODE GITHUB ????
-    print(initial_guess)
+    #print(initial_guess)
     const = makeconstSLS(Y,phiB, phi1spin,phi2spin,lastphi1,lastphi2)
     #phiMax = (1-2*phiS)/(1 + qc) - epsilon
     #bounds = [(epsilon, phi1spin - epsilon), (phi2spin+epsilon, 1-epsilon)]
     phi2Max = (1 - 2 * phiS) / (1 + qc)
     #bounds = [(epsilon, phi1spin - epsilon), (phi2spin+epsilon,  phi2Max-epsilon)]
-    bounds = [(phi1spin/10, phi1spin*.98 - epsilon), (phi2spin*1.02+epsilon,  phi2spin*3.5-epsilon)]
+    bounds = [(phi1spin/10, phi1spin - epsilon), (phi2spin+epsilon,  min(phi2spin*5-epsilon,1-epsilon))]
 
-    maxL1 = minimize(FBINODAL, initial_guess, args=(Y, phiB), method='SLSQP', jac=Jac_fgRPA , bounds=bounds, constraints= const)
-    #maxL = minimize(FBINODAL, initial_guess, args=(Y, phiB), method='SLSQP', jac=Jac_fgRPA ,bounds=bounds, constraints=const)#,  options={'ftol':1e-20, 'gtol':1e-20, 'eps':1e-20 })
-
+    #maxL1 = minimize(FBINODAL, initial_guess, args=(Y, phiB), method='SLSQP', jac=Jac_fgRPA , bounds=bounds, constraints= const)
+    maxL1 = minimize(FBINODAL, initial_guess, args=(Y, phiB), method='TNC', bounds=bounds,jac=Jac_fgRPA, options={'ftol':1e-20, 'gtol':1e-20, 'eps':1e-20 })
+    print('TNC M1 minimized, trying L-BFGS-B now\n')
     maxL2 = minimize(FBINODAL, initial_guess, args=(Y, phiB), method='L-BFGS-B', jac=Jac_fgRPA , bounds=bounds, options={'ftol':1e-20, 'gtol':1e-20, 'eps':1e-20})
+    print('L-BFGS-B minimized')
+    #maxL3 = minimize(FBINODAL, initial_guess, args=(Y, phiB), method='SLSQP', jac=Jac_fgRPA , bounds=bounds,constraints=const, options={'ftol':1e-20, 'gtol':1e-20, 'eps':1e-20})
 
-    if(maxL1.fun<=maxL2.fun):
-        print('SLSQP was more accurate', maxL1.fun, 'vs.', maxL2.fun)
+    if(maxL1.fun<=maxL2.fun):# and maxL1.fun<=maxL3.fun):
+        print('M1 was more accurate', maxL1.fun, 'vs.M2', maxL2.fun)#, maxL3.fun)
         phi1min = min(maxL1.x)
         phi2min = max(maxL1.x)
 
-    else:
-        print('L-BFGS-B was more accurate', maxL2.fun, 'vs.', maxL1.fun)
+    elif(maxL2.fun<= maxL1.fun):# and maxL2.fun<=maxL3.fun):
+        print('M2 was more accurate', maxL2.fun, 'vs. M1', maxL1.fun)#, maxL3.fun)
         phi1min = min(maxL2.x)
         phi2min = max(maxL2.x)
-
-
+    # else:
+    #     print('M3 was more accurate', maxL3.fun, 'vs.(M1,M2)', maxL1.fun,maxL2.fun)
+    #     phi1min = min(maxL3.x)
+    #     phi2min = max(maxL3.x)
     v = (phi2min-phiB)/(phi2min-phi1min)
 
-    print('\nwe have finished minimizing for Y = ',Y, 'just cuz curious: phi1,phi2, v = ',phi1min,phi2min,v)
+    print('\nwe have finished minimizing for Y = ',Y, 'MIN VALUES: phi1,phi2, v = ',phi1min,phi2min,v)
 
     return phi1spin, phi2spin, phi1min,phi2min
 def Jac_fgRPA(vars,Y,phiB):
