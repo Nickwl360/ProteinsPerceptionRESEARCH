@@ -11,13 +11,13 @@ import math
 import time
 
 ########################ConstANTS################################
-T0=100
-iterlim=200
+T0=1000
+iterlim=550
+MINMAX=40
 qL = np.array(qs)
 Q = np.sum(qL*qL)/N
 L = np.arange(N)
 L2 = L*L
-ConstRay = np.array([2,2])
 
 def getSigShifts(qs):
     sigSij = []
@@ -516,18 +516,21 @@ def findSpins(Y,phiC):
     phi2 = brenth(d2_Frg_phiM, phiC, phiMax,args = (Y,phiS))
     return phi1,phi2
 
-def FBINODAL(variables,Y,phiBulk):
+def FBINODAL(variables,Y,phiBulk,spins):
+    s1,s2 = spins
     phi1,phi2 = variables
     print('testing phi1,phi2: ' ,phi1, phi2, 'Y= ', Y, flush=True )
     if math.isnan(phi1) or math.isnan(phi2): return 1e20
     v = (phi2-phiBulk)/(phi2-phi1)
     eqn = v * ftot_rg(phi1, Y, phiS) + (1 - v) * ftot_rg(phi2, Y, phiS)
 
-    ftot = T0 * (eqn - ftot_rg(phiBulk, Y, phiS))
-    #ftot_differentiable = sum((ftot - ConstRay)**2)  ###########TRYING TO MAKE SLSQP WORK
+    ftot = T0* (eqn - ftot_rg(phiBulk, Y, phiS))
+    ConstRay = np.array([np.float64(s1*.85), np.float64(s2*1.15)])
+
+    #ftot_differentiable = T0* sum((ftot - ConstRay)**2)  ###########TRYING TO MAKE SLSQP WORK
 
     #return eqn
-    return ftot#_differentiable
+    return np.abs(ftot)#_differentiable
 def getInitialVsolved(Y,spinlow,spinhigh,phiBulk):
     bounds = [(epsilon,spinlow-epsilon),(spinhigh+epsilon, 1-epsilon)]
     initial_guess=(spinlow*.9, spinhigh*1.10)
@@ -555,7 +558,7 @@ def makeconstSLS(Y,phiBulk,s1,s2,l1,l2):
         return d1_Frg_dphi(variables[0],Y,phiS) - d1_Frg_dphi(variables[1],Y,phiS)
 
     return [{'type': 'ineq', 'fun': seperated},{'type': 'ineq', 'fun': minPhi1},{'type': 'ineq', 'fun': minPhi2},{'type': 'ineq', 'fun': maxPhi1},{'type': 'ineq', 'fun': maxPhi2},{'type': 'ineq', 'fun': phi1Lessphi2},{'type': 'eq', 'fun': equPotential}]
-def minFtotal(Y,phiC,lastphi1,lastphi2):
+def minFtotal(Y,phiC,lastphi1,lastphi2,dy):
 
     # phi1spin = findSpinlow(Y, phiC)[0]
     # phi2spin = findSpinhigh(Y, phiC)[0]
@@ -567,50 +570,62 @@ def minFtotal(Y,phiC,lastphi1,lastphi2):
     assert np.isfinite(phi2spin), "phi2spin is not a finite number"
 
     #phi1i, phi2i = getInitialVsolved(Y, phi1spin, phi2spin,phiB)
-    if lastphi1==phiC:
-        initial_guess=(np.float64(phi1spin*.9),np.float64(phi2spin*1.1))
-    else:
-        initial_guess=(np.float64(lastphi1*.89),np.float64(lastphi2*1.12))
-    phi1min,phi2min = 0,0
     #initial_guess=(np.float64(phi1i),np.float64(phi2i))
 
-    #initial_guess=(phi1spin*.9,phi2spin*1.1)
-    #initial_guess=(phi1spin*.899,phi2spin*1.301)
-    #phi2Max = (1-2*phiS)/(1+qc)#########FROM LIN CODE GITHUB ????
+    # if lastphi1==phiC:
+    initial_guess=(np.float64(phi1spin*.9),np.float64(phi2spin*1.1))
+    # else:
+    #     initial_guess=(np.float64(lastphi1*.9),np.float64(lastphi2*1.1))
+    phi1min,phi2min = 0,0
+
     #print(initial_guess)
     const = makeconstSLS(Y,phiB, phi1spin,phi2spin,lastphi1,lastphi2)
     #phiMax = (1-2*phiS)/(1 + qc) - epsilon
     #bounds = [(epsilon, phi1spin - epsilon), (phi2spin+epsilon, 1-epsilon)]
     phi2Max = (1 - 2 * phiS) / (1 + qc)
     #bounds = [(epsilon, phi1spin - epsilon), (phi2spin+epsilon,  phi2Max-epsilon)]
-    bounds = [(phi1spin/10, phi1spin - epsilon), (phi2spin+epsilon,  min(phi2spin*5-epsilon,1-epsilon))]
+    bounds = [(phi1spin/10, phi1spin - epsilon), (phi2spin+epsilon,  1-epsilon)]
+    if lastphi1!=phiC:
+        initial_guess = (np.float64(lastphi1 * (1 - .075 * (dy/.001))), np.float64(lastphi2 * (1 + .075*(dy/.001))))
+        #initial_guess=(np.float64(phi1spin*.9),np.float64(phi2spin*1.1))
+        #initial_guess= (np.float64(phi1spin*.93),np.float64(phi2spin*1.07))
+        spins=[phi1spin,phi2spin]
+        maxL1 = minimize(FBINODAL, initial_guess, args=(Y, phiB,spins), method='TNC', jac=Jac_fgRPA, bounds=bounds,  options={'ftol':1e-20, 'gtol':1e-20, 'eps':1e-20 ,'maxfun':MINMAX})
+        print('TNC M1 minimized, trying L-BFGS-B now\n')
+        #initial_guess= (np.float64(min(maxL1.x)*.95),np.float64(max(maxL1.x)*1.1))
+        maxL2 = minimize(FBINODAL, initial_guess, args=(Y, phiB,spins), method='L-BFGS-B', jac=Jac_fgRPA , bounds=bounds, options={'ftol':1e-20, 'gtol':1e-20, 'eps':1e-20,'maxfun':MINMAX})
+        #maxL2 = maxL1
+        print('L-BFGS-B minimized')
+        #initial_guess= (np.float64(lastphi1*.84),np.float64(lastphi2*1.16))
+        #initial_guess= (np.float64(phi1spin*.75),np.float64(phi2spin*1.25))
+        #maxL3 = minimize(FBINODAL, initial_guess, args=(Y, phiB), method='TNC', jac=Jac_fgRPA , bounds=bounds, options={'ftol':1e-20, 'gtol':1e-20, 'eps':1e-20,'maxfun':1})
+        maxL3 = maxL1
+        if(maxL1.fun<=maxL2.fun and maxL1.fun<=maxL3.fun):
+            print('M1 was more accurate', maxL1.fun, 'vs.M2/3', maxL2.fun, maxL3.fun)
+            phi1min = min(maxL1.x)
+            phi2min = max(maxL1.x)
 
-    #maxL1 = minimize(FBINODAL, initial_guess, args=(Y, phiB), method='SLSQP', jac=Jac_fgRPA , bounds=bounds, constraints= const)
-    maxL1 = minimize(FBINODAL, initial_guess, args=(Y, phiB), method='TNC', bounds=bounds,jac=Jac_fgRPA, options={'ftol':1e-20, 'gtol':1e-20, 'eps':1e-20 })
-    print('TNC M1 minimized, trying L-BFGS-B now\n')
-    maxL2 = minimize(FBINODAL, initial_guess, args=(Y, phiB), method='L-BFGS-B', jac=Jac_fgRPA , bounds=bounds, options={'ftol':1e-20, 'gtol':1e-20, 'eps':1e-20})
-    print('L-BFGS-B minimized')
-    #maxL3 = minimize(FBINODAL, initial_guess, args=(Y, phiB), method='SLSQP', jac=Jac_fgRPA , bounds=bounds,constraints=const, options={'ftol':1e-20, 'gtol':1e-20, 'eps':1e-20})
-
-    if(maxL1.fun<=maxL2.fun):# and maxL1.fun<=maxL3.fun):
-        print('M1 was more accurate', maxL1.fun, 'vs.M2', maxL2.fun)#, maxL3.fun)
+        elif(maxL2.fun<= maxL1.fun and maxL2.fun<=maxL3.fun):
+            print('M2 was more accurate', maxL2.fun, 'vs. M1/3', maxL1.fun, maxL3.fun)
+            phi1min = min(maxL2.x)
+            phi2min = max(maxL2.x)
+        else:
+            print('M3 was more accurate', maxL3.fun, 'vs.(M1,M2)', maxL1.fun,maxL2.fun)
+            phi1min = min(maxL3.x)
+            phi2min = max(maxL3.x)
+    else:
+        initial_guess = (np.float64(phi1spin * .9), np.float64(phi2spin * 1.1))
+        spins= [phi1spin,phi2spin]
+        maxL1 = minimize(FBINODAL, initial_guess, args=(Y, phiB,spins), method='TNC', jac=Jac_fgRPA, bounds=bounds,  options={'ftol':1e-20, 'gtol':1e-20, 'eps':1e-20 ,'maxfun':MINMAX})
         phi1min = min(maxL1.x)
         phi2min = max(maxL1.x)
 
-    elif(maxL2.fun<= maxL1.fun):# and maxL2.fun<=maxL3.fun):
-        print('M2 was more accurate', maxL2.fun, 'vs. M1', maxL1.fun)#, maxL3.fun)
-        phi1min = min(maxL2.x)
-        phi2min = max(maxL2.x)
-    # else:
-    #     print('M3 was more accurate', maxL3.fun, 'vs.(M1,M2)', maxL1.fun,maxL2.fun)
-    #     phi1min = min(maxL3.x)
-    #     phi2min = max(maxL3.x)
     v = (phi2min-phiB)/(phi2min-phi1min)
 
     print('\nwe have finished minimizing for Y = ',Y, 'MIN VALUES: phi1,phi2, v = ',phi1min,phi2min,v)
 
     return phi1spin, phi2spin, phi1min,phi2min
-def Jac_fgRPA(vars,Y,phiB):
+def Jac_fgRPA(vars,Y,phiB,spins):
     phi1=vars[0]
     phi2=vars[1]
 
@@ -643,11 +658,13 @@ def getBinodal(Yc,phiC,minY):
 
     while Ytest>minY:
         Y_ratio_done = (Yc -Ytest)/Y_range
+        resolution = scale_init *(1 + Y_ratio_done*(scale_final/scale_init))
+
         #print(Ytest, "until", minY)
         phiLlast,phiDlast = biphibin[0], biphibin[-1]
         biphibin, sphibin = biphibin.flatten(), sphibin.flatten()
         #to avoid dimension bs
-        spin1,spin2, phi1,phi2 = minFtotal(Ytest, phiC, phiLlast, phiDlast)
+        spin1,spin2, phi1,phi2 = minFtotal(Ytest, phiC, phiLlast, phiDlast,resolution)
         print(spin1,spin2, 'these were spins')
 
         #if phi1<phiLlast and phi2>phiDlast:
@@ -663,7 +680,6 @@ def getBinodal(Yc,phiC,minY):
         else: print('someglitch, repeating with a skipped step')
         ####HIGHER RESOLUTION AT TOP OF PHASE DIAGRAM###################
         #resolution = scale_init * np.exp((Yc / Ytest) ** 3) / np.exp(1)
-        resolution = scale_init *(1 + Y_ratio_done*(scale_final/scale_init))
         print("\nNEXT YTEST CHANGED BY:", resolution, "and Ytest=", Ytest)
         Ytest-=resolution
 
