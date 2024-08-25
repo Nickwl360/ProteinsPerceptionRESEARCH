@@ -13,7 +13,7 @@ import time
 ########################ConstANTS################################
 T0=100
 iterlim=250
-MINMAX=40
+MINMAX=30
 qL = np.array(qs)
 Q = np.sum(qL*qL)/N
 L = np.arange(N)
@@ -630,12 +630,12 @@ def minFtotal(Y,phiC,lastphi1,lastphi2,dy):
         maxL2 = minimize(FBINODAL, initial_guess, args=(Y, phiB,spins), method=M2, jac=Jac_rgRPA, bounds=bounds, options={'ftol':1e-20, 'gtol':1e-20, 'eps':1e-20, 'maxfun':MINMAX})
         print(M2, 'M2 minimized, beginning,', M3 ,'M3\n')
 
-        maxL3 = minimize(FBINODAL, initial_guess, args=(Y, phiB,spins), method=M3, jac=Jac_rgRPA, bounds=bounds, options={'ftol':1e-20, 'gtol':1e-20, 'eps':1e-20, 'maxfun':MINMAX})
-        print(M3, 'M3 minimized\n')
+        #maxL3 = minimize(FBINODAL, initial_guess, args=(Y, phiB,spins), method=M3, jac=Jac_rgRPA, bounds=bounds, options={'ftol':1e-20, 'gtol':1e-20, 'eps':1e-20, 'maxfun':MINMAX})
+        #print(M3, 'M3 minimized\n')
 
         ### OPTION TO TOGGLE OFF OTHER MINIMIZERS ###
         #maxL2 = maxL1
-        #maxL3 = maxL1
+        maxL3 = maxL1
 
         ### FINDING LOWEST SOLUTION ###
         if(maxL1.fun<=maxL2.fun and maxL1.fun<=maxL3.fun):
