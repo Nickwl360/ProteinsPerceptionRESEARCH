@@ -11,8 +11,8 @@ import math
 import time
 
 ########################ConstANTS################################
-T0=100
-iterlim=250
+T0=1e6
+iterlim=2500
 MINMAX=20
 qL = np.array(qs)
 Q = np.sum(qL*qL)/N
@@ -531,7 +531,8 @@ def FBINODAL(variables,Y,phiBulk,spins):
     #ftot_differentiable = T0* sum((ftot - ConstRay)**2)  ###########TRYING TO MAKE SLSQP WORK
 
     #return eqn
-    return np.abs(ftot)#_differentiable
+    return ftot
+    #return np.abs(ftot)#_differentiable
 def Jac_rgRPA(vars,Y,phiB,spins):
     phi1=vars[0]
     phi2=vars[1]
@@ -582,6 +583,49 @@ def makeconstSLS(Y,phiBulk,s1,s2,l1,l2):
         return d1_Frg_dphi(variables[0],Y,phiS) - d1_Frg_dphi(variables[1],Y,phiS)
 
     return [{'type': 'ineq', 'fun': seperated},{'type': 'ineq', 'fun': minPhi1},{'type': 'ineq', 'fun': minPhi2},{'type': 'ineq', 'fun': maxPhi1},{'type': 'ineq', 'fun': maxPhi2},{'type': 'ineq', 'fun': phi1Lessphi2},{'type': 'eq', 'fun': equPotential}]
+def min_verify(minObj, Y, phiB, spins):
+    s1, s2 = spins
+    min1, min2 = min(minObj.x), max(minObj.x)
+    mu1,mu2 = d1_Frg_dphi(min1,Y,phiS),d1_Frg_dphi(min2,Y,phiS)
+    print(mu1, mu2, '\n\n INITIAL ATTEMPT mu1 and mu2 for ', min1,min2)
+
+    mu_thresh = 10
+    redo_flag = 0
+    redo_i = 0
+
+    if 100*np.abs((mu1-mu2)/mu2) < mu_thresh:
+        if (min2 < s2*4) and min1< (s1 - 10*epsilon) and min2> (s2+10*epsilon):
+            minObj_verified = minObj
+            print('that worked')
+        else: redo_flag = 1
+    else: redo_flag = 1
+
+    while redo_flag==1:
+        print('oh shit looks like we have to retry', redo_i)
+        redo_i+=1
+
+        initial_guess=(np.float64(s1*.75 - redo_i*.05),np.float64(s2*1.25 + redo_i*.05))
+        bounds = [(s1 / 10, s1 - epsilon), (s2 + epsilon, s2*4)]
+
+        minTemp = minimize(FBINODAL, initial_guess, args=(Y, phiB,spins), method='L-BFGS-B', jac=Jac_rgRPA, bounds=bounds, options={'ftol':1e-20, 'gtol':1e-20, 'eps':1e-20})#, 'maxfun':MINMAX})
+        temp_min1, temp_min2 = min(minTemp.x), max(minTemp.x)
+        mu1, mu2 = d1_Frg_dphi(temp_min1, Y, phiS), d1_Frg_dphi(temp_min2, Y, phiS)
+        print(mu1, mu2, ' mu1 and mu2 for ', temp_min1, temp_min2)
+
+        if 100 * np.abs((mu1 - mu2) / mu2) < mu_thresh:
+            if (min2 < s2 * 3.5) and min1 < (s1 - 10 * epsilon) and min2 > (s2 + 10 * epsilon):
+                minObj_verified = minTemp
+                print('verified')
+                redo_flag = 0
+
+            else:
+                redo_flag = 1
+        else:
+            redo_flag = 1
+
+    print('this took ', redo_i, 'additional attempts')
+
+    return minObj_verified
 def minFtotal(Y,phiC,lastphi1,lastphi2,dy):
 
     phi1spin,phi2spin = findSpins(Y,phiC)
@@ -618,7 +662,7 @@ def minFtotal(Y,phiC,lastphi1,lastphi2,dy):
 
         ### MAKE INITIAL ### IN PROGRESS ###
         #initial_guess = (np.float64(lastphi1 * (1 - .04 * (scale_init/.001))), np.float64(lastphi2 * (1 + .04*(scale_init/.001))))
-        initial_guess=(np.float64(phi1spin*.55),np.float64(phi2spin*1.45))
+        initial_guess=(np.float64(phi1spin*.65),np.float64(phi2spin*1.35))
 
         print(initial_guess, ' THIS IS INITIAL GUESS FOR Y = ', Y)
 
@@ -627,6 +671,8 @@ def minFtotal(Y,phiC,lastphi1,lastphi2,dy):
 
         maxL1 = minimize(FBINODAL, initial_guess, args=(Y, phiB,spins), method=M1, jac=Jac_rgRPA, bounds=bounds, options={'ftol':1e-20, 'gtol':1e-20, 'eps':1e-20})# , 'maxfun':MINMAX})
         print(M1, 'M1 minimized, beginning,', M2 ,'M2\n')
+
+        maxL1 = min_verify(maxL1,Y, phiB, spins)
 
         ### OPTION TO USE LAST FIND AS INITIAL ###
         #initial_guess= (np.float64(min(maxL1.x)*.95),np.float64(max(maxL1.x)*1.1))
@@ -657,9 +703,10 @@ def minFtotal(Y,phiC,lastphi1,lastphi2,dy):
             phi2min = max(maxL3.x)
     else:
         ### TOP OF BINODAL GRAPH ### THIS ALWAYS WORKS ###
-        initial_guess = (np.float64(phi1spin * .55), np.float64(phi2spin * 1.45))
+        initial_guess = (np.float64(phi1spin * .975), np.float64(phi2spin * 1.025))
         spins= [phi1spin,phi2spin]
-        maxL1 = minimize(FBINODAL, initial_guess, args=(Y, phiB,spins), method='TNC', jac=Jac_rgRPA, bounds=bounds, options={'ftol':1e-20, 'gtol':1e-20, 'eps':1e-20 })#, 'maxfun':MINMAX})
+        maxL1 = minimize(FBINODAL, initial_guess, args=(Y, phiB, spins), method='TNC', jac=Jac_rgRPA, bounds=bounds, options={'ftol':1e-20, 'gtol':1e-20, 'eps':1e-20 })#, 'maxfun':MINMAX})
+        maxL1 = min_verify(maxL1, Y,phiB,spins)
         phi1min = min(maxL1.x)
         phi2min = max(maxL1.x)
 
