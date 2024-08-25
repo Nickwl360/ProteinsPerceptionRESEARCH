@@ -13,7 +13,7 @@ import time
 ########################ConstANTS################################
 T0=100
 iterlim=250
-MINMAX=30
+MINMAX=20
 qL = np.array(qs)
 Q = np.sum(qL*qL)/N
 L = np.arange(N)
@@ -519,7 +519,7 @@ def FBINODAL(variables,Y,phiBulk,spins):
 
     s1,s2 = spins
     phi1,phi2 = variables
-    print('testing phi1,phi2: ' ,phi1, phi2, 'Y= ', Y, flush=True )
+    #print('testing phi1,phi2: ' ,phi1, phi2, 'Y= ', Y, flush=True )
     if math.isnan(phi1) or math.isnan(phi2): return 1e20
     v = (phi2-phiBulk)/(phi2-phi1)
     eqn = v * ftot_rg(phi1, Y, phiS) + (1 - v) * ftot_rg(phi2, Y, phiS)
@@ -606,6 +606,7 @@ def minFtotal(Y,phiC,lastphi1,lastphi2,dy):
     phiMax = (1-2*phiS)/(1 + qc) - epsilon ### FROM LIN ###
     #bounds = [(epsilon, phi1spin - epsilon), (phi2spin+epsilon, 1-epsilon)]
     bounds = [(phi1spin/10, phi1spin - epsilon), (phi2spin+epsilon,  phiMax)]
+    t0 = time.time()
 
     ### MINIMIZER ### DEPENDS ON IF STARTING AT TOP OR NOT ###
     if lastphi1!=phiC:
@@ -616,25 +617,29 @@ def minFtotal(Y,phiC,lastphi1,lastphi2,dy):
         M3 = 'SLSQP'
 
         ### MAKE INITIAL ### IN PROGRESS ###
-        initial_guess = (np.float64(lastphi1 * (1 - .05 * (scale_init/.001))), np.float64(lastphi2 * (1 + .05*(scale_init/.001))))
+        #initial_guess = (np.float64(lastphi1 * (1 - .04 * (scale_init/.001))), np.float64(lastphi2 * (1 + .04*(scale_init/.001))))
+        initial_guess=(np.float64(phi1spin*.55),np.float64(phi2spin*1.45))
+
         print(initial_guess, ' THIS IS INITIAL GUESS FOR Y = ', Y)
 
         ### DEFINE SPINS AND MINIMIZE ### USES MULTIPLE MINIMIZERS AND CHECKS VALIDITY ###
         spins=[phi1spin,phi2spin]
-        maxL1 = minimize(FBINODAL, initial_guess, args=(Y, phiB,spins), method=M1, jac=Jac_rgRPA, bounds=bounds, options={'ftol':1e-20, 'gtol':1e-20, 'eps':1e-20 , 'maxfun':MINMAX})
+
+        maxL1 = minimize(FBINODAL, initial_guess, args=(Y, phiB,spins), method=M1, jac=Jac_rgRPA, bounds=bounds, options={'ftol':1e-20, 'gtol':1e-20, 'eps':1e-20})# , 'maxfun':MINMAX})
         print(M1, 'M1 minimized, beginning,', M2 ,'M2\n')
 
         ### OPTION TO USE LAST FIND AS INITIAL ###
         #initial_guess= (np.float64(min(maxL1.x)*.95),np.float64(max(maxL1.x)*1.1))
 
-        maxL2 = minimize(FBINODAL, initial_guess, args=(Y, phiB,spins), method=M2, jac=Jac_rgRPA, bounds=bounds, options={'ftol':1e-20, 'gtol':1e-20, 'eps':1e-20, 'maxfun':MINMAX})
-        print(M2, 'M2 minimized, beginning,', M3 ,'M3\n')
+        #maxL2 = minimize(FBINODAL, initial_guess, args=(Y, phiB,spins), method=M2, jac=Jac_rgRPA, bounds=bounds, options={'ftol':1e-20, 'gtol':1e-20, 'eps':1e-20, 'maxfun':MINMAX})
+        #print(M2, 'M2 minimized, beginning,', M3 ,'M3\n')
 
-        #maxL3 = minimize(FBINODAL, initial_guess, args=(Y, phiB,spins), method=M3, jac=Jac_rgRPA, bounds=bounds, options={'ftol':1e-20, 'gtol':1e-20, 'eps':1e-20, 'maxfun':MINMAX})
+        #initial_guess= (np.float64(phi1spin*.55),np.float64(phi2spin*1.45))
+        #maxL3 = minimize(FBINODAL, initial_guess, args=(Y, phiB,spins), method=M3, jac=Jac_rgRPA, bounds=bounds, options={'ftol':1e-20, 'gtol':1e-20, 'eps':1e-20, 'maxiter':3})
         #print(M3, 'M3 minimized\n')
 
         ### OPTION TO TOGGLE OFF OTHER MINIMIZERS ###
-        #maxL2 = maxL1
+        maxL2 = maxL1
         maxL3 = maxL1
 
         ### FINDING LOWEST SOLUTION ###
@@ -652,9 +657,9 @@ def minFtotal(Y,phiC,lastphi1,lastphi2,dy):
             phi2min = max(maxL3.x)
     else:
         ### TOP OF BINODAL GRAPH ### THIS ALWAYS WORKS ###
-        initial_guess = (np.float64(phi1spin * .9), np.float64(phi2spin * 1.1))
+        initial_guess = (np.float64(phi1spin * .55), np.float64(phi2spin * 1.45))
         spins= [phi1spin,phi2spin]
-        maxL1 = minimize(FBINODAL, initial_guess, args=(Y, phiB,spins), method='TNC', jac=Jac_rgRPA, bounds=bounds, options={'ftol':1e-20, 'gtol':1e-20, 'eps':1e-20 , 'maxfun':MINMAX})
+        maxL1 = minimize(FBINODAL, initial_guess, args=(Y, phiB,spins), method='TNC', jac=Jac_rgRPA, bounds=bounds, options={'ftol':1e-20, 'gtol':1e-20, 'eps':1e-20 })#, 'maxfun':MINMAX})
         phi1min = min(maxL1.x)
         phi2min = max(maxL1.x)
 
@@ -662,7 +667,7 @@ def minFtotal(Y,phiC,lastphi1,lastphi2,dy):
     v = (phi2min-phiB)/(phi2min-phi1min)
 
     print('\nMINIMIZER COMPLETE FOR Y = ',Y, 'MIN VALUES: phi1,phi2, v = ',phi1min,phi2min,v)
-
+    print('\nThis step took ', time.time()-t0, 's')
     return phi1spin, phi2spin, phi1min,phi2min
 def getBinodal(Yc,phiC,minY):
     biphibin= np.array([phiC])
