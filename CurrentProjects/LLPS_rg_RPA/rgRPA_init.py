@@ -25,9 +25,9 @@ def pH_qs(seq, ph):
 
 ###########CONSTANTS##########################
 phiS = .0
-ph = 5.5
-scale_init= .001
-scale_final= .005
+ph = 7
+scale_init= .005
+scale_final= .01
 epsilon = 1e-12
 
 #################PICK SEQUENCE/GET RELEVANTQUANTITIES###################################################
@@ -35,14 +35,17 @@ seqs = getseq('../../OldProteinProjects/SCDtests.xlsx')
 ddx4n1 = 'MGDEDWEAEINPHMSSYVPIFEKDRYSGENGDNFNRTPASSSEMDDGPSRRDHFMKSGFASGRNFGNRDAGECNKRDNTSTMGGFGVGKSFGNRGFSNSRFEDGDSSGFWRESSNDCEDNPTRNRGFSKRGGYRDGNNSEASGPYRRGGRGSFRGCRGGFGLGSPNNDLDPDECMQRTGGLFGSRRPVLSGTGNGDTSQSRSGSGSERGGYKGLNEEVITGSGKNSWKSEAEGGES'
 ddx4n1CS = 'MGDRDWRAEINPHMSSYVPIFEKDRYSGENGRNFNDTPASSSEMRDGPSERDHFMKSGFASGDNFGNRDAGKCNERDNTSTMGGFGVGKSFGNEGFSNSRFERGDSSGFWRESSNDCRDNPTRNDGFSDRGGYEKGNNSEASGPYERGGRGSFDGCRGGFGLGSPNNRLDPRECMQRTGGLFGSDRPVLSGTGNGDTSQSRSGSGSERGGYKGLNEKVITGSGENSWKSEARGGES'
 IP5 = 'HAQGTFTSDKSKYLDERAAQDFVQWLLDGGPSSGAPPPS'
-seq_of_interest = IP5
+seq_of_interest = ddx4n1CS
 qs = pH_qs(seq_of_interest,ph)
 #qs = getcharges(seq_of_interest) #regular way
 N = len(qs)
 qc = abs(sum(qs))/N
 
-#################FUNCTIONS OF USE#######################################
-
+### LIST OF KNOWN CRIT POINTS FOR QUICKER TESTING ###
+rg_phiC_list = (['IP5', .020014], ['ddx4n1',.015],['ddx4n1CS',.01983037])
+phiC_test = 0
+for name, pc in enumerate(rg_phiC_list):
+    if name == seq_of_interest: phiC_test=pc
 
 
 
