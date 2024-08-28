@@ -24,9 +24,9 @@ def pH_qs(seq, ph):
     return charges
 
 ###########CONSTANTS##########################
-phiS = .0
-ph = 7
-scale_init= .005
+phiS = .0018
+ph = 6.5
+scale_init= .001
 scale_final= .01
 epsilon = 1e-12
 
@@ -41,12 +41,18 @@ qs = pH_qs(seq_of_interest,ph)
 N = len(qs)
 qc = abs(sum(qs))/N
 
-### LIST OF KNOWN CRIT POINTS FOR QUICKER TESTING ###
-rg_phiC_list = (['IP5', .020014], ['ddx4n1',.015],['ddx4n1CS',.01983037])
-phiC_test = 0
-for name, pc in enumerate(rg_phiC_list):
-    if name == seq_of_interest: phiC_test=pc
+# # # ### ### ### ### ### ### FH OPTIONS ### ### ### ### ### ### ### # # #
+FH_TOGGLE = 1
+chi =0.5
 
+### LIST OF KNOWN CRIT POINTS FOR QUICKER TESTING ###
+rg_phiC_list = [('IP5', 0.020014), ('ddx4n1', 0.015), ('ddx4n1CS', 0.01983037)]
+phiC_test = 0
+for name, pc in rg_phiC_list:
+    if name == seq_of_interest:
+        phiC_test = pc
+        break
+phiC_test = .020
 
 
 

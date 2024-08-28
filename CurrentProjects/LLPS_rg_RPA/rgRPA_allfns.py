@@ -108,7 +108,7 @@ def d2_ck_r(k,x,sigs):
 def x_solver(phiM,Y):
     #print(x_eqn(1/(N*1000),phiM,Y),'lowbound', x_eqn(100*N,phiM,Y), 'upper')
 
-    sln = brenth(x_eqn, 1/100/N, 100*N, args=(phiM,Y))
+    sln = brenth(x_eqn, 1/100/N, 1000*N, args=(phiM,Y))
     #sln = fsolve(x_eqn,np.array([.5]),args=(phiM,Y,))
     #sln = root_scalar(x_eqn,x0=.5, args=(phiM,Y,))
     #bounds=[(0,1)]
@@ -290,7 +290,12 @@ def ftot_rg(phiM, Y, phiS, x=None):
     if phiM > 1 or phiM < 0 or phiS > 1 or phiS < 0:
         print('illegal phi range detected')
         return np.nan
-    return entropy(phiM, phiS) + fion(phiM, Y, phiS) + rgFP(phiM, Y, phiS, x) + 2*np.pi*phiM*phiM/3  ##f0 term
+    ftot = entropy(phiM, phiS) + fion(phiM, Y, phiS) + rgFP(phiM, Y, phiS, x) + 2*np.pi*phiM*phiM/3  ##f0 term
+
+    if FH_TOGGLE==1:
+        ftot += (-1*chi*phiM*phiM)
+
+    return ftot
 def rgFPint(k,Y,phiM,phiS,x):
     xe = xee(k, x, sigS=sigShift_xe)
     g = gk(k, x)
@@ -364,7 +369,12 @@ def d1_Frg_dphi(phiM,Y,phiS,x=None, dx = None):
     result = integrate.quad(dfpintegrand, lower, upper, args=(Y,phiM,phiS,x,dx), limit=iterlim)
     dfp_dphi = result[0] / (4 * np.pi * np.pi)
 
-    return ds_dphi+dfion_dphi+dfp_dphi + 4*np.pi*phiM/3 #d1f0
+    d1_ftot = ds_dphi + dfion_dphi + dfp_dphi + 4*np.pi*phiM/3 #d1f0
+
+    if FH_TOGGLE ==1:
+        d1_ftot += (-2*chi*phiM)
+
+    return d1_ftot
 
 #####################SECOND DERIVATIVE RG FREE ENERGIES############################################################
 def d2s_1comp(x):
@@ -421,8 +431,12 @@ def d2_Frg_Y(Y,phiM,phiS,x = None, dx = None, ddx = None):
     result = integrate.quad(d2_FP_toint, 0, np.inf, args=(Y, phiM,x,dx,ddx), limit=iterlim)
 
     d2fp = result[0] / (4 * np.pi * np.pi)
-    #print(d2s+d2f0,d2fp,d2fion, Y)
-    return np.float64((d2s + d2fp + d2fion + 4*np.pi/3)) #d2f0
+    d2_ftot = np.float64((d2s + d2fp + d2fion + 4*np.pi/3)) #d2f0
+
+    if FH_TOGGLE ==1:
+        d2_ftot += (-2*chi)
+
+    return d2_ftot
 def d2_Frg_phiM(phiM,Y,phiS,x=None,dx=None,ddx=None):
     x = x_solver(phiM, Y) if x == None else x
     dx = d1_x_solver(phiM, Y, x) if dx == None else dx
@@ -450,8 +464,13 @@ def d2_Frg_phiM(phiM,Y,phiS,x=None,dx=None,ddx=None):
     result = integrate.quad(d2_FP_toint, lowerlim, upperlim, args=(Y, phiM, x, dx, ddx), limit=iterlim)
 
     d2fp = result[0] / (4 * np.pi * np.pi)
-    # print(d2s+d2f0,d2fp,d2fion, Y)
-    return np.float64((d2s + d2fp + d2fion + d2f0))
+    d2_ftot =  np.float64((d2s + d2fp + d2fion + d2f0))
+
+    if FH_TOGGLE == 1:
+
+        d2_ftot+= (-2*chi)
+
+    return d2_ftot
 
 ###############################################################################################################
 #######SOLVER METHODS BELOW####################################################################################
@@ -468,7 +487,7 @@ def getSpinodalrg(phiMs):
 def spin_yfromphi(phiM,phiS,guess):
     guess1 = guess
 
-    ans = root_scalar(d2_Frg_Y, bracket=[1/N/1000, 10*N], args=(phiM,phiS),method='brenth',x0=guess1)
+    ans = root_scalar(d2_Frg_Y, bracket=[1/N/10000, 1000*N], args=(phiM,phiS),method='brenth',x0=guess1)
     #ans = brenth(d2_Frg_Y, 1/N/10, 10, args=(phiM, phiS,))
     #ans = y.x    ###IN THIS CASE, WE GET Y FROM PHI--- SO Y IS THE INPUT
     ans = ans.root
@@ -489,7 +508,7 @@ def findCrit(phiS,guess):
     return phiC, -1*Yc.fun
 
 t1 = time.time()
-phiC,Yc = findCrit(phiS, guess=.01987)
+phiC,Yc = findCrit(phiS, guess=phiC_test)
 # Yc= -1* spin_yfromphi(phiC,phiS,guess=phiC)
 print(phiC,Yc,'crit found in ', (time.time()-t1), ' s \n')
 
