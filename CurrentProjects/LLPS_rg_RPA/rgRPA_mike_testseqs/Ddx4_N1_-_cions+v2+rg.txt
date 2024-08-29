@@ -1,0 +1,91 @@
+
+ > LOADED module 'Model_standard'.
+
+_____   _____   _____   _____   _____   
+
+SELECTED SEQUENCE:	'Ddx4_N1'  ('Ddx4_N1')
+
+Sequence values:
+    N       236
+    Np       32
+    Nm       36
+    fracp   0.1356
+    fracm   0.1525
+    SCD     -0.9721
+_____   _____   _____   _____   _____   
+
+
+*****   *****   *****   *****   *****   
+  RPA parameters:	cions+v2+rg
+
+	PAR       	VALUE             
+	cions     	1                 
+	salt      	0                 
+	v2        	4.1888            
+	eps0      	0                 
+	potential 	coulomb           
+	ionsize   	smear             
+	mode      	renorm-G          
+*****   *****   *****   *****   *****   
+
+
+Finding critical point...
+
+TIME to find crit : 166.0215
+
+
+Using Binodal Method  {'max': '1d'}.
+
+Evaluating...
+
+
+	NO CONVERGENCE (maxwell) : (perc1,perc2) = (1.55e-02,2.86e-03)
+
+
+
+	NO CONVERGENCE (maxwell) : (perc1,perc2) = (1.38e-02,1.51e-03)
+
+
+
+	NO CONVERGENCE (maxwell) : (perc1,perc2) = (1.29e-03,2.65e-04)
+
+
+
+	NO CONVERGENCE (maxwell) : (perc1,perc2) = (4.30e-04,8.24e-05)
+
+
+
+	NO CONVERGENCE (maxwell) : (perc1,perc2) = (6.68e-04,5.31e-05)
+
+
+
+	NO CONVERGENCE (maxwell) : (perc1,perc2) = (1.18e-04,1.09e-04)
+
+
+
+	NO CONVERGENCE (maxwell) : (perc1,perc2) = (1.27e-04,7.77e-05)
+
+
+
+	NO CONVERGENCE (maxwell) : (perc1,perc2) = (3.01e-04,3.59e-04)
+
+
+
+	NO CONVERGENCE (maxwell) : (perc1,perc2) = (6.98e-05,2.19e-04)
+
+
+
+	NO CONVERGENCE (maxwell) : (perc1,perc2) = (4.52e-04,1.22e-04)
+
+
+
+	NO CONVERGENCE (maxwell) : (perc1,perc2) = (2.83e-04,1.21e-05)
+
+
+
+	NO CONVERGENCE (maxwell) : (perc1,perc2) = (3.40e-06,1.72e-05)
+
+
+TIME to evaluate : 23759.6267
+
+

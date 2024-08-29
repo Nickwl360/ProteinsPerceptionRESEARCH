@@ -108,7 +108,7 @@ def d2_ck_r(k,x,sigs):
 def x_solver(phiM,Y):
     #print(x_eqn(1/(N*1000),phiM,Y),'lowbound', x_eqn(100*N,phiM,Y), 'upper')
 
-    sln = brenth(x_eqn, 1/100/N, 1000*N, args=(phiM,Y))
+    sln = brenth(x_eqn, 1/10000/N, 1000*N, args=(phiM,Y))
     #sln = fsolve(x_eqn,np.array([.5]),args=(phiM,Y,))
     #sln = root_scalar(x_eqn,x0=.5, args=(phiM,Y,))
     #bounds=[(0,1)]
@@ -293,14 +293,14 @@ def ftot_rg(phiM, Y, phiS, x=None):
     ftot = entropy(phiM, phiS) + fion(phiM, Y, phiS) + rgFP(phiM, Y, phiS, x) + 2*np.pi*phiM*phiM/3  ##f0 term
 
     if FH_TOGGLE==1:
-        ftot += (-1*chi*phiM*phiM)
+        ftot += (w2/2 - chi/Y - chi_int)*phiM*phiM
 
     return ftot
 def rgFPint(k,Y,phiM,phiS,x):
     xe = xee(k, x, sigS=sigShift_xe)
     g = gk(k, x)
     c = ck(k, x, sigs=sigShift_ck)
-    v = (4*np.pi/3)*np.exp(-1*k*k/6)
+    v = w2*np.exp(-1*k*k/6)
     nu = k*k*Y/4/np.pi + qc*phiM + phiS
     N1 = nu + phiM*(g*nu*v + xe) +v*phiM*phiM*(g*xe-c*c)
     A = N1/nu
@@ -338,7 +338,7 @@ def dfpintegrand(k,Y,phiM,phiS,x,dx):
     c = ck(k,x,sigs=sigShift_ck)
     d1c = d1_ck(k,x,sigs=sigShift_ck)
     ionConst = k*k*Y/(4*np.pi) + phiS + qc*phiM
-    v2 = (4*np.pi/3)*np.exp(-k*k/6)
+    v2 = w2*np.exp(-k*k/6)
     r12 = xe*g-c*c
     vpp = v2*phiM*phiM
 
@@ -372,7 +372,7 @@ def d1_Frg_dphi(phiM,Y,phiS,x=None, dx = None):
     d1_ftot = ds_dphi + dfion_dphi + dfp_dphi + 4*np.pi*phiM/3 #d1f0
 
     if FH_TOGGLE ==1:
-        d1_ftot += (-2*chi*phiM)
+        d1_ftot += (w2 - 2*chi/Y - 2*chi_int)*phiM
 
     return d1_ftot
 
@@ -397,7 +397,7 @@ def d2_FP_toint(k, Y, phiM,x,dx,ddx):
     d1c_x = d1c*dx
     d2c = d2_ck(k, x, sigs=sigShift_ck)*dx2 + d1c*ddx
 
-    v2 = (4 * np.pi / 3) * np.exp(-1 * k2 / 6)
+    v2 = w2 * np.exp(-1 * k2 / 6)
     D2BIG = g * d2xe + 2 * d1xe_x * d1g_x + xe * d2g - 2 * c * d2c - 2 * d1c_x * d1c_x
     D = xe * g - c * c
     DD = g * d1xe_x + xe * d1g_x- 2 * c * d1c_x
@@ -431,10 +431,10 @@ def d2_Frg_Y(Y,phiM,phiS,x = None, dx = None, ddx = None):
     result = integrate.quad(d2_FP_toint, 0, np.inf, args=(Y, phiM,x,dx,ddx), limit=iterlim)
 
     d2fp = result[0] / (4 * np.pi * np.pi)
-    d2_ftot = np.float64((d2s + d2fp + d2fion + 4*np.pi/3)) #d2f0
+    d2_ftot = np.float64((d2s + d2fp + d2fion + w2)) #d2f0
 
     if FH_TOGGLE ==1:
-        d2_ftot += (-2*chi)
+        d2_ftot += (w2 - 2*chi/Y - 2*chi_int)
 
     return d2_ftot
 def d2_Frg_phiM(phiM,Y,phiS,x=None,dx=None,ddx=None):
@@ -456,7 +456,7 @@ def d2_Frg_phiM(phiM,Y,phiS,x=None,dx=None,ddx=None):
     d2fion = temp * tp * tp
 
     # d2f0
-    d2f0 = 4 * np.pi / 3
+    d2f0 = w2
 
     #################Electrofreeenergyd2###########
     upperlim = np.inf
@@ -467,8 +467,7 @@ def d2_Frg_phiM(phiM,Y,phiS,x=None,dx=None,ddx=None):
     d2_ftot =  np.float64((d2s + d2fp + d2fion + d2f0))
 
     if FH_TOGGLE == 1:
-
-        d2_ftot+= (-2*chi)
+        d2_ftot += (w2 - 2*chi/Y - 2*chi_int)
 
     return d2_ftot
 
@@ -774,10 +773,5 @@ def getBinodal(Yc,phiC,minY):
             sphibin = np.concatenate((spin1, sphibin, spin2))
             Ybin = np.concatenate(([Ytest], Ybin, [Ytest]))
 
-        else: print('someglitch, repeating with a skipped step')
-        ####HIGHER RESOLUTION AT TOP OF PHASE DIAGRAM###################
-        #resolution = scale_init * np.exp((Yc / Ytest) ** 3) / np.exp(1)
-        Ytest-=resolution
-        print("\nNEXT YTEST CHANGED BY:", resolution, "and Ytest=", Ytest)
 
     return sphibin, biphibin, Ybin

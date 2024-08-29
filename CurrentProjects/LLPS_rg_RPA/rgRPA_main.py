@@ -9,8 +9,6 @@ if __name__ == "__main__":
     print('looping from ', Yc, 'to ', minY)
 
     spins, phis,Ys = getBinodal(Yc, phiC, minY)
-    #phiMs = np.linspace(1e-3, .15, 45)
-    #YsSpin = getSpinodalrg(phiMs)
 
     ###################PLOTTING########################
     plt.plot(phis, Ys, label='Binodal')
