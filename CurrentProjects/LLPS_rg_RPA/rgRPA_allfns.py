@@ -14,6 +14,7 @@ import time
 T0=1e8
 iterlim=2500
 MINMAX=25
+thresh = 1e-8
 qL = np.array(qs)
 Q = np.sum(qL*qL)/N
 L = np.arange(N)
@@ -293,7 +294,7 @@ def ftot_rg(phiM, Y, phiS, x=None):
     ftot = entropy(phiM, phiS) + fion(phiM, Y, phiS) + rgFP(phiM, Y, phiS, x) + 2*np.pi*phiM*phiM/3  ##f0 term
 
     if FH_TOGGLE==1:
-        ftot += (w2/2 - chi/Y - chi_int)*phiM*phiM
+        ftot += (- chi/Y - chi_int)*phiM*phiM
 
     return ftot
 def rgFPint(k,Y,phiM,phiS,x):
@@ -372,7 +373,7 @@ def d1_Frg_dphi(phiM,Y,phiS,x=None, dx = None):
     d1_ftot = ds_dphi + dfion_dphi + dfp_dphi + 4*np.pi*phiM/3 #d1f0
 
     if FH_TOGGLE ==1:
-        d1_ftot += (w2 - 2*chi/Y - 2*chi_int)*phiM
+        d1_ftot += (- 2*chi/Y - 2*chi_int)*phiM
 
     return d1_ftot
 
@@ -434,8 +435,8 @@ def d2_Frg_Y(Y,phiM,phiS,x = None, dx = None, ddx = None):
     d2_ftot = np.float64((d2s + d2fp + d2fion + w2)) #d2f0
 
     if FH_TOGGLE ==1:
-        d2_ftot += (w2 - 2*chi/Y - 2*chi_int)
-
+        #d2_ftot += (w2 - 2*chi/Y - 2*chi_int)
+        d2_ftot += (-2*chi/Y - 2*chi_int)*(1+qc)
     return d2_ftot
 def d2_Frg_phiM(phiM,Y,phiS,x=None,dx=None,ddx=None):
     x = x_solver(phiM, Y) if x == None else x
@@ -467,7 +468,7 @@ def d2_Frg_phiM(phiM,Y,phiS,x=None,dx=None,ddx=None):
     d2_ftot =  np.float64((d2s + d2fp + d2fion + d2f0))
 
     if FH_TOGGLE == 1:
-        d2_ftot += (w2 - 2*chi/Y - 2*chi_int)
+        d2_ftot += (- 2*chi/Y - 2*chi_int)*(1+qc)
 
     return d2_ftot
 
@@ -485,26 +486,37 @@ def getSpinodalrg(phiMs):
     return Ys
 def spin_yfromphi(phiM,phiS,guess):
     guess1 = guess
+    pc = 1 / (1 + N ** (0.5))
+    tc = 2*N / ((1 + N ** (0.5)) ** 2)
+    uc = 1 / tc
+    # initial values
+    pi = pc
+    ui = uc
 
-    ans = root_scalar(d2_Frg_Y, bracket=[1/N/10000, 1000*N], args=(phiM,phiS),method='brenth',x0=guess1)
+    #ans = root_scalar(d2_Frg_Y, bracket=[1/N/10000, 1000*N], args=(phiM,phiS),method='brenth',x0=guess1)
+    d2f = lambda u: d2_Frg_phiM(phiM, 1/u ,phiS)
+    ures = root_scalar(d2f,x0=ui,x1=ui/2, rtol=thresh, bracket = (1e-4, 1e3))
+
+    print('phi,t:' ,phiM, 1/ures.root, 'attempted')
+    return np.float64(ures.root)
+
+
     #ans = brenth(d2_Frg_Y, 1/N/10, 10, args=(phiM, phiS,))
     #ans = y.x    ###IN THIS CASE, WE GET Y FROM PHI--- SO Y IS THE INPUT
-    ans = ans.root
-    print('phi', phiM, 'l/lb', ans)
-    return -1*ans
+    # ans = ans.root
+    # print('phi', phiM, 'l/lb', ans)
+    # return -1*ans
 def findCrit(phiS,guess):
-    #bounds = [(guess*.75,guess*1.25)]
-    bounds = [(epsilon,1-epsilon)]
-    #brentTrip= (guess/2, guess*1.01, guess*4)
-    #brentDub =(guess*.9, guess*2)
-    #Yc = minimize_scalar(spin_yfromphi,args=(phiS,guess,),bracket=brentTrip,method='Brent')
-    #Yc = minimize_scalar(spin_yfromphi,args=(phiS,guess,),bracket=brentTrip,method='Brent',tol=1e-5)
+    bounds = (epsilon,.25-epsilon)
 
-    Yc = minimize(spin_yfromphi, x0=guess, args=(phiS, guess), method='SLSQP', bounds=bounds)
-    #Yc = minimize(spin_yfromphi, x0=guess, args=(phiS, guess), method='L-BFGS-B', bounds=bounds)
+    result = minimize_scalar(spin_yfromphi,args=(phiS,guess,),method='bounded', bounds=bounds)
 
-    phiC = Yc.x
-    return phiC, -1*Yc.fun
+    # Yc = minimize(spin_yfromphi, x0=guess, args=(phiS, guess), method='SLSQP', bounds=bounds)
+    # phiC = Yc.x
+    # return phiC, -1*Yc.fun
+    (pf,uf) = (result.x, result.fun)
+    tf = 1/uf
+    return np.float64(pf), np.float64(tf)
 
 t1 = time.time()
 phiC,Yc = findCrit(phiS, guess=phiC_test)

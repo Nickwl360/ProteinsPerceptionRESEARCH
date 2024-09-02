@@ -16,6 +16,8 @@ def getcharges(seq):
             charges.append(-1)
         elif letter == 'R' or letter == 'K':
             charges.append(1)
+        elif letter == 'X':
+            charges.append(-2)
         else:
             charges.append(0)
     return charges
