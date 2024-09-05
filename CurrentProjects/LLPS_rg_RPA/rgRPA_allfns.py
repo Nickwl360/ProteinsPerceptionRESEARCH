@@ -12,12 +12,13 @@ import time
 
 ########################ConstANTS################################
 T0=1e8
-iterlim=2500
+iterlim=250
 MINMAX=25
 thresh = 1e-8
 qL = np.array(qs)
 Q = np.sum(qL*qL)/N
 L = np.arange(N)
+i_vals = np.arange(0,N-1)
 L2 = L*L
 
 def getSigShifts(qs):
@@ -95,11 +96,27 @@ def d2_xee(k,x,sigS):
     # return xeesum/N
     return k*k*k*k/36*np.mean(sigS*L2*np.exp((-1/6)*x*k*k*L))
 def d2_xee_r(k,x,sigS):
-    return k*k*k*k/36*np.mean(sigS*L2*L2*np.exp((-1/6)*x*k*k*L))
+    #return k*k*k*k/36*np.mean(sigS*L2*L2*np.exp((-1/6)*x*k*k*L))
+    k2 = k*k
+    exp_factor = -1/6*x*k2
+    coeff = k2*k2/36
+    i2 = i_vals*i_vals
+    exp_vals = np.exp(exp_factor*i_vals)
+    gksum= np.sum(sigS[:N-1]*i2*exp_vals*i2*coeff)
+    return gksum/N
+
+
 def d2_gk(k,x):
     return k*k*k*k/36*np.mean(sigShift_gk*L2*np.exp((-1/6)*x*k*k*L))
 def d2_gk_r(k,x):
-    return k*k*k*k/36*np.mean(sigShift_gk*L2*L2*np.exp((-1/6)*x*k*k*L))
+    # return k*k*k*k/36*np.mean(sigS*L2*L2*np.exp((-1/6)*x*k*k*L))
+    k2 = k * k
+    exp_factor = -1 / 6 * x * k2
+    coeff = k2 * k2 / 36
+    i2 = i_vals * i_vals
+    exp_vals = np.exp(exp_factor * i_vals)
+    gksum = np.sum(sigShift_gk[:N - 1] * i2 * exp_vals * i2 * coeff)
+    return gksum / N
 def d2_ck(k,x,sigs):
     return k*k*k*k/36*np.mean(sigs*L2*np.exp((-1/6)*x*k*k*L))
 def d2_ck_r(k,x,sigs):
@@ -444,6 +461,7 @@ def d2_Frg_phiM(phiM,Y,phiS,x=None,dx=None,ddx=None):
     ddx = d2_x_solver(phiM, Y, x, dx) if ddx == None else ddx
     phic = qc * phiM
     phiW = 1 - phiM - phic - phiS
+
     #################Entropyd2##########
     d2s = (d2s_1comp(phiM) / N + qc * qc * d2s_1comp(phic) + (1 + qc) * (1 + qc) * d2s_1comp(phiW)) * (phiM > 0)
 
@@ -453,7 +471,7 @@ def d2_Frg_phiM(phiM,Y,phiS,x=None,dx=None,ddx=None):
     k = np.sqrt((c) * (rho))
     ##THIS IS FROM LIN
     tp = qc / (1 + k) * (phiM > 0)
-    temp = -np.pi * (1 / Y) * (1 / Y) / (k + (k == 0)) * (k > 0)
+    temp = -1 * np.pi * (1 / Y) * (1 / Y) / (k + (k == 0)) * (k > 0)
     d2fion = temp * tp * tp
 
     # d2f0
@@ -463,12 +481,17 @@ def d2_Frg_phiM(phiM,Y,phiS,x=None,dx=None,ddx=None):
     upperlim = np.inf
     lowerlim = 0
     result = integrate.quad(d2_FP_toint, lowerlim, upperlim, args=(Y, phiM, x, dx, ddx), limit=iterlim)
-
     d2fp = result[0] / (4 * np.pi * np.pi)
-    d2_ftot =  np.float64((d2s + d2fp + d2fion + d2f0))
+
+    d2_ftot =  np.float64((d2s + d2fp + d2fion + d2f0 ))
+
+    #### FH OPTION ###
+    d2_fFH = 0
 
     if FH_TOGGLE == 1:
-        d2_ftot += (- 2*chi/Y - 2*chi_int)*(1+qc)
+        d2_fFH = np.float64((- 2*chi/Y - 2*chi_int)*(1+qc))
+
+    d2_ftot+= d2_fFH
 
     return d2_ftot
 
@@ -516,6 +539,7 @@ def findCrit(phiS,guess):
     # return phiC, -1*Yc.fun
     (pf,uf) = (result.x, result.fun)
     tf = 1/uf
+    #print(d2_Frg_phiM(pf,tf,phiS),'d2 at the crit', d2_Frg_phiM(pf,tf+.01,phiS),'above d2')
     return np.float64(pf), np.float64(tf)
 
 t1 = time.time()
@@ -655,6 +679,7 @@ def min_verify(minObj, Y, phiB, spins):
     print('this took ', redo_i, 'additional attempts')
 
     return minObj_verified
+
 def minFtotal(Y,phiC,lastphi1,lastphi2,dy):
 
     phi1spin,phi2spin = findSpins(Y,phiC)
