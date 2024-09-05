@@ -311,7 +311,7 @@ def ftot_rg(phiM, Y, phiS, x=None):
     ftot = entropy(phiM, phiS) + fion(phiM, Y, phiS) + rgFP(phiM, Y, phiS, x) + 2*np.pi*phiM*phiM/3  ##f0 term
 
     if FH_TOGGLE==1:
-        ftot += (- chi/Y - chi_int)*phiM*phiM
+        ftot += (- chi/Y)*phiM*phiM
 
     return ftot
 def rgFPint(k,Y,phiM,phiS,x):
@@ -390,7 +390,7 @@ def d1_Frg_dphi(phiM,Y,phiS,x=None, dx = None):
     d1_ftot = ds_dphi + dfion_dphi + dfp_dphi + 4*np.pi*phiM/3 #d1f0
 
     if FH_TOGGLE ==1:
-        d1_ftot += (- 2*chi/Y - 2*chi_int)*phiM
+        d1_ftot += (- 2*chi/Y )*phiM
 
     return d1_ftot
 
@@ -428,33 +428,6 @@ def d2_FP_toint(k, Y, phiM,x,dx,ddx):
     Num2 = (vp21*DD + phiM * (d1xe_x / rho - qc * xe / (rho2) + v2 * d1g_x) - qc * vp22 * D + 2 * vp21 * D / phiM + vr)
 
     return k2 * (Num1 / Den - (Num2 * Num2) /Den/Den )
-def d2_Frg_Y(Y,phiM,phiS,x = None, dx = None, ddx = None):
-    x = x_solver(phiM, Y) if x == None else x
-    dx = d1_x_solver(phiM, Y,x) if dx == None else dx
-    ddx = d2_x_solver(phiM, Y,x,dx) if ddx == None else ddx
-    phic = qc*phiM
-    phiW = 1 - phiM - phic - phiS
-    #################Entropyd2##########
-    d2s = (d2s_1comp(phiM)/N + qc*qc*d2s_1comp(phic) + (1+qc)*(1+qc)*d2s_1comp(phiW))*(phiM>0)
-
-    #####d2Fion#################
-    rho = phic + phiS
-    k = np.sqrt((4*np.pi/Y)*(rho))
-    ##THIS IS FROM LIN
-    tp = qc/(1+k)*(phiM>0)
-    temp = -np.pi*(1/Y)*(1/Y)/(k + (k==0))*(k>0)
-    d2fion = temp*tp*tp
-
-    #################Electrofreeenergyd2###########
-    result = integrate.quad(d2_FP_toint, 0, np.inf, args=(Y, phiM,x,dx,ddx), limit=iterlim)
-
-    d2fp = result[0] / (4 * np.pi * np.pi)
-    d2_ftot = np.float64((d2s + d2fp + d2fion + w2)) #d2f0
-
-    if FH_TOGGLE ==1:
-        #d2_ftot += (w2 - 2*chi/Y - 2*chi_int)
-        d2_ftot += (-2*chi/Y - 2*chi_int)*(1+qc)
-    return d2_ftot
 def d2_Frg_phiM(phiM,Y,phiS,x=None,dx=None,ddx=None):
     x = x_solver(phiM, Y) if x == None else x
     dx = d1_x_solver(phiM, Y, x) if dx == None else dx
@@ -489,7 +462,7 @@ def d2_Frg_phiM(phiM,Y,phiS,x=None,dx=None,ddx=None):
     d2_fFH = 0
 
     if FH_TOGGLE == 1:
-        d2_fFH = np.float64((- 2*chi/Y - 2*chi_int)*(1+qc))
+        d2_fFH = np.float64((- 2*chi/Y)*(1+qc))
 
     d2_ftot+= d2_fFH
 
@@ -499,14 +472,7 @@ def d2_Frg_phiM(phiM,Y,phiS,x=None,dx=None,ddx=None):
 #######SOLVER METHODS BELOW####################################################################################
 ###############################################################################################################
 
-def getSpinodalrg(phiMs):
-    Ys=[]
-    for j in range(len(phiMs)):
-        i = phiMs[j]
-        y = brenth(d2_Frg_Y, .01, 10, args=(i, phiS,))
-        print('phi', i, 'l/lb', y)
-        Ys.append(y)
-    return Ys
+
 def spin_yfromphi(phiM,phiS,guess):
     guess1 = guess
     pc = 1 / (1 + N ** (0.5))
