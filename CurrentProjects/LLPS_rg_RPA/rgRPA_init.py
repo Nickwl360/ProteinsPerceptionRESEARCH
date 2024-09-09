@@ -7,7 +7,7 @@ def pH_qs(seq, ph):
     for letter in seq:
         if letter == 'E' or letter == 'D':
             if letter == 'E':
-                q = -1*(10**(-1*(4.15- ph)))/(1+ 10**(-1*(4.15-ph)))
+                q = -1*(10**(-1*(4.15- ph)))/(1 + 10**(-1*(4.15-ph)))
             elif letter == 'D':
                 q = -1 * (10 ** (-1*(3.71 - ph))) / (1 + 10 ** (-1*(3.71 - ph)))
             charges.append(q)
@@ -15,20 +15,19 @@ def pH_qs(seq, ph):
             if letter == 'R':
                 q = (10**(12.1- ph))/(1 + 10**(12.1-ph))
             elif letter == 'K':
-                q = (10**(10.67- ph))/(1 + 10**(10.67-ph))
+                q = (10**(10.67 - ph))/(1 + 10**(10.67-ph))
             elif letter =='H':
-                q = (10**(6.04-ph))/(1+10**(6.04-ph))
+                q = (10**(6.04 - ph))/(1 + 10**(6.04-ph))
             charges.append(q)
         else:
             charges.append(0)
     return charges
 
 ###########CONSTANTS##########################
-
 phiS = 0.00
 ph = 7
-scale_init= .005
-scale_final= .007
+scale_init= .01
+scale_final= .025
 epsilon = 1e-12
 
 #################PICK SEQUENCE/GET RELEVANTQUANTITIES###################################################
@@ -46,13 +45,13 @@ ki67_p = 'SLQNGRKXTEFPRKIREQEPARRVSRSSFSSDPDEKAQDSKAYSKITEGKVSGNPQVHIKNVKEDSTADD
 MCM4_nonp = 'MSSPASTPSRRGSRRGRATPAQTPRSEDARSSPSQRRRGEDSTSTGELQPMPTSPGVDLQSPAAQDVLFSSPPQMHSSAIPLDFDVSSPLTYGTPSSRVEGTPRSGVRGTPVRQRPDLGSAQKGLQVDLQSDGAAAEDIVASEQSLG'
 MCM4_p = 'MSSPASTPSRRGSRRGRAXPAQTPRSEDARSXPSQRRRGEDSTSTGELQPMPTXPGVDLQSPAAQDVLFSSPPQMHSSAIPLDFDVSSPLTYGTPSSRVEGXPRSGVRGXPVRQRPDLGSAQKGLQVDLQSDGAAAEDIVASEQSLG'
 
-seq_of_interest = ki67_p
+seq_of_interest = MCM4_nonp
 #qs = pH_qs(seq_of_interest,ph)
 qs = getcharges(seq_of_interest) #regular way
 N = len(qs)
 print(N)
 qc = abs(sum(qs))/N
-print('qc' , qc)
+print('qc', qc)
 w2 = 4*np.pi/3
 
 # # # ### ### ### ### ### ### FH OPTIONS ### ### ### ### ### ### ### # # #
@@ -67,7 +66,7 @@ for name, pc in rg_phiC_list:
     if name == seq_of_interest:
         phiC_test = pc
         break
-phiC_test = .03
+#phiC_test = .03
 
 
 

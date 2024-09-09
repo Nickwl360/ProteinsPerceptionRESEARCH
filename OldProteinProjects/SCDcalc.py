@@ -18,6 +18,8 @@ def getcharges(seq):
             charges.append(1)
         elif letter == 'X':
             charges.append(-2)
+        # elif letter == 'H':
+        #     charges.append(.5)
         else:
             charges.append(0)
     return charges
@@ -29,7 +31,6 @@ def calcQ(seq):
 
     # calc SCD from charge array
     SUM = 0
-    nloop = 0
     for m in range(2, size+1):
         nloop = 0
         for n in range(1, m):

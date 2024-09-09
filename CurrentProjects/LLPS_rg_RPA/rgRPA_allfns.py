@@ -12,33 +12,31 @@ import time
 
 ########################ConstANTS################################
 T0=1e8
-iterlim=250
+iterlim=2500
 MINMAX=25
-thresh = 1e-8
+thresh = 1e-15
 qL = np.array(qs)
 Q = np.sum(qL*qL)/N
 L = np.arange(N)
-i_vals = np.arange(0,N-1)
+i_vals = np.arange(0,N)
 L2 = L*L
 
 def getSigShifts(qs):
     sigSij = []
-    sigGs = []
     for i in range(len(qs)):  ###abs(tau - mu)
         sigij = 0
-        sigG=0
         for j in range(len(qs)-1):  #### tau (starting spot)
             if (j+i)<= len(qs)-1:
                 sigij += qs[j] * qs[j + i] #
-                sigG += 1
         if i ==0:
             sigSij.append(sigij)
-            sigGs.append(sigG+1)
         if i!=0:
             sigSij.append(2 * sigij)
-            sigGs.append(2 *sigG )
 
+    sigGs = 2*np.arange(N,0,-1)
+    sigGs[0]/=2
     #######THIS IS FROM LIN GITHUB, COULDN'T FIGURE OUT MY SUM METHOD
+
     mlx = np.kron(qs, np.ones(N)).reshape((N, N))
     sigSi = np.array([np.sum(mlx.diagonal(n) + mlx.diagonal(-n)) for n in range(N)])
     sigSi[0] /= 2
@@ -57,36 +55,94 @@ def xee(k,x,sigS):
     # for i in range(0,N-1):
     #     xeesum += sigS[i]*np.exp((-1/6)*x*(k*k)*i)
     # return xeesum/N
-
-    return np.mean(sigS*np.exp((-1/6)*x*k*k*L))
+    k2 = k * k
+    exp_factor = -1 / 6 * x * k2
+    exp_vals = np.exp(exp_factor * i_vals)
+    gksum = np.sum(sigS[:N] * exp_vals)
+    return gksum / N
 def xee_r(k,x,sigS):
-    return np.mean(sigS*L2*np.exp((-1/6)*x*k*k*L))
+    k2 = k * k
+    exp_factor = -1 / 6 * x * k2
+    i2 = i_vals*i_vals
+    exp_vals = np.exp(exp_factor * i_vals)
+    gksum = np.sum(sigS[:N] * exp_vals*i2)
+    return gksum / N
 def gk(k,x):
-    return np.mean(sigShift_gk*np.exp((-1/6)*x*k*k*L))
+    k2 = k * k
+    exp_factor = -1 / 6 * x * k2
+    exp_vals = np.exp(exp_factor * i_vals)
+    gksum = np.sum(sigShift_gk[:N] * exp_vals)
+    return gksum / N
 def gk_r(k,x):
-    return np.mean(sigShift_gk*L2*np.exp((-1/6)*x*k*k*L))
+    k2 = k * k
+    exp_factor = -1 / 6 * x * k2
+    i2 = i_vals * i_vals
+    exp_vals = np.exp(exp_factor * i_vals)
+    gksum = np.sum(sigShift_gk[:N] * exp_vals * i2)
+    return gksum / N
 def ck(k,x,sigs):
-    return np.mean(sigs*np.exp((-1/6)*x*k*k*L))
+    k2 = k * k
+    exp_factor = -1 / 6 * x * k2
+    exp_vals = np.exp(exp_factor * i_vals)
+    gksum = np.sum(sigs[:N] * exp_vals)
+    return gksum / N
 def ck_r(k,x,sigs):
-    return np.mean(sigs*L2*np.exp((-1/6)*k*k*x*L))
+    # return np.mean(sigs* L2*np.exp((-1/6)*x*k*k*L))
+    k2 = k * k
+    exp_factor = -1 / 6 * x * k2
+    i2 = i_vals * i_vals
+    exp_vals = np.exp(exp_factor * i_vals)
+    gksum = np.sum(sigs[:N] * exp_vals * i2)
+    return gksum / N
 
 #d1
 def d1_xee(k,x,sigS):
-    # xeesum=0
-    # for i in range(0,N-1):
-    #     xeesum += sigS[i]*np.exp((-1/6)*x*(k*k)*i) *(-1/6)*(k*k)*i
-    # return xeesum/N
-    return -k*k/6*np.mean(sigS*L*np.exp((-1/6)*x*k*k*L))
+    k2 = k * k
+    exp_factor = -1 / 6 * x * k2
+    coeff = -k2 / 6
+    exp_vals = np.exp(exp_factor * i_vals)
+    gksum = np.sum(sigS[:N ] * i_vals * exp_vals * coeff)
+    return gksum / N
+    # return k*k*k*k/36*np.mean(sigs*L2*L2*np.exp((-1/6)*x*k*k*L))
+    #return -k * k / 6 * np.sum(sigS * L * np.exp((-1 / 6) * x * k * k * L))/N
 def d1_xee_r(k,x,sigS):
-    return -k*k/6*np.mean(sigS*L*L2*np.exp((-1/6)*x*k*k*L))
+    k2 = k * k
+    exp_factor = -1 / 6 * x * k2
+    coeff = -k2 / 6
+    i2 = i_vals * i_vals
+    exp_vals = np.exp(exp_factor * i_vals)
+    gksum = np.sum(sigS[:N ] * i_vals * exp_vals * i2 * coeff)
+    return gksum / N
 def d1_gk(k,x):
-    return -k*k/6*np.mean(sigShift_gk*L*np.exp((-1/6)*x*k*k*L))
+    k2 = k * k
+    exp_factor = -1 / 6 * x * k2
+    coeff = -k2 / 6
+    exp_vals = np.exp(exp_factor * i_vals)
+    gksum = np.sum(sigShift_gk[:N ] * i_vals * exp_vals * coeff)
+    return gksum / N
 def d1_gk_r(k,x):
-    return -k*k/6*np.mean(sigShift_gk*L2*L*np.exp((-1/6)*x*k*k*L))
+    k2 = k * k
+    exp_factor = -1 / 6 * x * k2
+    coeff = -k2 / 6
+    i2 = i_vals * i_vals
+    exp_vals = np.exp(exp_factor * i_vals)
+    gksum = np.sum(sigShift_gk[:N] * i_vals * exp_vals * i2 * coeff)
+    return gksum / N
 def d1_ck(k,x,sigs):
-    return -k*k/6*np.mean(sigs*L*np.exp((-1/6)*x*k*k*L))
-def d1_ck_r(k,x,sigs):
-    return -k*k/6*np.mean(sigs*L2*L*np.exp((-1/6)*x*k*k*L))
+    k2 = k * k
+    exp_factor = -1 / 6 * x * k2
+    coeff = - k2 / 6
+    exp_vals = np.exp(exp_factor * i_vals)
+    gksum = np.sum(sigs[:N] * i_vals * exp_vals * coeff)
+    return gksum / N
+def d1_ck_r(k, x, sigs):
+    k2 = k * k
+    exp_factor = -1 / 6 * x * k2
+    coeff = -k2 / 6
+    i2 = i_vals * i_vals
+    exp_vals = np.exp(exp_factor * i_vals)
+    gksum = np.sum(sigs[:N ] * i_vals * exp_vals * i2 * coeff)
+    return gksum / N
 
 #d2
 def d2_xee(k,x,sigS):
@@ -94,7 +150,14 @@ def d2_xee(k,x,sigS):
     # for i in range(0,N-1):
     #     xeesum += sigS[i]*np.exp((-1/6)*x*(k*k)*i) *(1/36)*(k*k)*i*(k*k)*i
     # return xeesum/N
-    return k*k*k*k/36*np.mean(sigS*L2*np.exp((-1/6)*x*k*k*L))
+    # return k*k*k*k/36*np.mean(sigs*L2*L2*np.exp((-1/6)*x*k*k*L))
+    k2 = k * k
+    exp_factor = -1 / 6 * x * k2
+    coeff = k2 * k2 / 36
+    i2 = i_vals * i_vals
+    exp_vals = np.exp(exp_factor * i_vals)
+    gksum = np.sum(sigS[:N]* exp_vals * i2 * coeff)
+    return gksum / N
 def d2_xee_r(k,x,sigS):
     #return k*k*k*k/36*np.mean(sigS*L2*L2*np.exp((-1/6)*x*k*k*L))
     k2 = k*k
@@ -102,12 +165,17 @@ def d2_xee_r(k,x,sigS):
     coeff = k2*k2/36
     i2 = i_vals*i_vals
     exp_vals = np.exp(exp_factor*i_vals)
-    gksum= np.sum(sigS[:N-1]*i2*exp_vals*i2*coeff)
+    gksum= np.sum(sigS[:N]*i2*exp_vals*i2*coeff)
     return gksum/N
-
-
 def d2_gk(k,x):
-    return k*k*k*k/36*np.mean(sigShift_gk*L2*np.exp((-1/6)*x*k*k*L))
+    # return k*k*k*k/36*np.mean(sigs*L2*L2*np.exp((-1/6)*x*k*k*L))
+    k2 = k * k
+    exp_factor = -1 / 6 * x * k2
+    coeff = k2 * k2 / 36
+    i2 = i_vals * i_vals
+    exp_vals = np.exp(exp_factor * i_vals)
+    gksum = np.sum(sigShift_gk[:N] * exp_vals * i2 * coeff)
+    return gksum / N
 def d2_gk_r(k,x):
     # return k*k*k*k/36*np.mean(sigS*L2*L2*np.exp((-1/6)*x*k*k*L))
     k2 = k * k
@@ -115,34 +183,36 @@ def d2_gk_r(k,x):
     coeff = k2 * k2 / 36
     i2 = i_vals * i_vals
     exp_vals = np.exp(exp_factor * i_vals)
-    gksum = np.sum(sigShift_gk[:N - 1] * i2 * exp_vals * i2 * coeff)
+    gksum = np.sum(sigShift_gk[:N] * i2 * exp_vals * i2 * coeff)
     return gksum / N
 def d2_ck(k,x,sigs):
-    return k*k*k*k/36*np.mean(sigs*L2*np.exp((-1/6)*x*k*k*L))
+    # return k*k*k*k/36*np.mean(sigs*L2*L2*np.exp((-1/6)*x*k*k*L))
+    k2 = k * k
+    exp_factor = -1 / 6 * x * k2
+    coeff = k2 * k2 / 36
+    i2 = i_vals * i_vals
+    exp_vals = np.exp(exp_factor * i_vals)
+    gksum = np.sum(sigs[:N ] * exp_vals * i2 * coeff)
+    return gksum / N
 def d2_ck_r(k,x,sigs):
-    return k*k*k*k/36*np.mean(sigs*L2*L2*np.exp((-1/6)*x*k*k*L))
+    # return k*k*k*k/36*np.mean(sigs*L2*L2*np.exp((-1/6)*x*k*k*L))
+    k2 = k * k
+    exp_factor = -1 / 6 * x * k2
+    coeff = k2 * k2 / 36
+    i2 = i_vals * i_vals
+    exp_vals = np.exp(exp_factor * i_vals)
+    gksum = np.sum(sigs[:N] * i2 * exp_vals * i2 * coeff)
+    return gksum / N
 
 ############SOLVING FOR X #####################################################
 def x_solver(phiM,Y):
-    #print(x_eqn(1/(N*1000),phiM,Y),'lowbound', x_eqn(100*N,phiM,Y), 'upper')
-
     sln = brenth(x_eqn, 1/10000/N, 1000*N, args=(phiM,Y))
-    #sln = fsolve(x_eqn,np.array([.5]),args=(phiM,Y,))
-    #sln = root_scalar(x_eqn,x0=.5, args=(phiM,Y,))
-    #bounds=[(0,1)]
-    #sln = minimize(x_eqn, np.array([.5]),args=(phiM,Y,),method='Nelder-Mead',bounds=bounds)
     return sln
 def x_eqn(x,phiM,Y):
     inte = integrate.quad(x_eqn_toint,epsilon,np.inf,args=(phiM,Y,x),limit=iterlim)[0]
     #print(inte , phiM, Y, x)
     eqn = 1 - 1/x - (N/(18*(N-1))) * inte
-    if math.isnan(eqn):
-        if x<.01:
-            eqn= -1e10
-        elif x> .2:
-            eqn = .99999999999
     return eqn
-    #return np.sqrt(eqn*eqn)
 def x_eqn_toint(k,phiM,Y,x):
     phic= phiM*qc
     ex = xee(k,x,sigS=sigShift_xe)
@@ -311,7 +381,7 @@ def ftot_rg(phiM, Y, phiS, x=None):
     ftot = entropy(phiM, phiS) + fion(phiM, Y, phiS) + rgFP(phiM, Y, phiS, x) + 2*np.pi*phiM*phiM/3  ##f0 term
 
     if FH_TOGGLE==1:
-        ftot += (- chi/Y)*phiM*phiM
+        ftot += (chi/Y)*phiM*(1-phiM-phiS-qc*phiM)
 
     return ftot
 def rgFPint(k,Y,phiM,phiS,x):
@@ -390,7 +460,7 @@ def d1_Frg_dphi(phiM,Y,phiS,x=None, dx = None):
     d1_ftot = ds_dphi + dfion_dphi + dfp_dphi + 4*np.pi*phiM/3 #d1f0
 
     if FH_TOGGLE ==1:
-        d1_ftot += (- 2*chi/Y )*phiM
+        d1_ftot += (chi/Y)*(1 - 2*phiM - phiS - 2*qc*phiM)
 
     return d1_ftot
 
@@ -456,13 +526,13 @@ def d2_Frg_phiM(phiM,Y,phiS,x=None,dx=None,ddx=None):
     result = integrate.quad(d2_FP_toint, lowerlim, upperlim, args=(Y, phiM, x, dx, ddx), limit=iterlim)
     d2fp = result[0] / (4 * np.pi * np.pi)
 
-    d2_ftot =  np.float64((d2s + d2fp + d2fion + d2f0 ))
+    d2_ftot =  np.float64((d2s + d2fp + d2fion + d2f0))
 
     #### FH OPTION ###
     d2_fFH = 0
 
     if FH_TOGGLE == 1:
-        d2_fFH = np.float64((- 2*chi/Y)*(1+qc))
+        d2_fFH = np.float64((- 2 * chi/Y)*(1+qc))
 
     d2_ftot+= d2_fFH
 
@@ -472,45 +542,33 @@ def d2_Frg_phiM(phiM,Y,phiS,x=None,dx=None,ddx=None):
 #######SOLVER METHODS BELOW####################################################################################
 ###############################################################################################################
 
-
 def spin_yfromphi(phiM,phiS,guess):
     guess1 = guess
     pc = 1 / (1 + N ** (0.5))
     tc = 2*N / ((1 + N ** (0.5)) ** 2)
     uc = 1 / tc
     # initial values
-    pi = pc
     ui = uc
 
-    #ans = root_scalar(d2_Frg_Y, bracket=[1/N/10000, 1000*N], args=(phiM,phiS),method='brenth',x0=guess1)
-    d2f = lambda u: d2_Frg_phiM(phiM, 1/u ,phiS)
+    d2f = lambda u: d2_Frg_phiM(phiM, 1/u, phiS)
     ures = root_scalar(d2f,x0=ui,x1=ui/2, rtol=thresh, bracket = (1e-4, 1e3))
 
     print('phi,t:' ,phiM, 1/ures.root, 'attempted')
+    print(d2_Frg_phiM(phiM,1/ures.root,phiS),'this is d2')
+
+    # print('phi,t:' ,phiM, ures.root, 'attempted')
+    # print(d2_Frg_phiM(phiM,ures.root,phiS),'this is d2')
     return np.float64(ures.root)
-
-
-    #ans = brenth(d2_Frg_Y, 1/N/10, 10, args=(phiM, phiS,))
-    #ans = y.x    ###IN THIS CASE, WE GET Y FROM PHI--- SO Y IS THE INPUT
-    # ans = ans.root
-    # print('phi', phiM, 'l/lb', ans)
-    # return -1*ans
 def findCrit(phiS,guess):
-    bounds = (epsilon,.25-epsilon)
+    bounds = (epsilon,.3-epsilon)
 
     result = minimize_scalar(spin_yfromphi,args=(phiS,guess,),method='bounded', bounds=bounds)
-
-    # Yc = minimize(spin_yfromphi, x0=guess, args=(phiS, guess), method='SLSQP', bounds=bounds)
-    # phiC = Yc.x
-    # return phiC, -1*Yc.fun
     (pf,uf) = (result.x, result.fun)
     tf = 1/uf
-    #print(d2_Frg_phiM(pf,tf,phiS),'d2 at the crit', d2_Frg_phiM(pf,tf+.01,phiS),'above d2')
     return np.float64(pf), np.float64(tf)
 
 t1 = time.time()
 phiC,Yc = findCrit(phiS, guess=phiC_test)
-# Yc= -1* spin_yfromphi(phiC,phiS,guess=phiC)
 print(phiC,Yc,'crit found in ', (time.time()-t1), ' s \n')
 
 def findSpinlow(Y,phiC):
@@ -606,8 +664,8 @@ def makeconstSLS(Y,phiBulk,s1,s2,l1,l2):
 def min_verify(minObj, Y, phiB, spins):
     s1, s2 = spins
     min1, min2 = min(minObj.x), max(minObj.x)
-    mu1,mu2 = d1_Frg_dphi(min1,Y,phiS),d1_Frg_dphi(min2,Y,phiS)
-    print(mu1, mu2, '\n\n INITIAL ATTEMPT mu1 and mu2 for ', min1,min2)
+    #mu1,mu2 = d1_Frg_dphi(min1,Y,phiS),d1_Frg_dphi(min2,Y,phiS)
+    #print(mu1, mu2, '\n\n INITIAL ATTEMPT mu1 and mu2 for ', min1,min2)
 
     redo_flag = 0
     redo_i = 0
@@ -628,8 +686,7 @@ def min_verify(minObj, Y, phiB, spins):
 
         minTemp = minimize(FBINODAL, initial_guess, args=(Y, phiB,spins), method='L-BFGS-B', jac=Jac_rgRPA, bounds=bounds, options={'ftol':1e-20, 'gtol':1e-20, 'eps':1e-20, 'maxfun':MINMAX})
         temp_min1, temp_min2 = min(minTemp.x), max(minTemp.x)
-        mu1, mu2 = d1_Frg_dphi(temp_min1, Y, phiS), d1_Frg_dphi(temp_min2, Y, phiS)
-        print(mu1, mu2, ' mu1 and mu2 for ', temp_min1, temp_min2)
+        #print(mu1, mu2, ' mu1 and mu2 for ', temp_min1, temp_min2)
 
         #if 100 * np.abs((mu1 - mu2) / mu2) < mu_thresh:
         if (temp_min2 < s2 * 3) and (temp_min1 < (s1 - 10 * epsilon)) and (temp_min2 > (s2 + 10 * epsilon)) and (temp_min1> 10*epsilon):
@@ -684,7 +741,7 @@ def minFtotal(Y,phiC,lastphi1,lastphi2,dy):
         #initial_guess = (np.float64(lastphi1 * (1 - .04 * (scale_init/.001))), np.float64(lastphi2 * (1 + .04*(scale_init/.001))))
 
         print(Yc,Y, Yc/Y, 'doublechecking')
-        initial_guess=(np.float64(phi1spin*.70 - phi1spin*(Yc/Y - 1)),np.float64(phi2spin*1.3 + phi2spin*2*((Yc/Y) - 1)))
+        initial_guess=(np.float64(phi1spin*.8 - phi1spin*(Yc/Y - 1)),np.float64(phi2spin*1.3 + phi2spin*2*((Yc/Y) - 1)))
         #initial_guess=(np.float64(phi1spin*(1 - Yc/Y - .1)),np.float64(phi2spin*(Yc/Y)+.45))
 
         print(phi2spin * 1.6 * (Yc / Y) ** 2, 'this was upper bound' )
@@ -746,6 +803,7 @@ def minFtotal(Y,phiC,lastphi1,lastphi2,dy):
     print('\nMINIMIZER COMPLETE FOR Y = ',Y, 'MIN VALUES: phi1,phi2, v = ',phi1min,phi2min,v)
     print('\nThis step took ', time.time()-t0, 's')
     return phi1spin, phi2spin, phi1min,phi2min
+
 def getBinodal(Yc,phiC,minY):
     biphibin= np.array([phiC])
     sphibin = np.array([phiC])
@@ -775,6 +833,8 @@ def getBinodal(Yc,phiC,minY):
             biphibin = np.concatenate((phi1, biphibin, phi2))
             sphibin = np.concatenate((spin1, sphibin, spin2))
             Ybin = np.concatenate(([Ytest], Ybin, [Ytest]))
+
+            Ytest -= resolution
 
 
     return sphibin, biphibin, Ybin
