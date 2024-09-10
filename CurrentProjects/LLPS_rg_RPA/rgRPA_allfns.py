@@ -741,7 +741,7 @@ def minFtotal(Y,phiC,lastphi1,lastphi2,dy):
         #initial_guess = (np.float64(lastphi1 * (1 - .04 * (scale_init/.001))), np.float64(lastphi2 * (1 + .04*(scale_init/.001))))
 
         print(Yc,Y, Yc/Y, 'doublechecking')
-        initial_guess=(np.float64(phi1spin*.8 - phi1spin*(Yc/Y - 1)),np.float64(phi2spin*1.3 + phi2spin*2*((Yc/Y) - 1)))
+        initial_guess=(np.float64(phi1spin*.8 - phi1spin*1.75*(Yc/Y - 1)),np.float64(phi2spin*1.25 + phi2spin*2.25*((Yc/Y) - 1)))
         #initial_guess=(np.float64(phi1spin*(1 - Yc/Y - .1)),np.float64(phi2spin*(Yc/Y)+.45))
 
         print(phi2spin * 1.6 * (Yc / Y) ** 2, 'this was upper bound' )
