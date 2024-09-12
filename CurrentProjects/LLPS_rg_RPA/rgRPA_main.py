@@ -4,7 +4,7 @@ from matplotlib import pyplot as plt
 from rgRPA_init import phiS, scale_init,epsilon,qc,N,scale_final
 
 if __name__ == "__main__":
-    minY = Yc*.7
+    minY = Yc*.8
 
     print('looping from ', Yc, 'to ', minY)
 
@@ -13,7 +13,7 @@ if __name__ == "__main__":
     ###################PLOTTING########################
     plt.plot(phis, Ys, label='Binodal')
     plt.plot(spins,Ys,label='Spinodal')
-    plt.xlim((0,.1))
+    plt.xlim((0,.25))
 
     plt.legend()
     plt.show()
