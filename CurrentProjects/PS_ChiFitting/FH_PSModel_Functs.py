@@ -1,66 +1,86 @@
 import numpy as np
 from scipy.optimize import fsolve
 import matplotlib.pyplot as plt
-from scipy.optimize import minimize
+from scipy.optimize import minimize, minimize_scalar
 from chi_fit_init import *
-from scipy.optimize import brenth, brent
+from scipy.optimize import brenth,root_scalar
 
 
-def get_critical_vals(N):
-    phiC = (1 / (1 + np.sqrt(N)))
-    chiC = .5*(1 + 1/np.sqrt(N))**2
-    return phiC, chiC
 
-def FH_free_energy(chi, phi):
-    return (1/N)* phi * np.log(phi) + (1 - phi)* np.log(1 - phi) + chi * phi * (1 - phi)
+def spin_yfromphi(phi):
+    phic = 1 / (1 + N ** (0.5))
+    chic = 2*N / ((1 + N ** (0.5)) ** 2)
+    tc = 1 / chic
+    ti = tc
 
-def FH_Seperated(variables,chi):
+    d2f = lambda t: d2_FH(phi, t)
+    res = root_scalar(d2f, x0=ti, x1=ti*2, rtol=tol, bracket = (1e-4, 1e3))
+
+    print('phi,t:' ,phi, res.root, 'attempted')
+
+    return -1*np.float64(res.root)
+
+def get_critical_vals(N,T):
+    bounds = (epsilon,1-epsilon)
+    res = minimize_scalar(spin_yfromphi,method='bounded',bounds=bounds)
+    (phic,tc) = (res.x, -1*res.fun)
+
+    return phic, tc
+
+def FH_free_energy(T, phi):
+    return (1/N)* phi * np.log(phi) + (1 - phi)* np.log(1 - phi) + chi/T * phi * (1 - phi)
+
+def FH_Seperated(variables,T):
     phi1,phi2 = variables
-    phiC, XC = get_critical_vals(N)
     v = (phiC-phi2)/(phi1-phi2)
-    eqn = v * FH_free_energy(chi, phi1) + (1 - v) * FH_free_energy(chi, phi2)
+    eqn = v * FH_free_energy(T, phi1) + (1 - v) * FH_free_energy(T, phi2)
     return eqn
-def d2_FH(phi, chi):
-    return (1 / (N * phi)) + (1 / (1 - phi)) - 2 * chi
+def d2_FH(phi,T):
+    return (1 / (N * phi)) + (1 / (1 - phi)) - 2 * chi/T
 
 
-def get_spins(chi,phiC):
+def get_spins(T,phiC):
     #phiMax = (1-2*phiS)/(1+qc)-epsilon
     phiMax = 1-epsilon
-    phi1 = brenth(d2_FH, epsilon, phiC, args=(chi,))
-    phi2 = brenth(d2_FH, phiC, phiMax,args = (chi,))
+    phi1 = brenth(d2_FH, epsilon, phiC, args=(T,))
+    phi2 = brenth(d2_FH, phiC, phiMax,args = (T,))
     return phi1,phi2
 
 
-def findPhisnoconst(chi,phiC):
-    phi1spin,phi2spin=get_spins(chi,phiC)
-    bounds = [(epsilon,phi1spin-epsilon), (phi2spin+epsilon,1-epsilon)]
+def findPhisnoconst(T,phiC):
+    phi1spin,phi2spin=get_spins(T,phiC)
+    bounds = [(epsilon,phi1spin - epsilon), (phi2spin+epsilon,1-epsilon)]
     # bounds = [(epsilon,phiC-epsilon), (phiC+epsilon,1-epsilon)]
     initial_guess = (phi1spin*.9,phi2spin+epsilon)
     # initial_guess = (epsilon,1-epsilon)
 
-    result = minimize(FH_Seperated, initial_guess, args=(chi,), method='Nelder-Mead', bounds=bounds)
+    result = minimize(FH_Seperated, initial_guess, args=(T,), method='Nelder-Mead', bounds=bounds)
     maxparams = result.x
     phi1,phi2 = min(maxparams), max(maxparams)
     return phi1,phi2,phi1spin,phi2spin
-def getbinodal(chiC,phiC):
+
+def getbinodal(Tc,phiC):
     bibin=[phiC]
     spinbin=[phiC]
-    chibin =[1/chiC]
-    chitest=chiC+resolution
-    while chitest<(2):
-        phil,phi2,s1,s2 = findPhisnoconst(chitest,phiC)
+    Tbin =[Tc]
+    print(Tc)
+    Ttest=Tc - resolution
+    while Ttest>(Tmin):
+
+        phil,phi2,s1,s2 = findPhisnoconst(Ttest,phiC)
         bibin = np.concatenate(([phil], bibin, [phi2]))
         spinbin = np.concatenate(([s1],spinbin,[s2]))
-        chibin = np.concatenate(([1/chitest], chibin, [1/chitest]))
-        chitest+=resolution
+        Tbin = np.concatenate(([Ttest], Tbin, [Ttest]))
+        Ttest-=resolution
 
-    return bibin, spinbin, chibin
+    return bibin, spinbin, Tbin
 
 if __name__ =='__main__':
-    phiC, chiC = get_critical_vals(N)
-    print(phiC, chiC)
-    bis,spins, chis = getbinodal(chiC, phiC)
+
+    phiC, tc = get_critical_vals(N,1)
+    print(phiC, tc)
+    bis,spins, chis = getbinodal(tc, phiC)
+    print('Binodal for chi = ', chi)
     plt.plot(bis, chis, label='Binodal')
     plt.plot(spins, chis, label='Spinodal')
     plt.show()
