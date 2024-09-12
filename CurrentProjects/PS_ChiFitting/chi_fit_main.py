@@ -23,7 +23,7 @@ def find_best_chi(T, preds):
 
     for chiTest in chi_search_space:
 
-        FH_phi1, FH_phi2 ,s1,s2 = fh.findPhisnoconst(chiTest, phiC)
+        FH_phi1, FH_phi2 ,s1,s2 = fh.findPhisnoconst(T, phiC)
 
         if np.isclose(FH_phi1,phi1pred,tol) and np.isclose(FH_phi2, phi2pred, tol):
             print('WE HAVE FOUND A FH MODEL TO MATCH PREDICTION for ', df_seq_csat_list[0][0])
