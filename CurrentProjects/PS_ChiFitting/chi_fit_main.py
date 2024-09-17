@@ -32,11 +32,7 @@ def find_best_chi(T, preds ):
 
     return bestChi
 
+
 #print(find_best_chi(T, preds))
 
-def cdense_calc(dG, cdil):
-    return cdil/(np.exp(dG))
-def vFrac_fromMgMl(mgml):
-    return
 
-print(np.exp(3.935),cdense_calc(-1.0578, np.exp(3.935)))

@@ -25,6 +25,15 @@ def get_critical_vals(N,T,chi):
     (phic,tc) = (res.x, -1*res.fun)
 
     return phic, tc
+def Tstar_to_Tcelsius(Tstar):
+    T_kelvin = Tstar*e*e/(4*np.pi*e0*er*kb*b)
+    T_celsius = T_kelvin - 273.15
+    return T_celsius
+def Tcelsius_to_Tstar(Tcelsius):
+    Tkelvin = Tcelsius + 273.15
+    Tstar = Tkelvin*(4*np.pi*e0*er*kb*b)/(e*e)
+    return Tstar
+
 
 def FH_free_energy(T, phi,chi):
     return (1/N)* phi * np.log(phi) + (1 - phi)* np.log(1 - phi) + chi/T * phi * (1 - phi)
@@ -73,7 +82,6 @@ if __name__ =='__main__':
     phiC, tc = get_critical_vals(N,1)
     print(phiC, tc)
     bis,spins, chis = getbinodal(tc, phiC)
-    print('Binodal for chi = ', chi)
     plt.plot(bis, chis, label='Binodal')
     plt.plot(spins, chis, label='Spinodal')
     plt.show()
