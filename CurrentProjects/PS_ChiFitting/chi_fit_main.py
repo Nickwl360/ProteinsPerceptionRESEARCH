@@ -5,7 +5,7 @@ from chi_fit_init import*
 
 cdilpred, cdensepred = df_seq_csat_list[0][2],df_seq_csat_list[0][3]
 preds =(cdilpred,cdensepred)
-# want to find best chi for these 2 predictions#
+# want to find the best chi for these 2 predictions#
 chi_search_space = np.linspace(.3,1,5000)
 
 def find_best_chi(T, preds ):

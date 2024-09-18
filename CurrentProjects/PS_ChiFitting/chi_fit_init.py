@@ -11,7 +11,7 @@ b = 3.8e-10  #bond length
 
 #constants
 epsilon = 1e-15
-MW = 110 #dalton (avg molecular weight per aminoacid
+MWavg = 110 #dalton (avg molecular weight per aminoacid
 
 tol = 1e-2
 
@@ -20,20 +20,20 @@ def cdense_calc(dG, cdil):
     return cdil/(np.exp(dG))
 
 def vFrac_fromMgMl(mgml):
-    phi = 6.022e-4 /MW *b**3 *mgml
+    phi = 6.022e-4 / MWavg * b ** 3 * mgml
     return phi
 
-#steps:
-#import data
+print(np.exp(3.935),cdense_calc(-1.0578, np.exp(3.935)))
+df_seq_csat_list= [('MCM4', 1000,.02, .124)]
 
+#steps:
+seqData = pd.DataFrame(df_seq_csat_list, columns=['seq_name','N','dG','csatpred'])
 #save as: name, N, cdil, cdense
 
 #convert to vfrac
 
 
-
-print(np.exp(3.935),cdense_calc(-1.0578, np.exp(3.935)))
-df_seq_csat_list= [('MCM4', 1000,.02, .124)]
+seq_of_interest = 'MCM4'
 
 #define variables for model fitter to use
 N = df_seq_csat_list[0][1]
