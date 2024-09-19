@@ -6,8 +6,7 @@ from scipy.optimize import minimize_scalar
 
 cdilpred, cdensepred = df_seq_csat_list[0][2],df_seq_csat_list[0][3]
 preds =(cdilpred,cdensepred)
-# want to find the best chi for these 2 predictions#
-chi_search_space = np.linspace(.3,1,5000)
+
 def Tstar_to_Tcelsius(Tstar):
     T_kelvin = Tstar*e*e/(4*np.pi*e0*er*kb*b)
     T_celsius = T_kelvin - 273.15
@@ -33,7 +32,7 @@ def error_function(chi, T, preds):
 
 
 def find_best_chi(T, preds):
-    result = minimize_scalar(error_function, bounds=(0.3, 1), args=(T, preds), method='bounded')
+    result = minimize_scalar(error_function, bounds=(0, 3), args=(T, preds), method='bounded')
 
     if result.success:
         best_chi = result.x

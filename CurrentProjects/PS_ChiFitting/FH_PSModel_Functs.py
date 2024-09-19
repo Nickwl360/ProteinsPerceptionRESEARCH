@@ -5,7 +5,7 @@ from scipy.optimize import minimize, minimize_scalar
 from chi_fit_init import *
 from scipy.optimize import brenth,root_scalar
 
-
+tol = 1e-2
 
 def spin_yfromphi(phi,chi):
     phic = 1 / (1 + N ** (0.5))
@@ -29,14 +29,21 @@ def get_critical_vals(N,T,chi):
 
 
 def FH_free_energy(T, phi,chi):
-    return (1/N)* phi * np.log(phi) + (1 - phi)* np.log(1 - phi) + chi/T * phi * (1 - phi)
+    f3b = 0
+    if omega3toggle:
+        f3b += (w3 - 1/6)*phi**3
+
+    return (1/N)* phi * np.log(phi) + (1 - phi)* np.log(1 - phi) + chi/T * phi * (1 - phi) + f3b
 def FH_Seperated(variables,T,phiC,chi):
     phi1,phi2 = variables
     v = (phiC-phi2)/(phi1-phi2)
     eqn = v * FH_free_energy(T, phi1,chi) + (1 - v) * FH_free_energy(T, phi2,chi)
     return eqn
 def d2_FH(phi,T,chi):
-    return (1 / (N * phi)) + (1 / (1 - phi)) - 2 * chi/T
+    d2f3b = 0
+    if omega3toggle:
+        d2f3b+= 6*(w3 -1/6)*phi
+    return (1 / (N * phi)) + (1 / (1 - phi)) - 2 * chi/T + d2f3b
 def get_spins(T,phiC,chi):
     #phiMax = (1-2*phiS)/(1+qc)-epsilon
     phiMax = 1-epsilon
