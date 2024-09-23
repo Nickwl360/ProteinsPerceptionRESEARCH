@@ -2,14 +2,38 @@ from FH_PSModel_Functs import get_critical_vals, getbinodal
 from matplotlib import pyplot as plt
 import numpy as np
 
-if __name__ =='__main__':
+setTest = 3
+
+#### A1 - LCD ### vs Aromatic Varients ###
+if setTest ==0:
     seqNames = ['WT', 'aro+','aro-', 'aro--']
     N = 137
-    #omega2List = [-0.31350964,-0.32084423,-0.28773427,-0.27752626]  #mike list
-    omega2List = [-0.3479,-0.38978,-0.29146,-0.22101]                #lili List
+    omega2List = [-0.3479,-0.38978,-0.29146,-0.22101] #lili predicted List
+
+
+    tcDataApprox=[332/332, (85+273.15)/332,  299.32/332, (-5+273.15)/332] ### Fig3.B experimental Tc's
+    #print('T/Tc',tcDataApprox)
+
+#### More A1 - LCD Alex SI predictions ####
+elif setTest ==1:
+    seqNames = ['WT', '+7f -7Y', '-12F +12Y']
+    N = 137
+    omega2List = [-0.3479, -0.312672, -0.38825116]  # lili predicted List
+
+elif setTest ==2:
+    seqNames = ['FUS-WT', 'FUS-6E', 'FUS-12E']
+    N = 163
+    omega2List = [-0.23405018, -0.26151404, -0.3302501]  # lili predicted List
+
+elif setTest ==3:
+    seqNames = ['RLP: Y=0.13, V=0.0', 'RLP: Y=0.1, V=0.03', 'RLP: Y=0.06, V=0.06']
+    N = 326
+    omega2List = [-0.27687773, -0.22338626, -0.14956477]  # lili predicted List
+
+
+if __name__ =='__main__':
 
     chiList = [(1-w2)/2 for w2 in omega2List]
-
     phiCtCList = [(get_critical_vals(chi),chi) for chi in chiList]
 
     tcNorm = phiCtCList[0][0][1]
@@ -19,14 +43,14 @@ if __name__ =='__main__':
 
     TcList = [tc for ((phic,tc),chi) in phiCtCList]
     TcList /= tcNorm
-    print(TcList)
+    print('T/Tc',TcList)
 
-    tcDataApprox=[332/332, (85+273.15)/332,  299.32/332, (-5+273.15)/332]
-    print(tcDataApprox)
+
 
     for ((bis, spins, ts),seq) in binodalList:
         plt.plot(bis, ts/tcNorm, label=seq)
 
     plt.legend()
+    plt.savefig('FH_PhaseDiagrams/AlexSIRLPrepeat_variants_fromw2Pred9-23-24')
     plt.show()
 
