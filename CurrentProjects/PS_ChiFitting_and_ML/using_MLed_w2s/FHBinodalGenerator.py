@@ -1,8 +1,8 @@
-from FH_PSModel_Functs import get_critical_vals, getbinodal
+from CurrentProjects.PS_ChiFitting_and_ML.FH_PSModel_Functs import get_critical_vals, getbinodal
 from matplotlib import pyplot as plt
 import numpy as np
 
-setTest = 3
+setTest = 4
 
 #### A1 - LCD ### vs Aromatic Varients ###
 if setTest ==0:
@@ -30,16 +30,21 @@ elif setTest ==3:
     N = 326
     omega2List = [-0.27687773, -0.22338626, -0.14956477]  # lili predicted List
 
+elif setTest ==4:
+    print('FH PHASE DIAGRAMS FOR TDP-43 LOW COMPLEXITY DOMAIN & VARIANTS')
+    seqNames=['WT','VLIM-F','W385G','FYW-L','VLIM-S','F-S','FYW-S']
+    N = 152
+    omega2List = [-0.1488061,-0.21055762,-0.13680525,-0.08521357,-0.13947238,-0.089303896,-0.053069234]
 
 if __name__ =='__main__':
 
     chiList = [(1-w2)/2 for w2 in omega2List]
-    phiCtCList = [(get_critical_vals(chi),chi) for chi in chiList]
+    phiCtCList = [(get_critical_vals(chi,N),chi) for chi in chiList]
 
     tcNorm = phiCtCList[0][0][1]
     print(tcNorm)
-
-    binodalList = [(getbinodal(tc,phic,chi),seqName) for (((phic,tc), chi),seqName) in zip(phiCtCList, seqNames)]
+    print(N)
+    binodalList = [(getbinodal(tc,phic,chi,N),seqName) for (((phic,tc), chi),seqName) in zip(phiCtCList, seqNames)]
 
     TcList = [tc for ((phic,tc),chi) in phiCtCList]
     TcList /= tcNorm
@@ -50,7 +55,8 @@ if __name__ =='__main__':
     for ((bis, spins, ts),seq) in binodalList:
         plt.plot(bis, ts/tcNorm, label=seq)
 
+
     plt.legend()
-    plt.savefig('FH_PhaseDiagrams/AlexSIRLPrepeat_variants_fromw2Pred9-23-24')
+    plt.savefig('FH_PhaseDiagrams/AlexSI_TDP43s_fromw2Pred9-24-24')
     plt.show()
 

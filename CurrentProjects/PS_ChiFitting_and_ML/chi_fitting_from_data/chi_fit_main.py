@@ -1,5 +1,5 @@
 import numpy as np
-import FH_PSModel_Functs as fh
+import CurrentProjects.PS_ChiFitting_and_ML.FH_PSModel_Functs as fh
 from chi_fit_init import*
 from scipy.optimize import minimize_scalar
 
@@ -20,11 +20,11 @@ def Tcelsius_to_Tstar(Tcelsius):
 print(Tcelsius_to_Tstar(65.5) , 'tstar crit')
 def error_function(chi, T, preds):
     phi1pred, phi2pred = preds
-    phiC, tC = fh.get_critical_vals(chi)
+    phiC, tC = fh.get_critical_vals(chi,N)
     print(T, tC, phiC, 'Ttest, tC, phiC\n')
 
     if tC > T:
-        FH_phi1, FH_phi2, s1, s2 = fh.findPhisnoconst(T, chi, phiC)
+        FH_phi1, FH_phi2, s1, s2 = fh.findPhisnoconst(T, chi, phiC,N)
         print(FH_phi1,FH_phi2, f'binodal values for chi = {chi}')
         print(s1,s2,f'spinodal values')
         # Calculate the squared error for both phases (phi1 and phi2)
