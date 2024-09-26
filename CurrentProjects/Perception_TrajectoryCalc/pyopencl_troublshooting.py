@@ -1,12 +1,21 @@
+import pyopencl as cl
+ctx = cl.create_some_context()
+
+platforms = cl.get_platforms()
+for platform in platforms:
+    print(f"Platform: {platform.name}")
+    for device in platform.get_devices():
+        print(f"Device: {device.name}(Type: {cl.device_type.to_string(device.type)})")
+for device in ctx.devices:
+    print(f"Device: {device.name}")
+    print(f"  Local Memory Size: {device.local_mem_size / 1024} KB")
+    print(f"  Max Work Group Size: {device.max_work_group_size}")
+    print(f"  Max Constant Buffer Size: {device.max_constant_buffer_size / 1024} KB")
+
+simple_kernel = """
 #define MAXTOP 5
 #define MAXBOT 12
-#define M1 MAXTOP*MAXBOT*MAXBOT*MAXTOP*MAXTOP*MAXBOT*MAXBOT
-#define M2 M1/MAXTOP
-#define M3 M2/MAXBOT
-#define M4 M3/MAXBOT
-#define M5 M4/MAXTOP
-#define M6 M5/MAXTOP
-#define PI 3.1415
+#define PI 3.14159265358979323
 #define M 1
 
 double stirling(double x){
@@ -46,15 +55,14 @@ __kernel void compute_Pmnop(__global double* Pmnop, const double halpha, const d
 {
      int i = get_global_id(0);   //ARRAYindexes:[nai,nbj,nck,ndl, nam, nbn, nco, ndp] [i,j,k,l ,m,n,o,p]
 
-     int nai = (i/(M1));
-     int nbj = (i/(M2))%MAXTOP;
-     int nck =(i/(M3))%MAXBOT;
-     int ndl = (i/(M4))%MAXBOT;
-     int nam = (i/(M5))%MAXTOP;
-     int nbn = (i/(M6))%MAXTOP;
+     int nai = (i/(MAXTOP*MAXBOT*MAXBOT*MAXTOP*MAXTOP*MAXBOT*MAXBOT));
+     int nbj = (i/(MAXBOT*MAXBOT*MAXTOP*MAXTOP*MAXBOT*MAXBOT))%MAXTOP;
+     int nck = (i/(MAXBOT*MAXTOP*MAXTOP*MAXBOT*MAXBOT))%MAXBOT;
+     int ndl = (i/(MAXTOP*MAXTOP*MAXBOT*MAXBOT))%MAXBOT;
+     int nam = (i/(MAXTOP*MAXBOT*MAXBOT))%MAXTOP;
+     int nbn = (i/(MAXBOT*MAXBOT))%MAXTOP;
      int nco = (i/(MAXBOT))%MAXBOT;
      int ndp = (i)%MAXBOT;
-
 
      double loop4=0;   //a=lA, b=lB, c=lC,d=lD, e=la,f=lb,g=lc,h=ld
      for(int a=0; a<=nai;a++)
@@ -85,5 +93,14 @@ __kernel void compute_Pmnop(__global double* Pmnop, const double halpha, const d
     }
     Pmnop[i] = loop4;
 }
+"""
 
-
+# Build the simple kernel
+try:
+    program = cl.Program(ctx, simple_kernel).build()
+    print("Simple kernel built successfully!")
+except cl.RuntimeError as e:
+    print("Build Error for simple kernel:", e)
+    for device in ctx.devices:
+        build_log = program.get_build_info(device, cl.program_build_info.LOG)
+        print(f"Build Log for {device.name}:\n{build_log}")

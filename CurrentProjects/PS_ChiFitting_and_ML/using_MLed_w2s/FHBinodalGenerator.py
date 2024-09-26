@@ -54,9 +54,12 @@ if __name__ =='__main__':
 
     for ((bis, spins, ts),seq) in binodalList:
         plt.plot(bis, ts/tcNorm, label=seq)
+        plt.ylim(0.8,1.1)
+        plt.ylabel(r'$T^*$')
+        plt.xlabel(r'$\phi$')
 
 
     plt.legend()
-    plt.savefig('FH_PhaseDiagrams/AlexSI_TDP43s_fromw2Pred9-24-24')
+    plt.savefig('FH_PhaseDiagrams/AlexSI_TDP43_LCD_fromw2Pred10-3-24')
     plt.show()
 
