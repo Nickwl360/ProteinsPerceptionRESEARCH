@@ -73,7 +73,7 @@ def brainlikelyhood(params9, counts):
         pmnonormal[nonzero_counts & nonzero_pmnonormal])
     L = np.sum(log_values)
     length=100_000_000
-    #length=len(dataa)
+    #N=len(dataa)
     val = (-1*L)/length
     print('Likelyhood: ', val)
     return val

@@ -6,7 +6,7 @@ e = 1.60217e-19
 e0 = 8.854e-12
 er = 80
 kb = 1.380649e-23
-b = 3.8e-10  #bond length
+b = 3.8e-10  #bond N
 MWavg = 110 #dalton (avg molecular weight per aminoacid
 
 #constants

@@ -75,7 +75,7 @@ RAM1_SCDM = run_program(RAM1,SCDM_prog)
 
 RAM1_SCDMflat = [item for sublist in RAM1_SCDM for item in sublist]
 
-print(len(RAM1_SCDMflat))  # Check the length of the flattened list
+print(len(RAM1_SCDMflat))  # Check the N of the flattened list
 #returns 100?
 
 #RAM1_SCDMpy = pyscd.calcSCDM(RAM1)
