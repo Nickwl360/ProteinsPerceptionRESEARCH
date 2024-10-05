@@ -8,18 +8,12 @@ if __name__ == "__main__":
     print('looping from ', Yc, 'to ', minY)
 
     phis,chis = getBinodal(Yc, phiC, minY)
-    phismooth = smooth(phis)
 
-    phismooth3 = smooth(smooth(smooth(phis)))
     phiMs = np.linspace(1e-3, .399, 100)
     Ys = getSpinodal(phiMs)
 
-    ###################PLOTTING########################
-    plt.plot(phismooth3, chis, label='Binodal')
-    plt.plot(phiMs,Ys,label='Spinodal')
-    plt.show()
 
-    plt.plot(phismooth, chis, label='Binodal')
+    plt.plot(phis, chis, label='Binodal')
     plt.plot(phiMs,Ys,label='Spinodal')
     plt.xlim((0,1))
 
