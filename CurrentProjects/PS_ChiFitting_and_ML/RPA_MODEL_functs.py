@@ -8,12 +8,20 @@ from scipy.optimize import root_scalar
 from scipy.optimize import brenth, brent
 import math
 import time
+import warnings
+from scipy.integrate import IntegrationWarning
+from scipy.optimize import OptimizeWarning
+
+# Suppress specific warnings
+warnings.filterwarnings("ignore", category=IntegrationWarning)
+warnings.filterwarnings("ignore", category=OptimizeWarning)
 
 ########################ConstANTS################################
-T0=1e8
-iterlim=250
+T0=00
+iterlim=1500
+epsabs = 1e-12
+epsrel = 1e-12
 MINMAX=25
-thresh = 1e-12
 phiS = 0.0
 epsilon = 1e-18
 
@@ -113,16 +121,16 @@ def rgFPint(k,Y,phiM,protein):
     g = gk(k, protein)
     c = ck(k, protein)
     v = protein.w2*np.exp(-1*k*k/6)
-    nu = k*k*Y/4/np.pi + protein.qc*phiM + phiS
-    N1 = nu + phiM*(g*nu*v + xe) +v*phiM*phiM*(g*xe-c*c)
-    A = N1/nu
-    B= 1 + protein.Q/nu
-    return (k*k/4/np.pi/np.pi)*np.log(A/B)
+    rho = k * k * Y / 4 / np.pi + protein.qc * phiM + phiS
+
+    a = phiM*(xe / rho + v * g)
+    b = (phiM * phiM * v / rho) * (g * xe - c * c)
+    return (k*k/4/np.pi/np.pi)*np.log(1+a+b)
 def rgFP(phiM, Y,protein):
 
     upperlim = np.inf
     lowerlim = 0
-    result = integrate.quad(rgFPint, lowerlim, upperlim, args=(Y, phiM,protein,), limit=iterlim)
+    result = integrate.quad(rgFPint, lowerlim, upperlim, args=(Y, phiM,protein,), limit=iterlim, epsabs=epsabs,epsrel=epsrel)
     fp = result[0]
     return fp
 def fion(phiM, Y,protein):
@@ -145,12 +153,12 @@ def dfpintegrand(k,Y,phiM,protein):
     xe = xee(k,protein)
     g = gk(k,protein)
     c = ck(k,protein)
-    ionConst = k*k*Y/(4*np.pi) + phiS + protein.qc*phiM
+    rho = k * k * Y / (4 * np.pi) + phiS + protein.qc * phiM
     v2 = protein.w2*np.exp(-k*k/6)
     c2 = c*c
 
-    num = -2*c2*v2*phiM + g*v2*ionConst + 2*xe*g*v2*phiM + xe
-    den = phiM*(c2*(-1*v2)*xe + xe*g*v2 +xe) + g*ionConst*v2 + ionConst
+    num = -2 * c2 * v2 * phiM + g * v2 * rho + 2 * xe * g * v2 * phiM + xe
+    den = phiM * (c2*(-1*v2)*xe + xe*g*v2 +xe) + g * rho * v2 + rho
 
     return k*k*num/den
 def d1_Frg_dphi(phiM,Y,protein):
@@ -207,7 +215,6 @@ def d2_FP_toint(k, Y, phiM,protein):
     num2 = (vp1 + vr)*(vp1 + vr)
     #not sure if k2 should be here or not
     return k2*(num1/(rho*den) - num2/(den*den))
-
 def d2_Frg_phiM(phiM,Y,protein):
     qc = protein.qc
     phic = qc * phiM
@@ -231,11 +238,10 @@ def d2_Frg_phiM(phiM,Y,protein):
     #################Electrofreeenergyd2###########
     upperlim = np.inf
     lowerlim = 0
-    result = integrate.quad(d2_FP_toint, lowerlim, upperlim, args=(Y, phiM,protein), limit=iterlim)
+    result = integrate.quad(d2_FP_toint, lowerlim, upperlim, args=(Y, phiM,protein), limit=iterlim,epsabs=epsabs, epsrel=epsrel)
     d2fp = result[0] / (4 * np.pi * np.pi)
 
     d2_ftot =  np.float64((d2s + d2fp + d2fion + d2f0))
-
 
     if protein.W3_TOGGLE == 1:
         d2_ftot += 6*(protein.w3 - 1/6)*phiM
@@ -256,7 +262,7 @@ def spin_yfromphi(phiM,protein):
 
     d2f = lambda u: d2_Frg_phiM(phiM, 1/u, protein)
     try:
-        ures = root_scalar(d2f,x0=ui,x1=ui/2, rtol=thresh, bracket = (1e-4, 1e3))
+        ures = root_scalar(d2f,x0=ui,x1=ui/5, rtol=epsabs, bracket = (1e-5, 1e4))
         if ures.converged:
             return np.float64(ures.root)
     except (ValueError,RuntimeError) as e:
@@ -274,9 +280,12 @@ def findCrit(protein):
     return np.float64(pf), np.float64(tf)
 def findSpins(Y,protein):
     ##THIS FROM LIN
-    phiMax = (1-2*phiS)/(1+protein.qc)-epsilon
+    phiMax = 0.9
+    #phiMax = 1-epsilon
+
+    #print(Y,protein.Yc)
     phi1 = brenth(d2_Frg_phiM, epsilon, protein.phiC, args=(Y,protein))
-    phi2 = brenth(d2_Frg_phiM, protein.phiC, phiMax,args = (Y,protein))
+    phi2 = brenth(d2_Frg_phiM, protein.phiC, .9,args = (Y,protein))
     return phi1,phi2
 
 def FBINODAL(variables,Y,phiBulk,protein):
@@ -310,12 +319,11 @@ def Jac_rgRPA(vars,Y,phiB,protein):
     J[1] = (1-v)*( (f1-f2)/(phi2-phi1) + df2)
 
     return J*T0
-
 def minFtotal(Y,protein):
 
     phi1spin,phi2spin = findSpins(Y,protein)
 
-    print(phi1spin, phi2spin, 'SPINS LEFT/RIGHT')
+    #print(phi1spin, phi2spin, 'SPINS LEFT/RIGHT')
 
     #phiB = (phi1spin+phi2spin)/2
     phiB = protein.phiC
@@ -325,55 +333,30 @@ def minFtotal(Y,protein):
 
     ### GET CONSTRAINTS ###
     phiMax = (1-2*phiS)/(1 + protein.qc) - epsilon ### FROM LIN ###
-    #bounds = [(phi1spin/10, phi1spin - epsilon), (phi2spin + epsilon, 1-epsilon) ]
-    bounds = [(phi1spin/10, phi1spin - epsilon), (phi2spin+epsilon, phi2spin*1.6*(protein.Yc/Y)**2) ]
-
+    bounds = [(epsilon, phi1spin - epsilon), (phi2spin + epsilon, phiMax-epsilon) ]
+    #bounds = [(phi1spin/10, phi1spin - epsilon), (phi2spin*1.025*(protein.Yc/Y)**2 +epsilon, phi2spin*3*(protein.Yc/Y)**2)]
     t0 = time.time()
 
-    ### MINIMIZER ### DEPENDS ON IF STARTING AT TOP OR NOT ###
-    if Y!=protein.Yc:
-        ### METHODS TO CHOOSE ### SCIPY.OPTIMIZE.MINIMIZE ###
-        M1 = 'TNC'
-        M2 = 'L-BFGS-B'
+    #M = 'L-BFGS-B'
+    M = 'SLSQP'
 
-        ### MAKE INITIAL ### IN PROGRESS ###
-        #initial_guess=(np.float64(phi1spin*0.9),np.float64(phi2spin*1.08))
-        initial_guess=(np.float64(phi1spin*.8 - phi1spin*1.75*(protein.Yc/Y - 1)),np.float64(phi2spin*1.25 + phi2spin*2.25*((protein.Yc/Y) - 1)))
+    ### MAKE INITIAL ### IN PROGRESS ###
+    #initial_guess= getInitialVsolved(Y,phi1spin,phi2spin,phiB,protein)
+    initial_guess=(np.float64(phi1spin*.9-epsilon),np.float64(phi2spin*1.1*(protein.Yc/Y) +epsilon))
+    #initial_guess = (np.float64(phi1spin*0.9),np.float64(1.01*phi2spin*(protein.Yc/Y)**2.5))
 
-        ### DEFINE SPINS AND MINIMIZE ### USES MULTIPLE MINIMIZERS AND CHECKS VALIDITY ###
-        maxL1 = minimize(FBINODAL, initial_guess, args=(Y, phiB,protein), method=M1, jac=Jac_rgRPA, bounds=bounds, options={'ftol':1e-20, 'gtol':1e-20, 'eps':1e-20})# , 'maxfun':MINMAX})
-        maxL2 = minimize(FBINODAL, initial_guess, args=(Y, phiB,protein), method=M2, jac=Jac_rgRPA, bounds=bounds, options={'ftol':1e-20, 'gtol':1e-20, 'eps':1e-20})#, 'maxfun':MINMAX})
-        #print(M2, 'M2 minimized, beginning,', M3 ,'M3\n')
-
-        maxL3 = maxL2
-
-        if maxL1 == None: maxL1=maxL2
-        elif maxL2 ==None: maxL2 =maxL1
-
-        ### FINDING LOWEST SOLUTION ###
-        if(maxL1.fun<=maxL2.fun and maxL1.fun<=maxL3.fun):
-            phi1min = min(maxL1.x)
-            phi2min = max(maxL1.x)
-        elif(maxL2.fun<= maxL1.fun and maxL2.fun<=maxL3.fun):
-            phi1min = min(maxL2.x)
-            phi2min = max(maxL2.x)
-        else:
-            phi1min = min(maxL3.x)
-            phi2min = max(maxL3.x)
-    else:
-        ### TOP OF BINODAL GRAPH ### THIS ALWAYS WORKS ###
-        initial_guess = (np.float64(phi1spin * .9), np.float64(phi2spin * 1.1))
-        spins= [phi1spin,phi2spin]
-        maxL1 = minimize(FBINODAL, initial_guess, args=(Y, phiB, spins), method='TNC', jac=Jac_rgRPA, bounds=bounds)#, options={'ftol':1e-20, 'gtol':1e-20, 'eps':1e-20 })#, 'maxfun':MINMAX})
-        phi1min = min(maxL1.x)
-        phi2min = max(maxL1.x)
+    maxL = minimize(FBINODAL, initial_guess, args=(Y, phiB,protein), method=M, jac=Jac_rgRPA, bounds=bounds , options={'ftol':1e-20, 'gtol':1e-20, 'eps':1e-20})#, 'maxfun':MINMAX})
+    ### FINDING LOWEST SOLUTION ###
+    phi1min = min(maxL.x)
+    phi2min = max(maxL.x)
 
     ### PRINTING RESULTS FROM MINIMIZER ###
     v = (phi2min-phiB)/(phi2min-phi1min)
 
-    print('\nMINIMIZER COMPLETE FOR Y = ',Y, 'MIN VALUES: phi1,phi2, v = ',phi1min,phi2min,v)
-    print('\nThis step took ', time.time()-t0, 's')
+    print('MINIMIZER COMPLETE FOR Y = ',Y, 'MIN VALUES: phi1,phi2, v = ',phi1min,phi2min,v )
+    #print('This step took ', time.time()-t0, 's\n')
     return phi1spin, phi2spin, phi1min,phi2min
+
 def getBinodal(protein):
 
     biphibin= np.array([protein.phiC])

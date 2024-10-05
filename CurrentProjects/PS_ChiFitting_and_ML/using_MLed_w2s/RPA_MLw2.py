@@ -7,6 +7,7 @@ import csv
 import os
 import time
 from matplotlib import pyplot as plt
+from datetime import datetime
 
 class Protein:
     def __init__(self,name, sequence,w2,w3):
@@ -17,11 +18,12 @@ class Protein:
         self.qc ,self.q_list, self.N = self.calculate_props_fromseq(sequence)
         self.xeeSig, self.gkSig, self.ckSig = self.getSigShifts(self.N, self.q_list)
         self.L = np.arange
-        self.W3_TOGGLE = 1
+        self.W3_TOGGLE = 0
         self.i_vals = np.arange(0, self.N)
         self.qL = np.array(self.q_list)
         self.Q = np.sum(self.qL*self.qL)/self.N
-        self.nres = 10
+        self.nres = 30
+        self.minFrac= .7
 
         self.phiC = None
         self.Yc = None
@@ -38,7 +40,6 @@ class Protein:
         N = len(q_list)
         qc = abs(sum(q_list))/N
         return qc, q_list,N
-
     def getSigShifts(self, N, qs):
 
         sigSij = []
@@ -64,9 +65,10 @@ class Protein:
 
     def getCrits(self):
         self.phiC, self.Yc = findCrit(self)
-        self.Ymin= self.Yc/2
+        self.Ymin= self.Yc*self.minFrac
         self.Yspace = np.logspace(0,np.log10(self.Ymin/self.Yc),num=self.nres)*self.Yc
         self.Yspace = self.Yspace[1:]
+
     def getCurves(self):
         if not np.isnan(self.phiC) and not np.isnan(self.Yc):
             self.spinbin, self.bibin, self.Ybin = getBinodal(self)
@@ -94,11 +96,15 @@ def run_selected_proteins(proteinobj_list):
     for indx, protein in enumerate(proteinobj_list):
         print(f"Index: {indx},Name: {protein.name}")
 
-    index_range=input("enter index range to run on model (eg. 0-3 for first 4 proteins")
-    start,stop = map(int,index_range.split('-'))
-    for protein in proteinobj_list[start:stop+1]:
+
+    index_input = input("Enter specific protein indices to run (e.g., 1,2,6,3,7): ").strip()
+    selected_indices = list(map(int, index_input.split(',')))
+    selected_proteins = [proteinobj_list[idx] for idx in selected_indices]
+
+    for protein in selected_proteins:
         run_model_onProtein(protein)
-    plot_binodals(proteinobj_list[start:stop+1])
+
+    plot_binodals(selected_proteins)
     return
 
 def run_model_onProtein(protein):
@@ -122,13 +128,46 @@ def run_model_onProtein(protein):
 
 def plot_binodals(protein_list):
     plt.figure()
+    YcNorm = protein_list[0].Yc
+    min_ybin = np.inf
+    max_ybin = -np.inf
+    max_phibin = -np.inf
+
     for protein in protein_list:
         if protein.bibin is not None:
-            plt.plot(protein.bibin, protein.Ybin, label= protein.name)
-    plt.xlabel(r'$phi$')
+            ybinNorm = protein.Ybin/YcNorm
+            min_ybin = min(min_ybin, np.min(ybinNorm))
+            max_ybin = max(max_ybin, np.max(ybinNorm))
+            max_phibin = max(max_phibin, np.max(protein.bibin))
+            #plt.plot(protein.spinbin, ybinNorm, label= protein.name)
+            plt.plot(protein.bibin, ybinNorm, label= protein.name)
+
+            #plt.plot(protein.bibin, ybinNorm, label= protein.name[11:])
+
+
+    plt.xlabel(r'$\phi$')
     plt.ylabel(r'$T^*$')
-    plt.legend()
+    plt.title(f'{protein_list[0].name[:6]} and Mutants')
+    plt.ylim(0.95 * min_ybin, 1.05 * max_ybin)
+    plt.xlim(0.0,.15)
+    plt.legend(fontsize=9)
     plt.show()
+
+    run_saver(plt,protein_list)
+
+def run_saver(plot,proteinlist):
+    save_bool = input("do you want to save this plot? (Y/N) ").strip().upper()
+    if save_bool=='Y':
+        today = datetime.today().strftime('%Y-%m-%d')
+
+        filename = f"{proteinlist[0].name[:6]}&mutants_fgRPA_w2Pred_{today}.png"
+        savedir = r'C:\Users\Nick\PycharmProjects\Researchcode (1) (1)\CurrentProjects\PS_ChiFitting_and_ML\using_MLed_w2s\FH_PhaseDiagrams'
+
+        fullpath = os.path.join(savedir,filename)
+
+        plot.savefig(fullpath)
+        print(f'plot saved to {fullpath}')
+
 
 
 if __name__ == '__main__':
