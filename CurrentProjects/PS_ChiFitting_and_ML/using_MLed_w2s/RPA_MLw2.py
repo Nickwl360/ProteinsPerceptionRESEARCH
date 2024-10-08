@@ -9,17 +9,12 @@ import time
 from matplotlib import pyplot as plt
 from datetime import datetime
 
-
-### class protein to be used for model. Takes in parameters on excel sheet, ML'd values for each sequence ###
-
 class Protein:
     def __init__(self,name, sequence,w2,w3):
         self.name = name
         self.sequence = sequence
         self.w2 = w2
         self.w3 = w3
-
-        ### calculate properties of each sequence when initialized ###
         self.qc ,self.q_list, self.N = self.calculate_props_fromseq(sequence)
         self.xeeSig, self.gkSig, self.ckSig = self.getSigShifts(self.N, self.q_list)
         self.L = np.arange
@@ -27,10 +22,9 @@ class Protein:
         self.i_vals = np.arange(0, self.N)
         self.qL = np.array(self.q_list)
         self.Q = np.sum(self.qL*self.qL)/self.N
-        self.nres = 3
+        self.nres = 30
         self.minFrac= .7
 
-        ### initialize values that will be calculated if wanted ###
         self.phiC = None
         self.Yc = None
         self.Ymin = None
@@ -40,13 +34,12 @@ class Protein:
         self.bibin= None
         self.Yspace = None
 
-    ### calculate basic properties q,N,qList ###
+
     def calculate_props_fromseq(self, sequence):
         q_list= pH_qs(sequence,ph=7)
         N = len(q_list)
         qc = abs(sum(q_list))/N
         return qc, q_list,N
-    ### calculate structure factor coef matrices ###
     def getSigShifts(self, N, qs):
 
         sigSij = []
@@ -70,14 +63,12 @@ class Protein:
 
         return sigSij, sigSi, sigGs
 
-    ### calculate crit for a sequence, and prepare for if binodal is wanted ###
     def getCrits(self):
         self.phiC, self.Yc = findCrit(self)
         self.Ymin= self.Yc*self.minFrac
         self.Yspace = np.logspace(0,np.log10(self.Ymin/self.Yc),num=self.nres)*self.Yc
         self.Yspace = self.Yspace[1:]
 
-    ### find and save binodal/spinodal curves ###
     def getCurves(self):
         if not np.isnan(self.phiC) and not np.isnan(self.Yc):
             self.spinbin, self.bibin, self.Ybin = getBinodal(self)
@@ -105,7 +96,7 @@ def run_selected_proteins(proteinobj_list):
     for indx, protein in enumerate(proteinobj_list):
         print(f"Index: {indx},Name: {protein.name}")
 
-    ### collect input ### ADJUST FOR MULTIPLE CASES ###
+
     index_input = input("Enter specific protein indices to run (e.g., 1,2,6,3,7): ").strip()
     selected_indices = list(map(int, index_input.split(',')))
     selected_proteins = [proteinobj_list[idx] for idx in selected_indices]
@@ -116,7 +107,6 @@ def run_selected_proteins(proteinobj_list):
     plot_binodals(selected_proteins)
     return
 
-### use model to calculate critical points and curves ###
 def run_model_onProtein(protein):
     print(f"Processing {protein.name}:")
     print(f"- Sequence Length: {protein.N}")
@@ -135,7 +125,7 @@ def run_model_onProtein(protein):
 
     print("\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n")
 
-### plot, normalizes to WT ###
+
 def plot_binodals(protein_list):
     plt.figure()
     YcNorm = protein_list[0].Yc
@@ -151,7 +141,6 @@ def plot_binodals(protein_list):
             max_phibin = max(max_phibin, np.max(protein.bibin))
             #plt.plot(protein.spinbin, ybinNorm, label= protein.name)
             plt.plot(protein.bibin, ybinNorm, label= protein.name)
-            print(ybinNorm)
 
             #plt.plot(protein.bibin, ybinNorm, label= protein.name[11:])
 
@@ -162,6 +151,7 @@ def plot_binodals(protein_list):
     plt.ylim(0.95 * min_ybin, 1.05 * max_ybin)
     plt.xlim(0.0,.15)
     plt.legend(fontsize=9)
+    plt.show()
 
     run_saver(plt,protein_list)
 
@@ -177,7 +167,8 @@ def run_saver(plot,proteinlist):
 
         plot.savefig(fullpath)
         print(f'plot saved to {fullpath}')
-        plt.show()
+
+
 
 if __name__ == '__main__':
     df = r'C:\Users\Nick\PycharmProjects\Researchcode (1) (1)\CurrentProjects\PS_ChiFitting_and_ML\ML_Lili_w2s\phase_sep_seqs_w2s.csv'
