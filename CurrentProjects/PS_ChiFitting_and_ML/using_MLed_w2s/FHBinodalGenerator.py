@@ -2,7 +2,7 @@ from CurrentProjects.PS_ChiFitting_and_ML.FH_PSModel_Functs import get_critical_
 from matplotlib import pyplot as plt
 import numpy as np
 
-setTest = 4
+setTest = 0
 
 #### A1 - LCD ### vs Aromatic Varients ###
 if setTest ==0:
@@ -12,7 +12,7 @@ if setTest ==0:
 
 
     tcDataApprox=[332/332, (85+273.15)/332,  299.32/332, (-5+273.15)/332] ### Fig3.B experimental Tc's
-    #print('T/Tc',tcDataApprox)
+    print('T/Tc',tcDataApprox)
 
 #### More A1 - LCD Alex SI predictions ####
 elif setTest ==1:
