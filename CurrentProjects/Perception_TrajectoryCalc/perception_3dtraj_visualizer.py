@@ -3,10 +3,11 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 import os
+from datetime import datetime
 
 
         ### Parameters for loading data ###
-total_length = 100_001
+total_length = 50_001
 chunk_size = 1_000_000
         # Calculate the number of chunks needed #
 num_chunks = total_length // chunk_size
@@ -33,6 +34,11 @@ def load_and_concatenate(directory, prefix, num_chunks):
         concatenated_array= concatenated_array[:total_length]
         print(len(concatenated_array))
     return concatenated_array
+
+def pull_traj_givenSi(dir, prefix, Ltraj,Si):
+    ai,bi,ci,di = Si
+
+    return
 
 def shift_toXY(Traj, NE,NR):
     A,B,C,D = Traj
@@ -132,7 +138,7 @@ def GetColorIndex( X, Y, num_colors ):
     cix   = round( (angle + np.pi) / (2 * np.pi) * (num_colors - 1) )
     return cix
 # Define an interactive plot
-def plot_trajectory_density(XYtrajs):
+def plot_trajectory_density(XYtrajs,I):
     """(3D trajectory density)"""
 
     X_i,Y_i,Xb_i,Yb_i = XYtrajs
@@ -141,7 +147,7 @@ def plot_trajectory_density(XYtrajs):
     (M, N, P, uX, uY, uXb, countXYXb) = CountVisitsInXYXb( X_i, Y_i, Xb_i, NE, NR )
 
     # Create a figure
-    fig = plt.figure(figsize=(6, 12))
+    fig = plt.figure(figsize=(10, 6))
     # Make colormap and prepare scaling
     clrmp = plt.get_cmap('jet')
     num_colors = 256
@@ -150,7 +156,7 @@ def plot_trajectory_density(XYtrajs):
     maxuY = np.max(uY)
 
     # First subplot
-    ax1 = fig.add_subplot(2, 1, 1, projection='3d')
+    ax1 = fig.add_subplot(1, 2, 1, projection='3d')
     for m in range(0,M):
         nX = uX[m]
         for n in range(0,N):
@@ -163,19 +169,19 @@ def plot_trajectory_density(XYtrajs):
                      mksz = 2*np.log( cnt )+1
                      ax1.plot(nX/NE, nY/NR, nXb/NE, marker='o', color=clrmp_array[cix,:], markersize=mksz)
 
-    ax1.set_xlabel('X', fontsize=14)
-    ax1.set_ylabel('Y', fontsize=14)
-    ax1.set_zlabel('X bar', fontsize=14)
+    ax1.set_xlabel('X', fontsize=12)
+    ax1.set_ylabel('Y', fontsize=12)
+    ax1.set_zlabel('X bar', fontsize=12)
     ax1.set_xlim([-0.35, 0.35])
     ax1.set_ylim([-1.1, 1.1])
-    ax1.set_zlim([0.0, 1.1])
-    ax1.set_title('Trajectory density', fontsize=18)
+    ax1.set_zlim([-0.1, 0.9])
+    ax1.set_title('Trajectory density', fontsize=13)
 
     # count trajectory visits in X-Y-Yb space
     (M, N, P, uX, uY, uYb, countXYYb) = CountVisitsInXYYb( X_i, Y_i, Yb_i, NE, NR )
 
     # Second subplot
-    ax2 = fig.add_subplot(2, 1, 2, projection='3d')
+    ax2 = fig.add_subplot(1, 2, 2, projection='3d')
     for m in range(0,M):
         nX = uX[m]
         for n in range(0,N):
@@ -188,13 +194,135 @@ def plot_trajectory_density(XYtrajs):
                      mksz = 2*np.log( cnt )+1
                      ax2.plot(nX/NE, nY/NR, nYb/NR, marker='o', color=clrmp_array[cix,:], markersize=mksz)
 
-    ax2.set_xlabel('X', fontsize=14)
-    ax2.set_ylabel('Y', fontsize=14)
-    ax2.set_zlabel('Y bar', fontsize=14)
+    ax2.set_xlabel('X', fontsize=12)
+    ax2.set_ylabel('Y', fontsize=12)
+    ax2.set_zlabel('Y bar', fontsize=12)
     ax2.set_xlim([-0.35, 0.35])
     ax2.set_ylim([-1.1, 1.1])
-    ax2.set_zlim([0.0, 2.1])
-    ax2.set_title('Trajectory density', fontsize=18)
+    ax2.set_zlim([-0.1, 2.1])
+    ax2.set_title('Trajectory density', fontsize=13)
+
+    # Adjust layout to prevent overlap
+    plt.subplots_adjust(wspace=0.2)
+    #plt.tight_layout()
+
+    # Display the plots
+    today = datetime.today().strftime('%Y-%m-%d')
+
+    filename = f"I_{I}_MCalPerceptionTrajDensity_{today}.png"
+    savedir = r'C:\Users\Nickl\PycharmProjects\Researchcode (1) (1)\CurrentProjects\Perception_TrajectoryCalc\Traj_Imgs'
+    fullpath = os.path.join(savedir, filename)
+
+    plt.savefig(fullpath)
+    print(f'plot saved to {fullpath}')
+    plt.show()
+
+def plot_average_trajectory_flow():
+    """(3D trajectory flow)"""
+
+                               # set parameters
+
+    # time axis
+    dt      = 10**-4
+    ti      = np.arange(0, 0.1, dt)
+    Ni      = len(ti)
+
+                           # taken from previous figure
+    uX   = np.arange(-7, 8, 1)
+    uY   = np.arange(-25, 26, 50)
+    uXb  = np.arange(2, 17, 1)
+
+
+    M = len(uX)
+    N = len(uY)
+    P = len(uXb)
+
+    # allocate nan arrays (they won't be filled completely)
+    E_mnpli  = np.full( (M, N, P, 2, Ni), np.nan )
+    R_mnpli  = np.full( (M, N, P, 2, Ni), np.nan )
+
+    X_mnpi   = np.full( (M, N, P, Ni), np.nan )
+    Y_mnpi   = np.full( (M, N, P, Ni), np.nan )
+
+    Xb_mnpi  = np.full( (M, N, P, Ni), np.nan )
+    Yb_mnpi  = np.full( (M, N, P, Ni), np.nan )
+
+    # number of trajectories to be averaged at every node
+    Nrepeat = 50
+
+    # loop over nodes of state space (only nodes traversed by trajectories)
+    for n in range (0,N):
+        nY = uY[n]
+                       # initial states at higher level (either +1 or -1)
+        if nY==NR:
+            R0  = 1
+            R0p = 0
+        else:
+            R0  = 0
+            R0p = 1
+
+        for m in range(0,M):
+            nX = uX[m]
+
+            print( m, n )
+
+            for p in range(0,P):
+                nXb = uXb[p]
+
+                        # intial states at lower level
+                nE0  = ( nX + nXb ) / 2
+                nE0p = (-nX + nXb ) / 2
+
+                E0  = nE0 / NE
+                E0p = nE0p / NE
+
+                        # restrict to starting points visited by trajectories
+                if ( (nE0 >= 0) & (nE0p >= 0) & (nE0 <= 10) & (nE0p <= 10) & (np.remainder(nE0, 1) == 0) & (np.remainder(nE0p, 1) == 0) ):
+
+                    [E_nli, R_nli, X_ni, Y_ni, Xb_ni, Yb_ni] = StochasticSimulation( ti, I0, I0p, E0, E0p, R0, R0p, Nrepeat, NE, NR, nue, nur, the, thr, wvis, wexc, winh, wcom, wcoo, wpre );
+
+                    E_mnpli[m,n,p,:,:] = np.squeeze( np.mean(E_nli, axis=0))
+                    R_mnpli[m,n,p,:,:] = np.squeeze( np.mean(R_nli, axis=0))
+                    X_mnpi[m,n,p,:]    = np.squeeze( np.mean(X_ni, axis=0))
+                    Y_mnpi[m,n,p,:]    = np.squeeze( np.mean(Y_ni, axis=0))
+                    Xb_mnpi[m,n,p,:]   = np.squeeze( np.mean(Xb_ni, axis=0))
+                    Yb_mnpi[m,n,p,:]   = np.squeeze( np.mean(Yb_ni, axis=0))
+
+    # Create a figure and a grid of subplots (1 rows, 1 columns)
+    fig = plt.figure(figsize=(6, 6))
+
+    # Get colormap and scaling
+    clrmp = plt.get_cmap('jet')
+    num_colors = 256
+    clrmp_array = clrmp(np.linspace(0, 1, num_colors))
+    maxuX = np.max(uX)
+    maxuY = np.max(uY)
+
+    # First subplot
+    ax1 = fig.add_subplot(1, 1, 1, projection='3d')
+
+    for m in range(0,M):
+        nX = uX[m];
+        for n in range(0,N):
+             nY = uY[n];
+             cix = GetColorIndex( nX/maxuX, nY/maxuY, num_colors );
+             for p in range(0,P):
+                 nXb = uXb[p];
+
+                 X_i   = np.squeeze( X_mnpi[m,n,p,:] );
+                 Y_i   = np.squeeze( Y_mnpi[m,n,p,:] );
+                 Xb_i  = np.squeeze( Xb_mnpi[m,n,p,:] );
+
+                 if np.sum( ~np.isnan(X_i) )>0:
+                     ax1.scatter(X_i, Y_i, Xb_i, marker='.', color=clrmp_array[cix,:], linewidth=1)
+
+    ax1.set_xlabel('X', fontsize=14)
+    ax1.set_ylabel('Y', fontsize=14)
+    ax1.set_zlabel('X bar', fontsize=14)
+    ax1.set_xlim([-0.35, 0.35])
+    ax1.set_ylim([-1.1, 1.1])
+    ax1.set_zlim([0.1, 0.7])
+    ax1.set_title('Trajectory flow', fontsize=18)
 
     # Adjust layout to prevent overlap
     plt.tight_layout()
@@ -202,12 +330,17 @@ def plot_trajectory_density(XYtrajs):
     # Display the plots
     plt.show()
 
+ # Create sliders
+interact(plot_average_trajectory_flow, log10dt=(-6, -2, 1), Tend=(0.05, 0.5, 0.05))
+
+
+
 
 if __name__ == '__main__':
             # load raw data 0-N integers#
     Is = ['1','6875','375','0625']
 
-    I_test = Is[3]
+    I_test = Is[0]
 
     inf_trajA = load_and_concatenate(directory, 'JochenI_'+I_test+'dt_.001HseedA', num_chunks)
     inf_trajB = load_and_concatenate(directory, 'JochenI_'+I_test+'dt_.001HseedB', num_chunks)
@@ -215,6 +348,6 @@ if __name__ == '__main__':
     inf_trajD = load_and_concatenate(directory, 'JochenI_'+I_test+'dt_.001HseedD', num_chunks)
 
     x, y, xb, yb = shift_toXY((inf_trajA, inf_trajB, inf_trajC, inf_trajD), NE, NR)
-    plot_trajectory_density((x,y,xb,yb))
+    plot_trajectory_density((x,y,xb,yb),I_test)
 
 

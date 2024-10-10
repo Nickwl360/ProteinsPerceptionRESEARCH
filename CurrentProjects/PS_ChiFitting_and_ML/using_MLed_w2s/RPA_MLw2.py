@@ -62,13 +62,11 @@ class Protein:
         sigSi[0] /= 2
 
         return sigSij, sigSi, sigGs
-
     def getCrits(self):
         self.phiC, self.Yc = findCrit(self)
         self.Ymin= self.Yc*self.minFrac
         self.Yspace = np.logspace(0,np.log10(self.Ymin/self.Yc),num=self.nres)*self.Yc
         self.Yspace = self.Yspace[1:]
-
     def getCurves(self):
         if not np.isnan(self.phiC) and not np.isnan(self.Yc):
             self.spinbin, self.bibin, self.Ybin = getBinodal(self)
@@ -173,6 +171,7 @@ def run_saver(plot,proteinlist):
 if __name__ == '__main__':
     df = r'C:\Users\Nick\PycharmProjects\Researchcode (1) (1)\CurrentProjects\PS_ChiFitting_and_ML\ML_Lili_w2s\phase_sep_seqs_w2s.csv'
     proteinlist = load_proteins_fromcsv(df)
+
     run_selected_proteins(proteinlist)
 
 
