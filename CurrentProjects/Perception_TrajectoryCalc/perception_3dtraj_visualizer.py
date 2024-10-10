@@ -217,17 +217,13 @@ def plot_trajectory_density(XYtrajs,I):
     print(f'plot saved to {fullpath}')
     plt.show()
 
-def plot_average_trajectory_flow():
+def plot_average_trajectory_flow(Ltraj,Ntraj,xyxb_space):
     """(3D trajectory flow)"""
 
-                               # set parameters
-
-    # time axis
-    dt      = 10**-4
-    ti      = np.arange(0, 0.1, dt)
-    Ni      = len(ti)
+    Ni = Ltraj
 
                            # taken from previous figure
+    uX,uY,uXb = xyxb_space
     uX   = np.arange(-7, 8, 1)
     uY   = np.arange(-25, 26, 50)
     uXb  = np.arange(2, 17, 1)
