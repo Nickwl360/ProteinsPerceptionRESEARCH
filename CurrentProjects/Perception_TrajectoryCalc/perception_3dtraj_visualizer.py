@@ -216,6 +216,7 @@ def plot_trajectory_density(XYtrajs,I):
     plt.savefig(fullpath)
     print(f'plot saved to {fullpath}')
     plt.show()
+    return uX,uY,uXb
 
 def plot_average_trajectory_flow(Ltraj,Ntraj,xyxb_space):
     """(3D trajectory flow)"""
@@ -224,6 +225,7 @@ def plot_average_trajectory_flow(Ltraj,Ntraj,xyxb_space):
 
                            # taken from previous figure
     uX,uY,uXb = xyxb_space
+
     uX   = np.arange(-7, 8, 1)
     uY   = np.arange(-25, 26, 50)
     uXb  = np.arange(2, 17, 1)
@@ -326,8 +328,6 @@ def plot_average_trajectory_flow(Ltraj,Ntraj,xyxb_space):
     # Display the plots
     plt.show()
 
- # Create sliders
-interact(plot_average_trajectory_flow, log10dt=(-6, -2, 1), Tend=(0.05, 0.5, 0.05))
 
 
 
@@ -344,6 +344,6 @@ if __name__ == '__main__':
     inf_trajD = load_and_concatenate(directory, 'JochenI_'+I_test+'dt_.001HseedD', num_chunks)
 
     x, y, xb, yb = shift_toXY((inf_trajA, inf_trajB, inf_trajC, inf_trajD), NE, NR)
-    plot_trajectory_density((x,y,xb,yb),I_test)
+    ux,uy,uxb = plot_trajectory_density((x,y,xb,yb),I_test)
 
 
