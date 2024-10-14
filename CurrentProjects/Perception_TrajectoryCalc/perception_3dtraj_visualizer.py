@@ -6,20 +6,6 @@ import os
 from datetime import datetime
 
 
-        ### Parameters for loading data ###
-total_length = 50_001
-chunk_size = 1_000_000
-        # Calculate the number of chunks needed #
-num_chunks = total_length // chunk_size
-if total_length % chunk_size != 0:
-    num_chunks += 1
-
-MAXTOP=5
-MAXBOT=12
-NE = 11
-NR = 4
-chunk_size = 1000000
-directory = r'C:\Users\Nickl\PycharmProjects\Researchcode (1) (1)\InferedTrajectoriesMCBRAIN'
 def load_and_concatenate(directory, prefix, num_chunks):
     concatenated_array = []
     for i in range(num_chunks):
@@ -35,10 +21,17 @@ def load_and_concatenate(directory, prefix, num_chunks):
         print(len(concatenated_array))
     return concatenated_array
 
-def pull_traj_givenSi(dir, prefix, Ltraj,Si):
+def pull_traj_givenSi(fulltraj,Ntot, Ltraj,Si):
     ai,bi,ci,di = Si
+    list_of_traj = []
+    for i, traj in enumerate(fulltraj):
+        N=0
+        while N <Ntot:
+            if traj[i]==[ai,bi,ci,di]:
+                list_of_traj.append(traj[i:i+Ltraj])
+                N+=1
 
-    return
+    return list_of_traj
 
 def shift_toXY(Traj, NE,NR):
     A,B,C,D = Traj
@@ -100,7 +93,7 @@ def CountVisitsInXYXb( X_i, Y_i, Xb_i, NE, NR ):
         for n in range(N):
             for p in range(P):
                        # Use logical AND to create a boolean mask and sum the occurrences
-                countXYXb[m, n, p] = np.sum((nX_i == nX[m, n, p]) & (nY_i == nY[m, n, p]) & (nXb_i == nXb[m, n, p]));
+                countXYXb[m, n, p] = np.sum((nX_i == nX[m, n, p]) & (nY_i == nY[m, n, p]) & (nXb_i == nXb[m, n, p]))
 
     return M, N, P, uX, uY, uXb, countXYXb
 def CountVisitsInXYYb( X_i, Y_i, Yb_i, NE, NR ):
@@ -210,7 +203,7 @@ def plot_trajectory_density(XYtrajs,I):
     today = datetime.today().strftime('%Y-%m-%d')
 
     filename = f"I_{I}_MCalPerceptionTrajDensity_{today}.png"
-    savedir = r'C:\Users\Nickl\PycharmProjects\Researchcode (1) (1)\CurrentProjects\Perception_TrajectoryCalc\Traj_Imgs'
+    savedir = r'C:\Users\Nick\PycharmProjects\Researchcode (1) (1)\CurrentProjects\Perception_TrajectoryCalc\Traj_Imgs'
     fullpath = os.path.join(savedir, filename)
 
     plt.savefig(fullpath)
@@ -259,7 +252,6 @@ def plot_average_trajectory_flow(Ltraj,Ntraj,xyxb_space):
 
         for m in range(0,M):
             nX = uX[m]
-
             print( m, n )
 
             for p in range(0,P):
@@ -284,6 +276,7 @@ def plot_average_trajectory_flow(Ltraj,Ntraj,xyxb_space):
                     Xb_mnpi[m,n,p,:]   = np.squeeze( np.mean(Xb_ni, axis=0))
                     Yb_mnpi[m,n,p,:]   = np.squeeze( np.mean(Yb_ni, axis=0))
 
+
     # Create a figure and a grid of subplots (1 rows, 1 columns)
     fig = plt.figure(figsize=(6, 6))
 
@@ -298,16 +291,16 @@ def plot_average_trajectory_flow(Ltraj,Ntraj,xyxb_space):
     ax1 = fig.add_subplot(1, 1, 1, projection='3d')
 
     for m in range(0,M):
-        nX = uX[m];
+        nX = uX[m]
         for n in range(0,N):
-             nY = uY[n];
-             cix = GetColorIndex( nX/maxuX, nY/maxuY, num_colors );
+             nY = uY[n]
+             cix = GetColorIndex( nX/maxuX, nY/maxuY, num_colors )
              for p in range(0,P):
-                 nXb = uXb[p];
+                 nXb = uXb[p]
 
-                 X_i   = np.squeeze( X_mnpi[m,n,p,:] );
-                 Y_i   = np.squeeze( Y_mnpi[m,n,p,:] );
-                 Xb_i  = np.squeeze( Xb_mnpi[m,n,p,:] );
+                 X_i   = np.squeeze( X_mnpi[m,n,p,:] )
+                 Y_i   = np.squeeze( Y_mnpi[m,n,p,:] )
+                 Xb_i  = np.squeeze( Xb_mnpi[m,n,p,:] )
 
                  if np.sum( ~np.isnan(X_i) )>0:
                      ax1.scatter(X_i, Y_i, Xb_i, marker='.', color=clrmp_array[cix,:], linewidth=1)
@@ -327,10 +320,6 @@ def plot_average_trajectory_flow(Ltraj,Ntraj,xyxb_space):
     plt.show()
 
  # Create sliders
-interact(plot_average_trajectory_flow, log10dt=(-6, -2, 1), Tend=(0.05, 0.5, 0.05))
-
-
-
 
 if __name__ == '__main__':
             # load raw data 0-N integers#
@@ -338,10 +327,37 @@ if __name__ == '__main__':
 
     I_test = Is[0]
 
-    inf_trajA = load_and_concatenate(directory, 'JochenI_'+I_test+'dt_.001HseedA', num_chunks)
-    inf_trajB = load_and_concatenate(directory, 'JochenI_'+I_test+'dt_.001HseedB', num_chunks)
-    inf_trajC = load_and_concatenate(directory, 'JochenI_'+I_test+'dt_.001HseedC', num_chunks)
-    inf_trajD = load_and_concatenate(directory, 'JochenI_'+I_test+'dt_.001HseedD', num_chunks)
+            ### Parameters for loading data ###
+    total_length = 50_001
+    chunk_size = 1_000_000
+    # Calculate the number of chunks needed #
+    num_chunks = total_length // chunk_size
+    if total_length % chunk_size != 0:
+       num_chunks += 1
+
+    MAXTOP = 5
+    MAXBOT = 12
+    NE = 11
+    NR = 4
+    chunk_size = 1000000
+
+
+
+    try:
+        directory = r'C:\Users\Nickl\PycharmProjects\Researchcode (1) (1)\InferedTrajectoriesMCBRAIN'
+
+        inf_trajA = load_and_concatenate(directory, 'JochenI_'+I_test+'dt_.001HseedA', num_chunks)
+        inf_trajB = load_and_concatenate(directory, 'JochenI_'+I_test+'dt_.001HseedB', num_chunks)
+        inf_trajC = load_and_concatenate(directory, 'JochenI_'+I_test+'dt_.001HseedC', num_chunks)
+        inf_trajD = load_and_concatenate(directory, 'JochenI_'+I_test+'dt_.001HseedD', num_chunks)
+
+    except:
+        directory = r'C:\Users\Nick\PycharmProjects\Researchcode (1) (1)\InferedTrajectoriesMCBRAIN'
+
+        inf_trajA = load_and_concatenate(directory, 'JochenI_' + I_test + 'dt_.001HseedA', num_chunks)
+        inf_trajB = load_and_concatenate(directory, 'JochenI_' + I_test + 'dt_.001HseedB', num_chunks)
+        inf_trajC = load_and_concatenate(directory, 'JochenI_' + I_test + 'dt_.001HseedC', num_chunks)
+        inf_trajD = load_and_concatenate(directory, 'JochenI_' + I_test + 'dt_.001HseedD', num_chunks)
 
     x, y, xb, yb = shift_toXY((inf_trajA, inf_trajB, inf_trajC, inf_trajD), NE, NR)
     plot_trajectory_density((x,y,xb,yb),I_test)
