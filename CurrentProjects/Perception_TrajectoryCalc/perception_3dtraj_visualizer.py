@@ -4,6 +4,8 @@ from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 import os
 from datetime import datetime
+from matplotlib import cm
+import matplotlib.colors as mcolors
 
 
         ### Parameters for loading data ###
@@ -12,7 +14,8 @@ MAXBOT=12
 NE = 11
 NR = 4
 chunk_size = 1000000
-directory = r'C:\Users\Nickl\PycharmProjects\Researchcode (1) (1)\InferedTrajectoriesMCBRAIN'
+directory = r'C:\Users\Nick\PycharmProjects\Researchcode (1) (1)\InferedTrajectoriesMCBRAIN'
+savdir = r'C:\Users\Nick\PycharmProjects\Researchcode (1) (1)\CurrentProjects\Perception_TrajectoryCalc\Traj_Imgs'
 def load_and_concatenate(directory, prefix, num_chunks):
     concatenated_array = []
     for i in range(num_chunks):
@@ -27,8 +30,6 @@ def load_and_concatenate(directory, prefix, num_chunks):
         concatenated_array= concatenated_array[:total_length]
         print(len(concatenated_array))
     return concatenated_array
-
-
 def pull_traj_givenSi(longtraj, ntraj, Ltraj, Si):
     ai, bi, ci, di = Si
     longa, longb, longc, longd = longtraj
@@ -49,7 +50,6 @@ def pull_traj_givenSi(longtraj, ntraj, Ltraj, Si):
         xb_list.append(xb)
         yb_list.append(yb)
     return x_list, y_list, xb_list, yb_list
-
 def shift_toXY(Traj, NE,NR):
     A,B,C,D = Traj
     N = len(A)
@@ -220,15 +220,14 @@ def plot_trajectory_density(XYtrajs,I):
     today = datetime.today().strftime('%Y-%m-%d')
 
     filename = f"I_{I}_MCalPerceptionTrajDensity_{today}.png"
-    savedir = r'C:\Users\Nickl\PycharmProjects\Researchcode (1) (1)\CurrentProjects\Perception_TrajectoryCalc\Traj_Imgs'
-    fullpath = os.path.join(savedir, filename)
+    fullpath = os.path.join(savdir, filename)
 
     plt.savefig(fullpath)
     print(f'plot saved to {fullpath}')
     plt.show()
     return uX,uY,uXb
 
-def plot_average_trajectory_flow(Ltraj,Ntraj,fulltraj,xyxb_space):
+def plot_average_trajectory_flow(Ltraj,Ntraj,fulltraj,xyxb_space,I):
     """(3D trajectory flow)"""
 
     Ni = Ltraj
@@ -295,7 +294,8 @@ def plot_average_trajectory_flow(Ltraj,Ntraj,fulltraj,xyxb_space):
 
 
     # Get colormap and scaling
-    clrmp = plt.get_cmap('jet')
+    clrmp = plt.get_cmap('coolwarm')
+    #num_colors = 256
     num_colors = 256
     clrmp_array = clrmp(np.linspace(0, 1, num_colors))
     maxuX = np.max(uX)
@@ -338,19 +338,29 @@ def plot_average_trajectory_flow(Ltraj,Ntraj,fulltraj,xyxb_space):
                 Xb_i  = np.squeeze( Xb_mnpi[m,n,p,:] )
 
                 if np.sum( ~np.isnan(X_i) )>0:
-                    ax1.scatter(X_i, Y_i, Xb_i, marker='.', color=clrmp_array[cix,:], linewidth=.5,zorder=1)
+
+                    num_points = len(X_i)
+
+                    ax1.scatter(X_i, Y_i, Xb_i, marker='.', color=clrmp_array[cix,:], linewidth=.3,zorder=1, alpha=0.85)
+                    #thin lines between points plotted
+                    ax1.plot(X_i, Y_i, Xb_i, color=clrmp_array[cix, :]*.6, linewidth=0.15, zorder=2,alpha=0.85)
                     #add a little arrow of the same length to show direction from starting point to second point in the same color
 
                     #find arrow direction, and normalize according to scale size
-                    direction = np.array([X_i[1]-X_i[0], Y_i[1]-Y_i[0], Xb_i[1]-Xb_i[0]])
-                    direction= np.array([direction[0]*x_scale, direction[1]*y_scale, direction[2]*z_scale])
-                    norm = np.linalg.norm(direction)
-                    if norm>0:
-                        direction/=norm
-                    length = .05
-                    arrow_V = length*direction
 
-                    ax1.quiver(X_i[0], Y_i[0], Xb_i[0], arrow_V[0]/x_scale, arrow_V[1]/y_scale, arrow_V[2]/z_scale, color='black', linewidth=1, zorder=5)
+                    for i in range(0, num_points - 2, int(num_points/3)):  # Add an arrow every 10th point
+                        direction = np.array([X_i[i+1] - X_i[i], Y_i[i+1] - Y_i[i], Xb_i[i+1] - Xb_i[i]])
+                        direction = np.array([direction[0] * x_scale, direction[1] * y_scale, direction[2] * z_scale])
+                        norm = np.linalg.norm(direction)
+                        if norm > 0:
+                            direction /= norm
+                        length = .10
+                        arrow_V = length * direction
+                        if abs(Y_i[i])<= 0.9:
+
+                            ax1.quiver(X_i[i], Y_i[i], Xb_i[i], arrow_V[0]/x_scale, arrow_V[1]/y_scale, arrow_V[2]/z_scale, color=clrmp_array[cix, :], linewidth=2.2, zorder=5)
+                            #ax1.quiver(X_i[i], Y_i[i], Xb_i[i], arrow_V[0]/x_scale, arrow_V[1]/y_scale, arrow_V[2]/z_scale, color='black', linewidth=3, zorder=5)
+
     ax1.set_xlabel('X', fontsize=14)
     ax1.set_ylabel('Y', fontsize=14)
     ax1.set_zlabel('X bar', fontsize=14)
@@ -358,9 +368,13 @@ def plot_average_trajectory_flow(Ltraj,Ntraj,fulltraj,xyxb_space):
     ax1.set_title('Trajectory flow', fontsize=18)
 
     # Adjust layout to prevent overlap
-    plt.tight_layout()
+    today = datetime.today().strftime('%Y-%m-%d')
 
-    # Display the plots
+    filename = f"I_{I}_MCalPerceptionAvgFlow_{today}_L={num_points}.png"
+    fullpath = os.path.join(savdir, filename)
+
+    plt.savefig(fullpath)
+    print(f'plot saved to {fullpath}')
     plt.show()
 
 
@@ -396,9 +410,8 @@ if __name__ == '__main__':
 
     ### GET AVERAGE TRAJECTORY FLOW ###
     nSamples = 10000
-    Ltraj = 100
-
-    plot_average_trajectory_flow(Ltraj,nSamples,(inf_trajA,inf_trajB,inf_trajC,inf_trajD),(ux,uy,uxb))
+    Ltraj = 25
+    plot_average_trajectory_flow(Ltraj,nSamples,(inf_trajA,inf_trajB,inf_trajC,inf_trajD),(ux,uy,uxb),I_test)
     ##############################################
 
 
