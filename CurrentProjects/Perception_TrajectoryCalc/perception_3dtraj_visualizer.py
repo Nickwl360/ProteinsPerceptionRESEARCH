@@ -14,8 +14,8 @@ MAXBOT=12
 NE = 11
 NR = 4
 chunk_size = 1000000
-directory = r'C:\Users\Nick\PycharmProjects\Researchcode (1) (1)\InferedTrajectoriesMCBRAIN'
-savdir = r'C:\Users\Nick\PycharmProjects\Researchcode (1) (1)\CurrentProjects\Perception_TrajectoryCalc\Traj_Imgs'
+directory = r'C:\Users\Nickl\PycharmProjects\Researchcode (1) (1)\InferedTrajectoriesMCBRAIN'
+savdir = r'C:\Users\Nickl\PycharmProjects\Researchcode (1) (1)\CurrentProjects\Perception_TrajectoryCalc\Traj_Imgs'
 def load_and_concatenate(directory, prefix, num_chunks):
     concatenated_array = []
     for i in range(num_chunks):
@@ -289,12 +289,15 @@ def plot_average_trajectory_flow(Ltraj,Ntraj,fulltraj,xyxb_space,I):
                     Xb_mnpi[m,n,p,:]   = np.squeeze( np.mean(Xb_ni, axis=0))
                     Yb_mnpi[m,n,p,:]   = np.squeeze( np.mean(Yb_ni, axis=0))
 
+
     # Create a figure and a grid of subplots (1 rows, 1 columns)
-    fig = plt.figure(figsize=(6, 6))
+    fig = plt.figure(figsize=(9, 12))
 
 
     # Get colormap and scaling
     clrmp = plt.get_cmap('coolwarm')
+    #clrmp = plt.get_cmap('jet')
+
     #num_colors = 256
     num_colors = 256
     clrmp_array = clrmp(np.linspace(0, 1, num_colors))
@@ -302,11 +305,24 @@ def plot_average_trajectory_flow(Ltraj,Ntraj,fulltraj,xyxb_space,I):
     maxuY = np.max(uY)
 
     # First subplot
-    ax1 = fig.add_subplot(1, 1, 1, projection='3d')
+    ax1 = fig.add_subplot(2, 2, 1, projection='3d')
+    ax2 = fig.add_subplot(2, 2, 2)
+    ax3 = fig.add_subplot(2, 2, 3)
+    ax4 = fig.add_subplot(2, 2, 4)
+
     #set limits first so that arrows are scaled correctly
     ax1.set_xlim([-0.5, 0.5])
     ax1.set_ylim([-1.1, 1.1])
     ax1.set_zlim([0.0, 0.85])
+
+    ax2.set_xlim([-0.5, 0.5])
+    ax2.set_ylim([-1.1, 1.1])
+
+    ax3.set_xlim([-0.5, 0.5])
+    ax3.set_ylim([-1.1, 1.1])
+
+    ax4.set_xlim([-0.5, 0.5])
+    ax4.set_ylim([-1.1, 1.1])
 
     # Now get the axis limits to calculate the scale factors
     xlim = ax1.get_xlim()
@@ -327,9 +343,11 @@ def plot_average_trajectory_flow(Ltraj,Ntraj,fulltraj,xyxb_space,I):
     for m in range(0,M):
         nX = uX[m]
         for n in range(0,2):
+
             if n == 0:
              nY = min(uY)
             else:nY = max(uY)
+
             cix = GetColorIndex( nX/maxuX, nY/maxuY, num_colors )
             for p in range(0,P):
 
@@ -337,17 +355,19 @@ def plot_average_trajectory_flow(Ltraj,Ntraj,fulltraj,xyxb_space,I):
                 Y_i   = np.squeeze( Y_mnpi[m,n,p,:] )
                 Xb_i  = np.squeeze( Xb_mnpi[m,n,p,:] )
 
+                X_i_miny = np.squeeze(X_mnpi[m, 0, p, :])
+                Xb_i_miny = np.squeeze(Xb_mnpi[m, 0, p, :])
+
+                X_i_maxy = np.squeeze(X_mnpi[m, 1, p, :])
+                Xb_i_maxy = np.squeeze(Xb_mnpi[m, 1, p, :])
+
                 if np.sum( ~np.isnan(X_i) )>0:
-
+                    #ax1
                     num_points = len(X_i)
-
-                    ax1.scatter(X_i, Y_i, Xb_i, marker='.', color=clrmp_array[cix,:], linewidth=.3,zorder=1, alpha=0.85)
+                    ax1.scatter(X_i, Y_i, Xb_i, marker='.', color=clrmp_array[cix,:], linewidth=.4,zorder=1, alpha=0.9)
                     #thin lines between points plotted
-                    ax1.plot(X_i, Y_i, Xb_i, color=clrmp_array[cix, :]*.6, linewidth=0.15, zorder=2,alpha=0.85)
-                    #add a little arrow of the same length to show direction from starting point to second point in the same color
-
-                    #find arrow direction, and normalize according to scale size
-
+                    #ax1.plot(X_i, Y_i, Xb_i, color=clrmp_array[cix, :]*.7, linewidth=0.3, zorder=2,alpha=0.9)
+                    #arrows for ax1
                     for i in range(0, num_points - 2, int(num_points/3)):  # Add an arrow every 10th point
                         direction = np.array([X_i[i+1] - X_i[i], Y_i[i+1] - Y_i[i], Xb_i[i+1] - Xb_i[i]])
                         direction = np.array([direction[0] * x_scale, direction[1] * y_scale, direction[2] * z_scale])
@@ -358,14 +378,70 @@ def plot_average_trajectory_flow(Ltraj,Ntraj,fulltraj,xyxb_space,I):
                         arrow_V = length * direction
                         if abs(Y_i[i])<= 0.9:
 
-                            ax1.quiver(X_i[i], Y_i[i], Xb_i[i], arrow_V[0]/x_scale, arrow_V[1]/y_scale, arrow_V[2]/z_scale, color=clrmp_array[cix, :], linewidth=2.2, zorder=5)
-                            #ax1.quiver(X_i[i], Y_i[i], Xb_i[i], arrow_V[0]/x_scale, arrow_V[1]/y_scale, arrow_V[2]/z_scale, color='black', linewidth=3, zorder=5)
+                            #ax1.quiver(X_i[i], Y_i[i], Xb_i[i], arrow_V[0]/x_scale, arrow_V[1]/y_scale, arrow_V[2]/z_scale, color=clrmp_array[cix, :], linewidth=2.2, zorder=5)
+                            ax1.quiver(X_i[i], Y_i[i], Xb_i[i], arrow_V[0]/x_scale, arrow_V[1]/y_scale, arrow_V[2]/z_scale, color='black', linewidth=1.9, zorder=5)
 
-    ax1.set_xlabel('X', fontsize=14)
-    ax1.set_ylabel('Y', fontsize=14)
-    ax1.set_zlabel('X bar', fontsize=14)
+                    ihalf = int(num_points/1.5)
+                    length = .08
 
-    ax1.set_title('Trajectory flow', fontsize=18)
+                    ## DIRECTION OF ARROWS
+                    direction2 = np.array([X_i[ihalf + 1] - X_i[ihalf], Y_i[ihalf + 1] - Y_i[ihalf]])
+                    direction3 = np.array([X_i[ihalf + 1] - X_i[ihalf], Xb_i_miny[ihalf + 1] - Xb_i_miny[ihalf]])
+                    direction4 = np.array([X_i[ihalf + 1] - X_i[ihalf], Xb_i_maxy[ihalf + 1] - Xb_i_maxy[ihalf]])
+
+                    direction2 = np.array([direction2[0] * x_scale, direction2[1] * y_scale])
+                    direction3 = np.array([direction3[0] * x_scale, direction3[1] * y_scale])
+                    direction4 = np.array([direction4[0] * x_scale, direction4[1] * y_scale])
+
+                    norm2,norm3,norm4 = np.linalg.norm(direction2),np.linalg.norm(direction3),np.linalg.norm(direction4)
+                    if norm2 > 0:
+                        direction2 /= norm2
+                    if norm2 > 0:
+                        direction3 /= norm3
+                    if norm3 > 0:
+                        direction4 /= norm4
+                    arrow_V2,arrow_V3,arrow_V4 = length*direction2,length*direction3,length*direction4
+                    ##
+
+                    #PLOT 2
+                    if (Xb_i[ihalf]) >= 0.25:
+
+                        ax2.scatter(X_i, Y_i, marker='.', color=clrmp_array[cix, :], linewidth=0.7)
+                        ax2.quiver(X_i[ihalf], Y_i[ihalf],  arrow_V2[0] / x_scale, arrow_V2[1] / y_scale,
+                                    color='black', linewidth=1., zorder=5)
+                    #PLOT 3
+
+                    ax3.scatter(X_i_miny, Xb_i_miny, marker='.', color=clrmp_array[cix, :], linewidth=0.7)
+
+                    #PLOT 4
+
+                    ax4.scatter(X_i_maxy, Xb_i_maxy, marker='.', color=clrmp_array[cix, :], linewidth=0.7)
+
+
+    ax1.set_xlabel('X', fontsize=10)
+    ax1.set_ylabel('Y', fontsize=10)
+    ax1.set_zlabel('X bar', fontsize=10)
+    ax1.set_title('Trajectory flow', fontsize=13)
+
+    ax2.set_xlabel('X', fontsize=10)
+    ax2.set_ylabel('Y', fontsize=10)
+
+    # ax2.set_title('Trajectory flow', fontsize=18)
+
+    ax3.set_xlabel('X, Y=-1', fontsize=10)
+    ax3.set_ylabel('Xb', fontsize=10)
+    ax3.set_xlim([-0.5, 0.5])
+    ax3.set_ylim([0.0, 0.85])
+    ax3.set_aspect(aspect=1 / 0.85)
+    # ax3.set_title('Trajectory flow', fontsize=18)
+
+    ax4.set_xlabel('X, Y=+1', fontsize=10)
+    ax4.set_ylabel('Xb', fontsize=10)
+    ax4.set_xlim([-0.5, 0.5])
+    ax4.set_ylim([0.0, 0.85])
+    ax4.set_aspect(aspect=1 / 0.85)
+    ax4.set_title('Trajectory flow', fontsize=12)
+
 
     # Adjust layout to prevent overlap
     today = datetime.today().strftime('%Y-%m-%d')
@@ -381,7 +457,7 @@ def plot_average_trajectory_flow(Ltraj,Ntraj,fulltraj,xyxb_space,I):
 if __name__ == '__main__':
             # load raw data 0-N integers#
     Is = ['1','6875','375','0625']
-    I_test = Is[3]
+    I_test = Is[2]
 
     ### LOAD FULL DATA ###
     total_length = 50_000_001
@@ -410,7 +486,7 @@ if __name__ == '__main__':
 
     ### GET AVERAGE TRAJECTORY FLOW ###
     nSamples = 10000
-    Ltraj = 25
+    Ltraj = 50
     plot_average_trajectory_flow(Ltraj,nSamples,(inf_trajA,inf_trajB,inf_trajC,inf_trajD),(ux,uy,uxb),I_test)
     ##############################################
 
