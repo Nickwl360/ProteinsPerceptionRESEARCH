@@ -293,6 +293,7 @@ def plot_average_trajectory_flow(Ltraj,Ntraj,fulltraj,xyxb_space):
     # Create a figure and a grid of subplots (1 rows, 1 columns)
     fig = plt.figure(figsize=(6, 6))
 
+
     # Get colormap and scaling
     clrmp = plt.get_cmap('jet')
     num_colors = 256
@@ -302,6 +303,26 @@ def plot_average_trajectory_flow(Ltraj,Ntraj,fulltraj,xyxb_space):
 
     # First subplot
     ax1 = fig.add_subplot(1, 1, 1, projection='3d')
+    #set limits first so that arrows are scaled correctly
+    ax1.set_xlim([-0.5, 0.5])
+    ax1.set_ylim([-1.1, 1.1])
+    ax1.set_zlim([0.0, 0.85])
+
+    # Now get the axis limits to calculate the scale factors
+    xlim = ax1.get_xlim()
+    ylim = ax1.get_ylim()
+    zlim = ax1.get_zlim()
+
+    # Calculate the data range for each axis
+    x_range = xlim[1] - xlim[0]
+    y_range = ylim[1] - ylim[0]
+    z_range = zlim[1] - zlim[0]
+
+    # Scale factors based on axis ranges
+    x_scale = 1 / x_range
+    y_scale = 1 / y_range
+    z_scale = 1 / z_range
+
 
     for m in range(0,M):
         nX = uX[m]
@@ -317,14 +338,23 @@ def plot_average_trajectory_flow(Ltraj,Ntraj,fulltraj,xyxb_space):
                 Xb_i  = np.squeeze( Xb_mnpi[m,n,p,:] )
 
                 if np.sum( ~np.isnan(X_i) )>0:
-                    ax1.scatter(X_i, Y_i, Xb_i, marker='.', color=clrmp_array[cix,:], linewidth=1)
+                    ax1.scatter(X_i, Y_i, Xb_i, marker='.', color=clrmp_array[cix,:], linewidth=.5,zorder=1)
+                    #add a little arrow of the same length to show direction from starting point to second point in the same color
 
+                    #find arrow direction, and normalize according to scale size
+                    direction = np.array([X_i[1]-X_i[0], Y_i[1]-Y_i[0], Xb_i[1]-Xb_i[0]])
+                    direction= np.array([direction[0]*x_scale, direction[1]*y_scale, direction[2]*z_scale])
+                    norm = np.linalg.norm(direction)
+                    if norm>0:
+                        direction/=norm
+                    length = .05
+                    arrow_V = length*direction
+
+                    ax1.quiver(X_i[0], Y_i[0], Xb_i[0], arrow_V[0]/x_scale, arrow_V[1]/y_scale, arrow_V[2]/z_scale, color='black', linewidth=1, zorder=5)
     ax1.set_xlabel('X', fontsize=14)
     ax1.set_ylabel('Y', fontsize=14)
     ax1.set_zlabel('X bar', fontsize=14)
-    ax1.set_xlim([-0.5, 0.5])
-    ax1.set_ylim([-1.1, 1.1])
-    ax1.set_zlim([0.0, 0.85])
+
     ax1.set_title('Trajectory flow', fontsize=18)
 
     # Adjust layout to prevent overlap
@@ -366,7 +396,7 @@ if __name__ == '__main__':
 
     ### GET AVERAGE TRAJECTORY FLOW ###
     nSamples = 10000
-    Ltraj = 150
+    Ltraj = 100
 
     plot_average_trajectory_flow(Ltraj,nSamples,(inf_trajA,inf_trajB,inf_trajC,inf_trajD),(ux,uy,uxb))
     ##############################################
