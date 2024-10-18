@@ -14,8 +14,20 @@ MAXBOT=12
 NE = 11
 NR = 4
 chunk_size = 1000000
-directory = r'C:\Users\Nickl\PycharmProjects\Researchcode (1) (1)\InferedTrajectoriesMCBRAIN'
-savdir = r'C:\Users\Nickl\PycharmProjects\Researchcode (1) (1)\CurrentProjects\Perception_TrajectoryCalc\Traj_Imgs'
+
+### auto detect if Users\Nickl or Users\Nick is the current user
+if os.path.exists(r'C:\Users\Nickl'):
+    directory = r'C:\Users\Nickl\PycharmProjects\Researchcode (1) (1)\InferedTrajectoriesMCBRAIN'
+    savdir = r'C:\Users\Nickl\PycharmProjects\Researchcode (1) (1)\CurrentProjects\Perception_TrajectoryCalc\Traj_Imgs'
+    trajdir = r'C:\Users\Nickl\PycharmProjects\Researchcode (1) (1)\CurrentProjects\Perception_TrajectoryCalc\traj_data'
+else:
+    directory = r'C:\Users\Nick\PycharmProjects\Researchcode (1) (1)\InferedTrajectoriesMCBRAIN'
+    savdir = r'C:\Users\Nick\PycharmProjects\Researchcode (1) (1)\CurrentProjects\Perception_TrajectoryCalc\Traj_Imgs'
+    trajdir = r'C:\Users\Nick\PycharmProjects\Researchcode (1) (1)\CurrentProjects\Perception_TrajectoryCalc\traj_data'
+
+today = datetime.today().strftime('%Y-%m-%d')
+
+
 def load_and_concatenate(directory, prefix, num_chunks):
     concatenated_array = []
     for i in range(num_chunks):
@@ -65,7 +77,6 @@ def shift_toXY(Traj, NE,NR):
     yb_list = np.round(yb_list) / NR
 
     return x_list,y_list, xb_list,yb_list
-
 
 ### Jochen's Functions ###
 def CountVisitsInXYXb( X_i, Y_i, Xb_i, NE, NR ):
@@ -147,7 +158,72 @@ def GetColorIndex( X, Y, num_colors ):
     angle = np.arctan2( Y, X)
     cix   = round( (angle + np.pi) / (2 * np.pi) * (num_colors - 1) )
     return cix
+
 # Define an interactive plot
+def get_average_trajectory_flow(Ltraj,Ntraj,fulltraj,xyxb_space,I):
+    """(3D trajectory flow)"""
+
+    Ni = Ltraj
+             # taken from previous figure
+    uX,uY,uXb = xyxb_space
+
+    M = len(uX) ## (a-b) space [-NR, NR]
+    N = len(uY) ## (c-d) space [-NE, NE]
+    P = len(uXb) ## (a+b) space [0, 2NE]
+
+    # allocate nan arrays (they won't be filled completely)
+    X_mnpi   = np.full( (M, N, P, Ni), np.nan )
+    Y_mnpi   = np.full( (M, N, P, Ni), np.nan )
+
+    Xb_mnpi  = np.full( (M, N, P, Ni), np.nan )
+    Yb_mnpi  = np.full( (M, N, P, Ni), np.nan )
+
+    # loop over nodes of state space (only nodes traversed by trajectories)
+    #want n loop just to be 0 and 1
+    for n in range(0,2):
+
+        #loop through Y [Difference in upper layer]
+
+
+        if n == 0:
+            nY = min(uY) #cmax
+            R0 = 1 * NR
+            R0p = 0
+
+        else:
+            nY = max(uY) #dmax
+            R0  = 0
+            R0p = 1*NR
+
+        for m in range(0,M):
+            nX = uX[m]
+
+            print( m, n )
+
+            for p in range(0,P):
+                nXb = uXb[p]
+
+                        # intial states at lower level
+                nE0  = ( nX + nXb ) / 2
+                nE0p = (-nX + nXb ) / 2
+
+                E0  = nE0   / NE
+                E0p = nE0p  / NE
+
+                        # restrict to starting points visited by trajectories
+                if ( (nE0 >= 0) & (nE0p >= 0) & (nE0 <= 10) & (nE0p <= 10) & (np.remainder(nE0, 1) == 0) & (np.remainder(nE0p, 1) == 0) ):
+                    E0*=NE
+                    E0p*=NE
+                    print(E0,E0p,R0,R0p,'starting point')
+                    [X_ni, Y_ni, Xb_ni, Yb_ni] = pull_traj_givenSi( fulltraj, Ntraj, Ltraj, (R0,R0p,E0,E0p))
+
+                    X_mnpi[m,n,p,:]    = np.squeeze( np.mean(X_ni, axis=0))
+                    Y_mnpi[m,n,p,:]    = np.squeeze( np.mean(Y_ni, axis=0))
+                    Xb_mnpi[m,n,p,:]   = np.squeeze( np.mean(Xb_ni, axis=0))
+                    Yb_mnpi[m,n,p,:]   = np.squeeze( np.mean(Yb_ni, axis=0))
+
+    return (X_mnpi,Y_mnpi,Xb_mnpi,Yb_mnpi),xyxb_space
+
 def plot_trajectory_density(XYtrajs,I):
     """(3D trajectory density)"""
 
@@ -217,9 +293,8 @@ def plot_trajectory_density(XYtrajs,I):
     #plt.tight_layout()
 
     # Display the plots
-    today = datetime.today().strftime('%Y-%m-%d')
 
-    filename = f"I_{I}_MCalPerceptionTrajDensity_{today}.png"
+    filename = f"I_{I}_MCPavgTrajField_{today}.png"
     fullpath = os.path.join(savdir, filename)
 
     plt.savefig(fullpath)
@@ -227,72 +302,15 @@ def plot_trajectory_density(XYtrajs,I):
     plt.show()
     return uX,uY,uXb
 
-def plot_average_trajectory_flow(Ltraj,Ntraj,fulltraj,xyxb_space,I):
-    """(3D trajectory flow)"""
 
-    Ni = Ltraj
-             # taken from previous figure
-    uX,uY,uXb = xyxb_space
+def plot_average_trajectory_flow(Data_avg,xyxb_space,L, I):
 
-    M = len(uX) ## (a-b) space [-NR, NR]
-    N = len(uY) ## (c-d) space [-NE, NE]
-    P = len(uXb) ## (a+b) space [0, 2NE]
-
-    # allocate nan arrays (they won't be filled completely)
-    X_mnpi   = np.full( (M, N, P, Ni), np.nan )
-    Y_mnpi   = np.full( (M, N, P, Ni), np.nan )
-
-    Xb_mnpi  = np.full( (M, N, P, Ni), np.nan )
-    Yb_mnpi  = np.full( (M, N, P, Ni), np.nan )
-
-    # loop over nodes of state space (only nodes traversed by trajectories)
-    #want n loop just to be 0 and 1
-    for n in range(0,2):
-
-        #loop through Y [Difference in upper layer]
-
-
-        if n == 0:
-            nY = min(uY) #cmax
-            R0 = 1 * NR
-            R0p = 0
-
-        else:
-            nY = max(uY) #dmax
-            R0  = 0
-            R0p = 1*NR
-
-        for m in range(0,M):
-            nX = uX[m]
-
-            print( m, n )
-
-            for p in range(0,P):
-                nXb = uXb[p]
-
-                        # intial states at lower level
-                nE0  = ( nX + nXb ) / 2
-                nE0p = (-nX + nXb ) / 2
-
-                E0  = nE0   / NE
-                E0p = nE0p  / NE
-
-                        # restrict to starting points visited by trajectories
-                if ( (nE0 >= 0) & (nE0p >= 0) & (nE0 <= 10) & (nE0p <= 10) & (np.remainder(nE0, 1) == 0) & (np.remainder(nE0p, 1) == 0) ):
-                    E0*=NE
-                    E0p*=NE
-                    print(E0,E0p,R0,R0p,'starting point')
-                    [X_ni, Y_ni, Xb_ni, Yb_ni] = pull_traj_givenSi( fulltraj, Ntraj, Ltraj, (R0,R0p,E0,E0p))
-
-                    X_mnpi[m,n,p,:]    = np.squeeze( np.mean(X_ni, axis=0))
-                    Y_mnpi[m,n,p,:]    = np.squeeze( np.mean(Y_ni, axis=0))
-                    Xb_mnpi[m,n,p,:]   = np.squeeze( np.mean(Xb_ni, axis=0))
-                    Yb_mnpi[m,n,p,:]   = np.squeeze( np.mean(Yb_ni, axis=0))
-
-
+    (X_mnpi,Y_mnpi,Xb_mnpi,Yb_mnpi) = Data_avg
     # Create a figure and a grid of subplots (1 rows, 1 columns)
-    fig = plt.figure(figsize=(9, 12))
 
+    uX,uY,uXb = xyxb_space
+    M = len(uX)  ## (a-b) space [-NR, NR]
+    P = len(uXb)  ## (a+b) space [0, 2NE]
 
     # Get colormap and scaling
     clrmp = plt.get_cmap('coolwarm')
@@ -304,11 +322,13 @@ def plot_average_trajectory_flow(Ltraj,Ntraj,fulltraj,xyxb_space,I):
     maxuX = np.max(uX)
     maxuY = np.max(uY)
 
+
+    fig = plt.figure(figsize=(15,7))
+
     # First subplot
-    ax1 = fig.add_subplot(2, 2, 1, projection='3d')
-    ax2 = fig.add_subplot(2, 2, 2)
-    ax3 = fig.add_subplot(2, 2, 3)
-    ax4 = fig.add_subplot(2, 2, 4)
+
+    ax1 = fig.add_subplot(1, 2, 1, projection='3d', position=[0.05, 0.1, 0.6, 0.8])
+    ax2 = fig.add_subplot(1, 2, 2, aspect='auto', position=[0.7, 0.1, 0.25, 0.8])
 
     #set limits first so that arrows are scaled correctly
     ax1.set_xlim([-0.5, 0.5])
@@ -318,11 +338,6 @@ def plot_average_trajectory_flow(Ltraj,Ntraj,fulltraj,xyxb_space,I):
     ax2.set_xlim([-0.5, 0.5])
     ax2.set_ylim([-1.1, 1.1])
 
-    ax3.set_xlim([-0.5, 0.5])
-    ax3.set_ylim([-1.1, 1.1])
-
-    ax4.set_xlim([-0.5, 0.5])
-    ax4.set_ylim([-1.1, 1.1])
 
     # Now get the axis limits to calculate the scale factors
     xlim = ax1.get_xlim()
@@ -355,67 +370,49 @@ def plot_average_trajectory_flow(Ltraj,Ntraj,fulltraj,xyxb_space,I):
                 Y_i   = np.squeeze( Y_mnpi[m,n,p,:] )
                 Xb_i  = np.squeeze( Xb_mnpi[m,n,p,:] )
 
-                X_i_miny = np.squeeze(X_mnpi[m, 0, p, :])
-                Xb_i_miny = np.squeeze(Xb_mnpi[m, 0, p, :])
-
-                X_i_maxy = np.squeeze(X_mnpi[m, 1, p, :])
-                Xb_i_maxy = np.squeeze(Xb_mnpi[m, 1, p, :])
 
                 if np.sum( ~np.isnan(X_i) )>0:
                     #ax1
-                    num_points = len(X_i)
-                    ax1.scatter(X_i, Y_i, Xb_i, marker='.', color=clrmp_array[cix,:], linewidth=.4,zorder=1, alpha=0.9)
+                    num_points = L
+                    ax1.scatter(X_i, Y_i, Xb_i, marker='.', color=clrmp_array[cix,:], linewidth=.6, zorder=1, alpha=0.95)
                     #thin lines between points plotted
                     #ax1.plot(X_i, Y_i, Xb_i, color=clrmp_array[cix, :]*.7, linewidth=0.3, zorder=2,alpha=0.9)
                     #arrows for ax1
-                    for i in range(0, num_points - 2, int(num_points/3)):  # Add an arrow every 10th point
+                    for i in range(0, num_points - 2, int(num_points/4)):  # Add an arrow every 10th point
                         direction = np.array([X_i[i+1] - X_i[i], Y_i[i+1] - Y_i[i], Xb_i[i+1] - Xb_i[i]])
                         direction = np.array([direction[0] * x_scale, direction[1] * y_scale, direction[2] * z_scale])
                         norm = np.linalg.norm(direction)
                         if norm > 0:
                             direction /= norm
-                        length = .10
+                        length = .08
                         arrow_V = length * direction
                         if abs(Y_i[i])<= 0.9:
 
-                            #ax1.quiver(X_i[i], Y_i[i], Xb_i[i], arrow_V[0]/x_scale, arrow_V[1]/y_scale, arrow_V[2]/z_scale, color=clrmp_array[cix, :], linewidth=2.2, zorder=5)
-                            ax1.quiver(X_i[i], Y_i[i], Xb_i[i], arrow_V[0]/x_scale, arrow_V[1]/y_scale, arrow_V[2]/z_scale, color='black', linewidth=1.9, zorder=5)
+                            ax1.quiver(X_i[i], Y_i[i], Xb_i[i], arrow_V[0]/x_scale, arrow_V[1]/y_scale, arrow_V[2]/z_scale, color=clrmp_array[cix, :], linewidth=2.5, zorder=5)
+                            #ax1.quiver(X_i[i], Y_i[i], Xb_i[i], arrow_V[0]/x_scale, arrow_V[1]/y_scale, arrow_V[2]/z_scale, color='black', linewidth=2.5, zorder=5, alpha=0.8)
 
-                    ihalf = int(num_points/1.5)
-                    length = .08
+
+                    ihalf = int(num_points / 3.3)
 
                     ## DIRECTION OF ARROWS
                     direction2 = np.array([X_i[ihalf + 1] - X_i[ihalf], Y_i[ihalf + 1] - Y_i[ihalf]])
-                    direction3 = np.array([X_i[ihalf + 1] - X_i[ihalf], Xb_i_miny[ihalf + 1] - Xb_i_miny[ihalf]])
-                    direction4 = np.array([X_i[ihalf + 1] - X_i[ihalf], Xb_i_maxy[ihalf + 1] - Xb_i_maxy[ihalf]])
-
                     direction2 = np.array([direction2[0] * x_scale, direction2[1] * y_scale])
-                    direction3 = np.array([direction3[0] * x_scale, direction3[1] * y_scale])
-                    direction4 = np.array([direction4[0] * x_scale, direction4[1] * y_scale])
 
-                    norm2,norm3,norm4 = np.linalg.norm(direction2),np.linalg.norm(direction3),np.linalg.norm(direction4)
+                    norm2 = np.linalg.norm(direction2)
                     if norm2 > 0:
                         direction2 /= norm2
-                    if norm2 > 0:
-                        direction3 /= norm3
-                    if norm3 > 0:
-                        direction4 /= norm4
-                    arrow_V2,arrow_V3,arrow_V4 = length*direction2,length*direction3,length*direction4
+
+                    length = .08
+                    arrow_V2 = length*direction2
                     ##
-
                     #PLOT 2
-                    if (Xb_i[ihalf]) >= 0.25:
-
-                        ax2.scatter(X_i, Y_i, marker='.', color=clrmp_array[cix, :], linewidth=0.7)
+                    if (Xb_i[ihalf]) >= 0.35:
+                        #add a thin line between scatter points
+                        ax2.plot(X_i, Y_i, color=clrmp_array[cix, :], linewidth=1.3, zorder=2, alpha=0.9)
+                        ax2.scatter(X_i, Y_i, marker='.', color=clrmp_array[cix, :], linewidth=1.3)
                         ax2.quiver(X_i[ihalf], Y_i[ihalf],  arrow_V2[0] / x_scale, arrow_V2[1] / y_scale,
-                                    color='black', linewidth=1., zorder=5)
-                    #PLOT 3
+                                    color='black', linewidth=1.1, zorder=5)
 
-                    ax3.scatter(X_i_miny, Xb_i_miny, marker='.', color=clrmp_array[cix, :], linewidth=0.7)
-
-                    #PLOT 4
-
-                    ax4.scatter(X_i_maxy, Xb_i_maxy, marker='.', color=clrmp_array[cix, :], linewidth=0.7)
 
 
     ax1.set_xlabel('X', fontsize=10)
@@ -426,27 +423,123 @@ def plot_average_trajectory_flow(Ltraj,Ntraj,fulltraj,xyxb_space,I):
     ax2.set_xlabel('X', fontsize=10)
     ax2.set_ylabel('Y', fontsize=10)
 
-    # ax2.set_title('Trajectory flow', fontsize=18)
+    filename = f"I_{I}_MCalPerceptionAvgFlow_{today}_L={L}.png"
+    fullpath = os.path.join(savdir, filename)
 
-    ax3.set_xlabel('X, Y=-1', fontsize=10)
-    ax3.set_ylabel('Xb', fontsize=10)
-    ax3.set_xlim([-0.5, 0.5])
-    ax3.set_ylim([0.0, 0.85])
-    ax3.set_aspect(aspect=1 / 0.85)
-    # ax3.set_title('Trajectory flow', fontsize=18)
+    plt.savefig(fullpath)
+    print(f'plot saved to {fullpath}')
+    plt.show()
 
-    ax4.set_xlabel('X, Y=+1', fontsize=10)
-    ax4.set_ylabel('Xb', fontsize=10)
-    ax4.set_xlim([-0.5, 0.5])
-    ax4.set_ylim([0.0, 0.85])
-    ax4.set_aspect(aspect=1 / 0.85)
-    ax4.set_title('Trajectory flow', fontsize=12)
+def plot_side_profile_flow(avgData,xyxb_space,Ni,I):
+    # Create a figure and a grid of subplots (2 rows, 1 columns)
+    fig = plt.figure(figsize=(5, 10))
+    uX,uY,uXb = xyxb_space
+    M = len(uX)  ## (a-b) space [-NR, NR]
+    P = len(uXb)  ## (a+b) space [0, 2NE]
 
+    X_mnpi, Y_mnpi, Xb_mnpi, Yb_mnpi = avgData
+
+    # Convert to x, dx, and y, dy for arrow plotting
+    X_mnp = np.squeeze(X_mnpi[:, :, :, 0])
+    Y_mnp = np.squeeze(Y_mnpi[:, :, :, 0])
+    Xb_mnp = np.squeeze(Xb_mnpi[:, :, :, 0])
+
+    eX_mnp = np.squeeze(X_mnpi[:, :, :, Ni - 1])
+    eY_mnp = np.squeeze(Y_mnpi[:, :, :, Ni - 1])
+    eXb_mnp = np.squeeze(Xb_mnpi[:, :, :, Ni - 1])
+
+    dX_mnp = eX_mnp - X_mnp
+    dY_mnp = eY_mnp - Y_mnp
+    dXb_mnp = eXb_mnp - Xb_mnp
+
+    # Get colormap and scaling
+    clrmp = plt.get_cmap('jet')
+    num_colors = 256
+    clrmp_array = clrmp(np.linspace(0, 1, num_colors))
+    maxuX = np.max(uX)
+    maxuY = np.max(uY)
+
+    # First subplot
+    ax1 = fig.add_subplot(2, 1, 1)
+
+    for m in range(0, M):
+        nX = uX[m]
+
+        n = 0
+        nY = uY[n]
+
+        cix = GetColorIndex(nX / maxuX, nY / maxuY, num_colors)
+
+        for p in range(0, P):
+
+            X_p = np.squeeze(X_mnp[m, n, p])
+            Xb_p = np.squeeze(Xb_mnp[m, n, p])
+
+            dX_p = np.squeeze(dX_mnp[m, n, p])
+            dY_p = np.squeeze(dY_mnp[m, n, p])
+            dXb_p = np.squeeze(dXb_mnp[m, n, p])
+
+            eX_p = np.squeeze(eX_mnp[m, n, p])
+            eXb_p = np.squeeze(eXb_mnp[m, n, p])
+
+            if np.sum(~np.isnan(X_p)) >= 1:
+
+                # ax1.scatter(X_p, Xb_p, marker='.', color=clrmp_array[cix,:], linewidth=1)
+                # ax1.scatter(X_p+dX_p, Xb_p+dXb_p, marker='.', color=clrmp_array[cix,:], linewidth=0.5)
+                if dY_p >= 1:
+                    ax1.scatter(eX_p, eXb_p, marker='o', color='grey', linewidth=0.01)
+                ax1.arrow(X_p, Xb_p, dX_p, dXb_p, color=clrmp_array[cix, :], width=0.001, head_width=0.01)
+
+    ax1.set_xlabel('X, Y=-1', fontsize=14)
+    ax1.set_ylabel('Xb', fontsize=14)
+    ax1.set_xlim([-0.5, 0.5])
+    ax1.set_ylim([0.0, 0.85])
+    ax1.set_aspect(aspect=1 / 0.85)
+    ax1.set_title('Grey dot marks termination on other side, Y=+1', fontsize=12)
+
+    # Second subplot
+    ax2 = fig.add_subplot(2, 1, 2)
+
+    for m in range(0, M):
+        nX = uX[m]
+
+        n = 1  # surface nY = +4
+        nY = uY[n]
+
+        cix = GetColorIndex(nX / maxuX, nY / maxuY, num_colors)
+
+        for p in range(0, P):
+
+            X_p = np.squeeze(X_mnp[m, n, p])
+            Xb_p = np.squeeze(Xb_mnp[m, n, p])
+
+            dX_p = np.squeeze(dX_mnp[m, n, p])
+            dY_p = np.squeeze(dY_mnp[m, n, p])
+            dXb_p = np.squeeze(dXb_mnp[m, n, p])
+
+            eX_p = np.squeeze(eX_mnp[m, n, p])
+            eXb_p = np.squeeze(eXb_mnp[m, n, p])
+
+            if np.sum(~np.isnan(X_p)) >= 1:
+
+                # ax2.scatter(X_p, Xb_p, marker='.', color=clrmp_array[cix,:], linewidth=1)
+                # ax2.scatter(X_p+dX_p, Xb_p+dXb_p, marker='.', color=clrmp_array[cix,:], linewidth=0.5)
+                if dY_p <= -1:
+                    ax2.scatter(eX_p, eXb_p, marker='o', color='grey', linewidth=0.01)
+                ax2.arrow(X_p, Xb_p, dX_p, dXb_p, color=clrmp_array[cix, :], width=0.001, head_width=0.01)
+
+    ax2.set_xlabel('X, Y=+1', fontsize=14)
+    ax2.set_ylabel('Xb', fontsize=14)
+    ax2.set_xlim([-0.5, 0.5])
+    ax2.set_ylim([0.0, 0.85])
+    ax2.set_aspect(aspect=1 / 0.85)
+    ax2.set_title('Grey dot marks termination on other side, Y=-1', fontsize=12)
 
     # Adjust layout to prevent overlap
-    today = datetime.today().strftime('%Y-%m-%d')
+    plt.tight_layout()
 
-    filename = f"I_{I}_MCalPerceptionAvgFlow_{today}_L={num_points}.png"
+    # Display the plots
+    filename = f"I_{I}_MCPavgSideFlow_{today}_L={Ni}.png"
     fullpath = os.path.join(savdir, filename)
 
     plt.savefig(fullpath)
@@ -454,10 +547,11 @@ def plot_average_trajectory_flow(Ltraj,Ntraj,fulltraj,xyxb_space,I):
     plt.show()
 
 
+
 if __name__ == '__main__':
             # load raw data 0-N integers#
     Is = ['1','6875','375','0625']
-    I_test = Is[2]
+    I_test = Is[3]
 
     ### LOAD FULL DATA ###
     total_length = 50_000_001
@@ -487,7 +581,27 @@ if __name__ == '__main__':
     ### GET AVERAGE TRAJECTORY FLOW ###
     nSamples = 10000
     Ltraj = 50
-    plot_average_trajectory_flow(Ltraj,nSamples,(inf_trajA,inf_trajB,inf_trajC,inf_trajD),(ux,uy,uxb),I_test)
+
+    #check if there is a file with same Ltraj and I_test in name before calculating data
+
+    filenametest = f"I_{I_test}_L={Ltraj}MCavgflow_{today}_.npy"
+    fullpathtest = os.path.join(trajdir, filenametest)
+    if os.path.exists(fullpathtest):
+        avg_traj_data = np.load(fullpathtest)
+        print(f'Data loaded {filenametest}')
+    #if file does not exist, calculate data
+    else:
+        avg_traj_data,xyxb_space= get_average_trajectory_flow(Ltraj,nSamples,(inf_trajA,inf_trajB,inf_trajC,inf_trajD),(ux,uy,uxb),I_test)
+        filename = f"I_{I_test}_L={Ltraj}MCavgflow_{today}_.npy"
+        fullpath = os.path.join(trajdir, filename)
+        np.save(fullpath, avg_traj_data)
+        print(f'plot saved to {fullpath}')
+
+    #plot average trajectory flow
+    plot_average_trajectory_flow(avg_traj_data,(ux,uy,uxb),Ltraj,I_test)
+    plot_side_profile_flow(avg_traj_data,(ux,uy,uxb),Ltraj,I_test)
+
+
     ##############################################
 
 
