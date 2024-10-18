@@ -392,7 +392,7 @@ def plot_average_trajectory_flow(Data_avg,xyxb_space,L, I):
                             #ax1.quiver(X_i[i], Y_i[i], Xb_i[i], arrow_V[0]/x_scale, arrow_V[1]/y_scale, arrow_V[2]/z_scale, color='black', linewidth=2.5, zorder=5, alpha=0.8)
 
 
-                    ihalf = int(num_points / 3.3)
+                    ihalf = int(num_points / 2)
 
                     ## DIRECTION OF ARROWS
                     direction2 = np.array([X_i[ihalf + 1] - X_i[ihalf], Y_i[ihalf + 1] - Y_i[ihalf]])
@@ -406,12 +406,12 @@ def plot_average_trajectory_flow(Data_avg,xyxb_space,L, I):
                     arrow_V2 = length*direction2
                     ##
                     #PLOT 2
-                    if (Xb_i[ihalf]) >= 0.35:
+                    if (Xb_i[ihalf]) >= 0.4:
                         #add a thin line between scatter points
                         ax2.plot(X_i, Y_i, color=clrmp_array[cix, :], linewidth=1.3, zorder=2, alpha=0.9)
                         ax2.scatter(X_i, Y_i, marker='.', color=clrmp_array[cix, :], linewidth=1.3)
                         ax2.quiver(X_i[ihalf], Y_i[ihalf],  arrow_V2[0] / x_scale, arrow_V2[1] / y_scale,
-                                    color='black', linewidth=1.1, zorder=5)
+                                    color='black', linewidth=.9, zorder=5,alpha=0.8)
 
 
 
@@ -422,6 +422,8 @@ def plot_average_trajectory_flow(Data_avg,xyxb_space,L, I):
 
     ax2.set_xlabel('X', fontsize=10)
     ax2.set_ylabel('Y', fontsize=10)
+    ax1.view_init(elev=38, azim=-41)
+
 
     filename = f"I_{I}_MCalPerceptionAvgFlow_{today}_L={L}.png"
     fullpath = os.path.join(savdir, filename)
@@ -429,7 +431,6 @@ def plot_average_trajectory_flow(Data_avg,xyxb_space,L, I):
     plt.savefig(fullpath)
     print(f'plot saved to {fullpath}')
     #fix start view angle
-    ax1.view_init(elev=38, azim=-41)
     plt.show()
 
 def plot_side_profile_flow(avgData,xyxb_space,Ni,I):
@@ -455,9 +456,11 @@ def plot_side_profile_flow(avgData,xyxb_space,Ni,I):
     dXb_mnp = eXb_mnp - Xb_mnp
 
     # Get colormap and scaling
-    clrmp = plt.get_cmap('jet')
+    clrmp1 = plt.get_cmap('jet')
+    clrmp2 = plt.get_cmap('jet_r')
     num_colors = 256
-    clrmp_array = clrmp(np.linspace(0, 1, num_colors))
+    clrmp_array1 = clrmp1(np.linspace(0, 1, num_colors))
+    clrmp_array2 = clrmp2(np.linspace(0, 1, num_colors))
     maxuX = np.max(uX)
     maxuY = np.max(uY)
 
@@ -490,7 +493,7 @@ def plot_side_profile_flow(avgData,xyxb_space,Ni,I):
                 # ax1.scatter(X_p+dX_p, Xb_p+dXb_p, marker='.', color=clrmp_array[cix,:], linewidth=0.5)
                 if dY_p >= 1:
                     ax1.scatter(eX_p, eXb_p, marker='o', color='grey', linewidth=0.01)
-                ax1.arrow(X_p, Xb_p, dX_p, dXb_p, color=clrmp_array[cix, :], width=0.001, head_width=0.01)
+                ax1.arrow(X_p, Xb_p, dX_p, dXb_p, color=clrmp_array1[cix, :], width=0.001, head_width=0.01)
 
     ax1.set_xlabel('X, Y=-1', fontsize=14)
     ax1.set_ylabel('Xb', fontsize=14)
@@ -528,7 +531,8 @@ def plot_side_profile_flow(avgData,xyxb_space,Ni,I):
                 # ax2.scatter(X_p+dX_p, Xb_p+dXb_p, marker='.', color=clrmp_array[cix,:], linewidth=0.5)
                 if dY_p <= -1:
                     ax2.scatter(eX_p, eXb_p, marker='o', color='grey', linewidth=0.01)
-                ax2.arrow(X_p, Xb_p, dX_p, dXb_p, color=clrmp_array[cix, :], width=0.001, head_width=0.01)
+
+                ax2.arrow(X_p, Xb_p, dX_p, dXb_p, color=clrmp_array2[cix, :], width=0.001, head_width=0.01)
 
     ax2.set_xlabel('X, Y=+1', fontsize=14)
     ax2.set_ylabel('Xb', fontsize=14)
