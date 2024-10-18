@@ -428,6 +428,8 @@ def plot_average_trajectory_flow(Data_avg,xyxb_space,L, I):
 
     plt.savefig(fullpath)
     print(f'plot saved to {fullpath}')
+    #fix start view angle
+    ax1.view_init(elev=38, azim=-41)
     plt.show()
 
 def plot_side_profile_flow(avgData,xyxb_space,Ni,I):
@@ -537,6 +539,7 @@ def plot_side_profile_flow(avgData,xyxb_space,Ni,I):
 
     # Adjust layout to prevent overlap
     plt.tight_layout()
+    # fix the default view angle
 
     # Display the plots
     filename = f"I_{I}_MCPavgSideFlow_{today}_L={Ni}.png"
@@ -544,6 +547,7 @@ def plot_side_profile_flow(avgData,xyxb_space,Ni,I):
 
     plt.savefig(fullpath)
     print(f'plot saved to {fullpath}')
+
     plt.show()
 
 
