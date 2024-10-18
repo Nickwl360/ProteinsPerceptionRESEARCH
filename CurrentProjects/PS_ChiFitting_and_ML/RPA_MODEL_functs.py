@@ -17,7 +17,7 @@ warnings.filterwarnings("ignore", category=IntegrationWarning)
 warnings.filterwarnings("ignore", category=OptimizeWarning)
 
 ########################ConstANTS################################
-T0=00
+T0=100
 iterlim=1500
 epsabs = 1e-12
 epsrel = 1e-12
@@ -102,7 +102,7 @@ def d2_ck(k,protein):
 
 #################FREE ENERGIES#####################################
 def ftot_rg(phiM, Y, protein):
-    if phiM > 1 or phiM < 0 or phiS > 1 or phiS < 0:
+    if phiM > 1 or phiM < 0 or protein.phiS > 1 or protein.phiS < 0:
         print('illegal phi range detected')
         return np.nan
 
@@ -110,7 +110,8 @@ def ftot_rg(phiM, Y, protein):
     #this is where we add lili's predicted omega2 values.
     ftot += protein.w2*phiM*phiM/2
 
-    #2*np.pi*phiM*phiM/3  ##f0 term old version
+    #testing old version
+    #ftot+= 2*np.pi*phiM*phiM/3
 
     if protein.W3_TOGGLE==1:
         ftot += (protein.w3 - 1/6)*phiM**3
@@ -120,11 +121,14 @@ def rgFPint(k,Y,phiM,protein):
     xe = xee(k, protein)
     g = gk(k, protein)
     c = ck(k, protein)
-    v = protein.w2*np.exp(-1*k*k/6)
-    rho = k * k * Y / 4 / np.pi + protein.qc * phiM + phiS
+    v2 = protein.w2 * np.exp(-1 * k * k / 6)
+    #testing fp with old version
+    #v2 = 4 * np.pi / 3 * np.exp(-1 * k * k / 6) #fails to find crit
 
-    a = phiM*(xe / rho + v * g)
-    b = (phiM * phiM * v / rho) * (g * xe - c * c)
+    rho = k * k * Y / 4 / np.pi + protein.qc * phiM + protein.phiS
+
+    a = phiM*(xe / rho + v2 * g)
+    b = (phiM * phiM * v2 / rho) * (g * xe - c * c)
     return (k*k/4/np.pi/np.pi)*np.log(1+a+b)
 def rgFP(phiM, Y,protein):
 
@@ -134,16 +138,16 @@ def rgFP(phiM, Y,protein):
     fp = result[0]
     return fp
 def fion(phiM, Y,protein):
-    kl = np.sqrt(4 * np.pi * (phiS + protein.qc * phiM) / Y)
+    kl = np.sqrt(4 * np.pi * (protein.phiS + protein.qc * phiM) / Y)
     return (-1 / (4 * np.pi)) * (np.log(1 + kl) - kl + .5 * kl * kl)
 def s_1comp(x):
     ###THIS IS FROM LIN TO SPEED UP AND AVOID ERRORS
     return (x > epsilon)*x*np.log(x + (x < epsilon)) + 1e5*(x<0)
 def entropy(phiM,protein):
     phiC = protein.qc * phiM
-    phiW = 1 - phiM - phiS - phiC
+    phiW = 1 - phiM - protein.phiS - phiC
     #################FIGURE OUT LOGIC FOR 0s
-    return s_1comp(phiM)/protein.N + s_1comp(phiS)+ s_1comp(phiC) + s_1comp(phiW)
+    return s_1comp(phiM)/protein.N + s_1comp(protein.phiS)+ s_1comp(phiC) + s_1comp(phiW)
 
 ################FIRST DERIVATIVES##############################################################
 def ds_1comp(x):
@@ -153,8 +157,10 @@ def dfpintegrand(k,Y,phiM,protein):
     xe = xee(k,protein)
     g = gk(k,protein)
     c = ck(k,protein)
-    rho = k * k * Y / (4 * np.pi) + phiS + protein.qc * phiM
+    rho = k * k * Y / (4 * np.pi) + protein.phiS + protein.qc * phiM
     v2 = protein.w2*np.exp(-k*k/6)
+    #testing fp with old version (fails crit finder)
+    #v2 = 4*np.pi/3*np.exp(-k*k/6)
     c2 = c*c
 
     num = -2 * c2 * v2 * phiM + g * v2 * rho + 2 * xe * g * v2 * phiM + xe
@@ -163,19 +169,18 @@ def dfpintegrand(k,Y,phiM,protein):
     return k*k*num/den
 def d1_Frg_dphi(phiM,Y,protein):
     phic = protein.qc*phiM
-    phiW = 1 - phiM - phic - phiS
+    phiW = 1 - phiM - phic - protein.phiS
 
     ###d1 entropy
     ds_dphi = (ds_1comp(phiM)/protein.N + protein.qc*ds_1comp(phic) - (1+protein.qc)*ds_1comp(phiW))*(phiM>0)
 
     ##d1 screening
     c = 4*np.pi/Y
-    rho = protein.qc*phiM + phiS
+    rho = protein.qc*phiM + protein.phiS
     k = np.sqrt(c*rho)
 
     temp = -k/2/(1+k)*(1/Y)
     dfion_dphi=temp*protein.qc*(phiM>0)
-    #dfion_dphi= (-1*np.sqrt(np.pi)*qc*np.sqrt((phic + phiS)/Y))/(Y*(2*np.sqrt(np.pi)*np.sqrt((phic)/Y)+1))
 
     #d1 fprotein
     upper,lower = 0,np.inf
@@ -185,6 +190,9 @@ def d1_Frg_dphi(phiM,Y,protein):
     d1_ftot = ds_dphi + dfion_dphi + dfp_dphi
     # w2 part from lili
     d1_ftot += protein.w2*phiM #d1f0
+
+    #testing old version
+    #d1_ftot += 4*np.pi*phiM/3
 
     if protein.W3_TOGGLE ==1:
         d1_ftot += 3*(protein.w3 - 1/6)*phiM**2
@@ -197,13 +205,15 @@ def d2s_1comp(x):
 def d2_FP_toint(k, Y, phiM,protein):
     phic = protein.qc*phiM
     k2 = k*k
-    rho = k2 * Y / (4 * np.pi) + phiS + phic
+    rho = k2 * Y / (4 * np.pi) + protein.phiS + phic
     qc2, phi2, rho2 =  protein.qc * protein.qc, phiM * phiM, rho * rho
     xe = xee(k, protein)
     g = gk(k,protein)
     c = ck(k, protein)
 
     v2 = protein.w2 * np.exp(-1 * k2 / 6)
+    #testing fp with old version (fails crit finder)
+    #v2 = 4*np.pi/3*np.exp(-1*k2/6)
     D = xe * g - c * c
     vp2 = v2 * phi2*D / rho
     vp1= 2*v2*phiM*D/rho
@@ -218,14 +228,14 @@ def d2_FP_toint(k, Y, phiM,protein):
 def d2_Frg_phiM(phiM,Y,protein):
     qc = protein.qc
     phic = qc * phiM
-    phiW = 1 - phiM - phic - phiS
+    phiW = 1 - phiM - phic - protein.phiS
 
     #################Entropyd2##########
     d2s = (d2s_1comp(phiM) / protein.N + qc * qc * d2s_1comp(phic) + (1 + qc) * (1 + qc) * d2s_1comp(phiW)) * (phiM > 0)
 
     #####d2Fion#################
     c = 4 * np.pi / Y
-    rho = phic + phiS
+    rho = phic + protein.phiS
     k = np.sqrt((c) * (rho))
     ##THIS IS FROM LIN
     tp = qc / (1 + k) * (phiM > 0)
@@ -234,6 +244,8 @@ def d2_Frg_phiM(phiM,Y,protein):
 
     # lili ML value
     d2f0 = protein.w2
+    #testing old version
+    #d2f0 = 4*np.pi/3
 
     #################Electrofreeenergyd2###########
     upperlim = np.inf
@@ -259,7 +271,6 @@ def spin_yfromphi(phiM,protein):
     uc = 1 / tc
     # initial values
     ui = uc
-
     d2f = lambda u: d2_Frg_phiM(phiM, 1/u, protein)
     try:
         ures = root_scalar(d2f,x0=ui,x1=ui/5, rtol=epsabs, bracket = (1e-5, 1e4))
@@ -269,7 +280,7 @@ def spin_yfromphi(phiM,protein):
         return np.nan
 
     # print('phi,t:' ,phiM, ures.root, 'attempted')
-    # print(d2_Frg_phiM(phiM,ures.root,phiS),'this is d2')
+    # print(d2_Frg_phiM(phiM,ures.root,protein.phiS),'this is d2')
     #return np.float64(ures.root)
 def findCrit(protein):
     bounds = (epsilon,1-epsilon)
@@ -332,7 +343,7 @@ def minFtotal(Y,protein):
     assert np.isfinite(phi2spin), "phi2spin is not a finite number"
 
     ### GET CONSTRAINTS ###
-    phiMax = (1-2*phiS)/(1 + protein.qc) - epsilon ### FROM LIN ###
+    phiMax = (1-2*protein.phiS)/(1 + protein.qc) - epsilon ### FROM LIN ###
     bounds = [(epsilon, phi1spin - epsilon), (phi2spin + epsilon, phiMax-epsilon) ]
     #bounds = [(phi1spin/10, phi1spin - epsilon), (phi2spin*1.025*(protein.Yc/Y)**2 +epsilon, phi2spin*3*(protein.Yc/Y)**2)]
     t0 = time.time()
