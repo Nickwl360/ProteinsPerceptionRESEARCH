@@ -22,7 +22,6 @@ iterlim=1500
 epsabs = 1e-12
 epsrel = 1e-12
 MINMAX=25
-phiS = 0.0
 epsilon = 1e-18
 
 
@@ -125,7 +124,7 @@ def rgFPint(k,Y,phiM,protein):
     #testing fp with old version
     #v2 = 4 * np.pi / 3 * np.exp(-1 * k * k / 6) #fails to find crit
 
-    rho = k * k * Y / 4 / np.pi + protein.qc * phiM + protein.phiS
+    rho = k * k * Y / 4 / np.pi + protein.qc * phiM + protein.phiS*2
 
     a = phiM*(xe / rho + v2 * g)
     b = (phiM * phiM * v2 / rho) * (g * xe - c * c)
@@ -138,14 +137,14 @@ def rgFP(phiM, Y,protein):
     fp = result[0]
     return fp
 def fion(phiM, Y,protein):
-    kl = np.sqrt(4 * np.pi * (protein.phiS + protein.qc * phiM) / Y)
+    kl = np.sqrt(4 * np.pi * (protein.phiS*2 + protein.qc * phiM) / Y)
     return (-1 / (4 * np.pi)) * (np.log(1 + kl) - kl + .5 * kl * kl)
 def s_1comp(x):
     ###THIS IS FROM LIN TO SPEED UP AND AVOID ERRORS
     return (x > epsilon)*x*np.log(x + (x < epsilon)) + 1e5*(x<0)
 def entropy(phiM,protein):
-    phiC = protein.qc * phiM
-    phiW = 1 - phiM - protein.phiS - phiC
+    phiC = protein.qc * phiM + protein.phiS
+    phiW = 1 - phiM - protein.phiS*2 - phiC
     #################FIGURE OUT LOGIC FOR 0s
     return s_1comp(phiM)/protein.N + s_1comp(protein.phiS)+ s_1comp(phiC) + s_1comp(phiW)
 
@@ -157,7 +156,7 @@ def dfpintegrand(k,Y,phiM,protein):
     xe = xee(k,protein)
     g = gk(k,protein)
     c = ck(k,protein)
-    rho = k * k * Y / (4 * np.pi) + protein.phiS + protein.qc * phiM
+    rho = k * k * Y / (4 * np.pi) + protein.phiS*2 + protein.qc * phiM
     v2 = protein.w2*np.exp(-k*k/6)
     #testing fp with old version (fails crit finder)
     #v2 = 4*np.pi/3*np.exp(-k*k/6)
@@ -168,8 +167,8 @@ def dfpintegrand(k,Y,phiM,protein):
 
     return k*k*num/den
 def d1_Frg_dphi(phiM,Y,protein):
-    phic = protein.qc*phiM
-    phiW = 1 - phiM - phic - protein.phiS
+    phic = protein.qc*phiM + protein.phiS
+    phiW = 1 - phiM - phic - protein.phiS*2
 
     ###d1 entropy
     ds_dphi = (ds_1comp(phiM)/protein.N + protein.qc*ds_1comp(phic) - (1+protein.qc)*ds_1comp(phiW))*(phiM>0)
@@ -203,7 +202,7 @@ def d1_Frg_dphi(phiM,Y,protein):
 def d2s_1comp(x):
     return (x>0)/(x + (x==0))
 def d2_FP_toint(k, Y, phiM,protein):
-    phic = protein.qc*phiM
+    phic = protein.qc*phiM + protein.phiS
     k2 = k*k
     rho = k2 * Y / (4 * np.pi) + protein.phiS + phic
     qc2, phi2, rho2 =  protein.qc * protein.qc, phiM * phiM, rho * rho
@@ -223,11 +222,10 @@ def d2_FP_toint(k, Y, phiM,protein):
     den = vp2 + phiM*vr + 1
 
     num2 = (vp1 + vr)*(vp1 + vr)
-    #not sure if k2 should be here or not
     return k2*(num1/(rho*den) - num2/(den*den))
 def d2_Frg_phiM(phiM,Y,protein):
     qc = protein.qc
-    phic = qc * phiM
+    phic = qc * phiM + protein.phiS
     phiW = 1 - phiM - phic - protein.phiS
 
     #################Entropyd2##########
@@ -349,6 +347,7 @@ def minFtotal(Y,protein):
     t0 = time.time()
 
     #M = 'L-BFGS-B'
+    #if protein.phiS ==0:
     M = 'SLSQP'
 
     ### MAKE INITIAL ### IN PROGRESS ###

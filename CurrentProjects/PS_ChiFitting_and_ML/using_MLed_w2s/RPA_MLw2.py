@@ -27,8 +27,8 @@ class Protein:
         self.qL = np.array(self.q_list)
         self.Q = np.sum(self.qL*self.qL)/self.N
 
-        self.nres = 30
-        self.minFrac= .7
+        self.nres = 20
+        self.minFrac= .8
 
         self.phiC = None
         self.Yc = None
@@ -100,6 +100,10 @@ def load_proteins_fromcsv(file_path,rg,phiS):
     proteinList = [Protein(name=row['Name'], sequence=row['Sequence'], w2=row['w2_preds_LLw302'], w3=0.2, rg=rg,phiS=phiS) for _,row in df.iterrows()]
     return proteinList
 
+def convPhiSto_mM(phiS):
+    return phiS/(6.022e-7*(3.8)**3)
+
+
 
 
 ### a little silly, but this method takes specific input from user for determining which proteins to use for model. ###
@@ -119,7 +123,28 @@ def select_andrun_proteins(proteinobj_list):
     for protein in selected_proteins:
         print(f"Normalized Crit Value for {protein.name}: {protein.Yc/ycNorm}")
 
-    plot_binodals(selected_proteins)
+    plot_binodals(selected_proteins,phiS=0)
+    return
+def select_andrun_proteins_withsalt(proteinobj_list, phiSchoices):
+    for indx, protein in enumerate(proteinobj_list):
+        print(f"Index: {indx},Name: {protein.name}")
+
+    index_input = input("Enter specific protein indices to run (e.g., 1,2,6,3,7): ").strip()
+    selected_indices = list(map(int, index_input.split(',')))
+    selected_proteins = [proteinobj_list[idx] for idx in selected_indices]
+    #phiSchoices will be a list of protein names and phiS values, because some proteins have multiple phiS values
+    for protein in selected_proteins:
+        for name, phiS in phiSchoices:
+            if protein.name == name:
+                protein.phiS = phiS
+                run_model_onProtein(protein)
+
+    ycNorm = selected_proteins[0].Yc
+    #print normalized crit list
+    for protein in selected_proteins:
+        print(f"Normalized Crit Value for {protein.name}: {protein.Yc/ycNorm}")
+
+    plot_binodals(selected_proteins,phiS=1)
     return
 
 def run_model_onProtein(protein):
@@ -128,6 +153,7 @@ def run_model_onProtein(protein):
     print(f"- Total Charge: {protein.qc}")
     #print(f"- Charge List: {protein.q_list}")
     print(f"- w2 Value: {protein.w2}")
+    print(f"- phiS Value: {protein.phiS}")
     #print(f"- xeeshift: {protein.xeeSig}")
     tik = time.time()
     protein.getCrits()
@@ -136,13 +162,13 @@ def run_model_onProtein(protein):
 
     print(f'SOLVING FOR A BINODAL CURVE (Nres = {protein.nres})')
     tok = time.time()
-    #protein.getCurves()
+    protein.getCurves()
     print('binodal calculated in ', (time.time()-tok), ' s \n')
 
     print("\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n")
 
 
-def plot_binodals(protein_list):
+def plot_binodals(protein_list,phiS):
     plt.figure()
     YcNorm = protein_list[0].Yc
     min_ybin = np.inf
@@ -156,17 +182,20 @@ def plot_binodals(protein_list):
             max_ybin = max(max_ybin, np.max(ybinNorm))
             max_phibin = max(max_phibin, np.max(protein.bibin))
             #plt.plot(protein.spinbin, ybinNorm, label= protein.name)
-            plt.plot(protein.bibin, ybinNorm, label= protein.name)
+            if phiS==1:
+                plt.plot(protein.bibin, ybinNorm, label= f'{protein.name} phiS={convPhiSto_mM(protein.phiS)}')
+            else:
+                plt.plot(protein.bibin, ybinNorm, label= protein.name)
 
             #plt.plot(protein.bibin, ybinNorm, label= protein.name[11:])
 
 
     plt.xlabel(r'$\phi$')
     plt.ylabel(r'$T^*$')
-    plt.title(f'{protein_list[0].name[:6]} and Mutants')
+    plt.title(f'{protein_list[0].name[:6]} and Salt Dependence')
     plt.ylim(0.95 * min_ybin, 1.05 * max_ybin)
     plt.xlim(0.0,.15)
-    plt.legend(fontsize=9)
+    plt.legend(fontsize=9,loc='upper right')
     plt.show()
 
     run_saver(plt,protein_list)
@@ -187,8 +216,12 @@ def run_saver(plot,proteinlist):
 
 if __name__ == '__main__':
     df = r'C:\Users\Nickl\PycharmProjects\Researchcode (1) (1)\CurrentProjects\PS_ChiFitting_and_ML\ML_Lili_w2s\phase_sep_seqs_w2s.csv'
-    proteinlist = load_proteins_fromcsv(df,rg=1,phiS=0.0)
+    proteinlist = load_proteins_fromcsv(df,rg=0,phiS=0.0)
 
-    select_andrun_proteins(proteinlist)
+    phiSlist1 = [('ddx4n1',.006609),('ddx4n1',.003304),('ddx4n1',.009913),('ddx4n1',.013218),('ddx4n1',.016522)]
+    phiSlist2 = [('ddx4n1',.006609),('ddx4n1',.003304),('ddx4n1',.009913),('ddx4n1-CS',.003304),('ddx4n1-CS',.009913)]
+
+    #select_andrun_proteins(proteinlist)
+    select_andrun_proteins_withsalt(proteinlist,phiSlist1)
 
 
