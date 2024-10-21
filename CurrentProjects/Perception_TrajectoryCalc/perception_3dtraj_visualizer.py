@@ -415,6 +415,9 @@ def plot_average_trajectory_flow(Data_avg,xyxb_space,L, I):
 
 
 
+
+
+
     ax1.set_xlabel('X', fontsize=10)
     ax1.set_ylabel('Y', fontsize=10)
     ax1.set_zlabel('X bar', fontsize=10)
