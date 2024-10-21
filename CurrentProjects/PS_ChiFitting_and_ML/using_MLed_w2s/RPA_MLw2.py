@@ -223,5 +223,5 @@ if __name__ == '__main__':
 
     #select_andrun_proteins(proteinlist)
     select_andrun_proteins_withsalt(proteinlist,phiSlist1)
-
+    #working needs to run
 
