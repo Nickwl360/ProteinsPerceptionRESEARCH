@@ -102,6 +102,8 @@ def load_proteins_fromcsv(file_path,rg,phiS):
 
 def convPhiSto_mM(phiS):
     return phiS/(6.022e-7*(3.8)**3)
+def convmMtoPhiS(mM):
+    return mM*(6.022e-7*(3.8)**3)
 
 
 
@@ -132,12 +134,19 @@ def select_andrun_proteins_withsalt(proteinobj_list, phiSchoices):
     index_input = input("Enter specific protein indices to run (e.g., 1,2,6,3,7): ").strip()
     selected_indices = list(map(int, index_input.split(',')))
     selected_proteins = [proteinobj_list[idx] for idx in selected_indices]
+
     #phiSchoices will be a list of protein names and phiS values, because some proteins have multiple phiS values
-    for protein in selected_proteins:
-        for name, phiS in phiSchoices:
+    #create duplicate proteins that have the same name but different phiS values
+    for name,phiS in phiSchoices:
+        for protein in selected_proteins:
             if protein.name == name:
-                protein.phiS = phiS
-                run_model_onProtein(protein)
+                new_protein = Protein(name=f"{protein.name}-phiS{phiS}", sequence=protein.sequence, w2=protein.w2, w3=protein.w3, rg=protein.rg, phiS=phiS)
+                selected_proteins.append(new_protein)
+                #remove the original protein from the list
+                selected_proteins.remove(protein)
+
+    for protein in selected_proteins:
+        run_model_onProtein(protein)
 
     ycNorm = selected_proteins[0].Yc
     #print normalized crit list
@@ -183,7 +192,8 @@ def plot_binodals(protein_list,phiS):
             max_phibin = max(max_phibin, np.max(protein.bibin))
             #plt.plot(protein.spinbin, ybinNorm, label= protein.name)
             if phiS==1:
-                plt.plot(protein.bibin, ybinNorm, label= f'{protein.name} phiS={convPhiSto_mM(protein.phiS)}')
+               #limit phiS label to 3 significant figures
+                plt.plot(protein.bibin, ybinNorm, label= f'{protein.name} phiS={convPhiSto_mM(protein.phiS):.3g} mM')
             else:
                 plt.plot(protein.bibin, ybinNorm, label= protein.name)
 
@@ -194,7 +204,7 @@ def plot_binodals(protein_list,phiS):
     plt.ylabel(r'$T^*$')
     plt.title(f'{protein_list[0].name[:6]} and Salt Dependence')
     plt.ylim(0.95 * min_ybin, 1.05 * max_ybin)
-    plt.xlim(0.0,.15)
+    plt.xlim(0.0, 1.1 * max_phibin)
     plt.legend(fontsize=9,loc='upper right')
     plt.show()
 
@@ -205,7 +215,7 @@ def run_saver(plot,proteinlist):
         today = datetime.today().strftime('%Y-%m-%d')
 
         filename = f"{proteinlist[0].name[:6]}&mutants_fgRPA_w2Pred_{today}.png"
-        savedir = r'C:\Users\Nick\PycharmProjects\Researchcode (1) (1)\CurrentProjects\PS_ChiFitting_and_ML\using_MLed_w2s\FH_PhaseDiagrams'
+        savedir = r'C:\Users\Nickl\PycharmProjects\Researchcode (1) (1)\CurrentProjects\PS_ChiFitting_and_ML\using_MLed_w2s\FH_PhaseDiagrams'
 
         fullpath = os.path.join(savedir,filename)
 
@@ -215,11 +225,11 @@ def run_saver(plot,proteinlist):
 
 
 if __name__ == '__main__':
-    df = r'C:\Users\Nick\PycharmProjects\Researchcode (1) (1)\CurrentProjects\PS_ChiFitting_and_ML\ML_Lili_w2s\phase_sep_seqs_w2s.csv'
+    df = r'C:\Users\Nickl\PycharmProjects\Researchcode (1) (1)\CurrentProjects\PS_ChiFitting_and_ML\ML_Lili_w2s\phase_sep_seqs_w2s.csv'
     proteinlist = load_proteins_fromcsv(df,rg=0,phiS=0.0)
 
-    phiSlist1 = [('ddx4n1',.006609),('ddx4n1',.003304),('ddx4n1',.009913),('ddx4n1',.013218),('ddx4n1',.016522)]
-    phiSlist2 = [('ddx4n1',.006609),('ddx4n1',.003304),('ddx4n1',.009913),('ddx4n1-CS',.003304),('ddx4n1-CS',.009913)]
+    phiSlist1 = [('ddx4n1',convmMtoPhiS(200)),('ddx4n1',convmMtoPhiS(100)),('ddx4n1',convmMtoPhiS(300)),('ddx4n1',convmMtoPhiS(400)),('ddx4n1',convmMtoPhiS(500))]
+    phiSlist2 = [('ddx4n1',convmMtoPhiS(200)),('ddx4n1',convmMtoPhiS(100)),('ddx4n1',convmMtoPhiS(300)),('ddx4n1-CS',convmMtoPhiS(100)),('ddx4n1-CS',convmMtoPhiS(300))]
 
     #select_andrun_proteins(proteinlist)
     select_andrun_proteins_withsalt(proteinlist,phiSlist1)
