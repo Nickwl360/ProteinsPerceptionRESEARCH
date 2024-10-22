@@ -352,7 +352,7 @@ def minFtotal(Y,protein):
 
     ### MAKE INITIAL ### IN PROGRESS ###
     #initial_guess= getInitialVsolved(Y,phi1spin,phi2spin,phiB,protein)
-    initial_guess=(np.float64(phi1spin*.9-epsilon),np.float64(phi2spin*1.1*(protein.Yc/Y) +epsilon))
+    initial_guess=(np.float64(phi1spin*.9),np.float64(phi2spin*1.1))#*(protein.Yc/Y) +epsilon))
     #initial_guess = (np.float64(phi1spin*0.9),np.float64(1.01*phi2spin*(protein.Yc/Y)**2.5))
 
     maxL = minimize(FBINODAL, initial_guess, args=(Y, phiB,protein), method=M, jac=Jac_rgRPA, bounds=bounds , options={'ftol':1e-20, 'gtol':1e-20, 'eps':1e-20})#, 'maxfun':MINMAX})
