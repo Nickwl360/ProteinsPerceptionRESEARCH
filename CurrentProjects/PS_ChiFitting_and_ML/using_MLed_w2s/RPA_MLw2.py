@@ -134,26 +134,25 @@ def select_andrun_proteins_withsalt(proteinobj_list, phiSchoices):
     index_input = input("Enter specific protein indices to run (e.g., 1,2,6,3,7): ").strip()
     selected_indices = list(map(int, index_input.split(',')))
     selected_proteins = [proteinobj_list[idx] for idx in selected_indices]
+    phiS_selected_proteins = []
 
     #phiSchoices will be a list of protein names and phiS values, because some proteins have multiple phiS values
     #create duplicate proteins that have the same name but different phiS values
     for name,phiS in phiSchoices:
         for protein in selected_proteins:
             if protein.name == name:
-                new_protein = Protein(name=f"{protein.name}-phiS{phiS}", sequence=protein.sequence, w2=protein.w2, w3=protein.w3, rg=protein.rg, phiS=phiS)
-                selected_proteins.append(new_protein)
-                #remove the original protein from the list
-                selected_proteins.remove(protein)
+                new_protein = Protein(name=f"{protein.name}", sequence=protein.sequence, w2=protein.w2, w3=protein.w3, rg=protein.rg, phiS=phiS)
+                phiS_selected_proteins.append(new_protein)
 
-    for protein in selected_proteins:
+    for protein in phiS_selected_proteins:
         run_model_onProtein(protein)
 
-    ycNorm = selected_proteins[0].Yc
+    ycNorm = phiS_selected_proteins[0].Yc
     #print normalized crit list
-    for protein in selected_proteins:
+    for protein in phiS_selected_proteins:
         print(f"Normalized Crit Value for {protein.name}: {protein.Yc/ycNorm}")
 
-    plot_binodals(selected_proteins,phiS=1)
+    plot_binodals(phiS_selected_proteins,phiS=1)
     return
 
 def run_model_onProtein(protein):
@@ -207,8 +206,8 @@ def plot_binodals(protein_list,phiS):
     plt.xlim(0.0, 1.1 * max_phibin)
     plt.legend(fontsize=9,loc='upper right')
     plt.show()
-
     run_saver(plt,protein_list)
+
 def run_saver(plot,proteinlist):
     save_bool = input("do you want to save this plot? (Y/N) ").strip().upper()
     if save_bool=='Y':

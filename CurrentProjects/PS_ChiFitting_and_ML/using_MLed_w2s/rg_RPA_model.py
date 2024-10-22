@@ -17,7 +17,7 @@ warnings.filterwarnings("ignore", category=IntegrationWarning)
 warnings.filterwarnings("ignore", category=OptimizeWarning)
 
 ########################ConstANTS################################
-T0=100
+T0=500
 iterlim=500
 epsabs = 1e-15
 epsrel = 1e-15
@@ -359,7 +359,7 @@ def rgFPint(k,Y,phiM,protein,x):
     g = gk(k, x,protein)
     c = ck(k, x, protein)
     v = protein.w2*np.exp(-1*k*k/6)
-    nu = k*k*Y/4/np.pi + protein.qc*phiM + protein.phiS
+    nu = k*k*Y/4/np.pi + protein.qc*phiM + protein.phiS*2
     N1 = nu + phiM*(g*nu*v + xe) +v*phiM*phiM*(g*xe-c*c)
     A = N1/nu
     B= 1 + protein.Q/nu
@@ -373,13 +373,13 @@ def rgFP(phiM, Y,protein,x=None):
     fp = result[0]
     return fp
 def fion(phiM, Y,protein):
-    kl = np.sqrt(4 * np.pi * (protein.phiS + protein.qc * phiM) / Y)
+    kl = np.sqrt(4 * np.pi * (protein.phiS*2 + protein.qc * phiM) / Y)
     return (-1 / (4 * np.pi)) * (np.log(1 + kl) - kl + .5 * kl * kl)
 def s_1comp(x):
     ###THIS IS FROM LIN TO SPEED UP AND AVOID ERRORS
     return (x > epsilon)*x*np.log(x + (x < epsilon)) + 1e5*(x<0)
 def entropy(phiM,protein):
-    phiC = protein.qc * phiM
+    phiC = protein.qc * phiM + protein.phiS
     phiW = 1 - phiM - protein.phiS - phiC
     #################FIGURE OUT LOGIC FOR 0s
     return s_1comp(phiM)/protein.N + s_1comp(protein.phiS)+ s_1comp(phiC) + s_1comp(phiW)
@@ -395,7 +395,7 @@ def dfpintegrand(k,Y,phiM,protein,x,dx):
     d1g = d1_gk(k,x,protein)
     c = ck(k,x,protein)
     d1c = d1_ck(k,x,protein)
-    ionConst = k*k*Y/(4*np.pi) + protein.phiS + protein.qc*phiM
+    ionConst = k*k*Y/(4*np.pi) + protein.phiS*2 + protein.qc*phiM
     v2 = protein.w2*np.exp(-k*k/6)
     r12 = xe*g-c*c
     vpp = v2*phiM*phiM
@@ -407,7 +407,7 @@ def dfpintegrand(k,Y,phiM,protein,x,dx):
 def d1_Frg_dphi(phiM,Y,protein,x=None, dx = None):
     x = x_solver(phiM,Y,protein) if x==None else x
     dx = d1_x_solver(phiM,Y,protein,x) if dx ==None else dx
-    phic = protein.qc*phiM
+    phic = protein.qc*phiM + protein.phiS
     phiW = 1 - phiM - phic - protein.phiS
 
     ###d1 entropy
@@ -415,7 +415,7 @@ def d1_Frg_dphi(phiM,Y,protein,x=None, dx = None):
 
     ##d1 screening
     c = 4*np.pi/Y
-    rho = protein.qc*phiM + protein.phiS
+    rho = phic + protein.phiS
     k = np.sqrt(c*rho)
 
     temp = -k/2/(1+k)*(1/Y)
@@ -439,7 +439,7 @@ def d1_Frg_dphi(phiM,Y,protein,x=None, dx = None):
 def d2s_1comp(x):
     return (x>0)/(x + (x==0))
 def d2_FP_toint(k, Y, phiM,protein,x,dx,ddx):
-    phic = protein.qc*phiM
+    phic = protein.qc*phiM + protein.phiS
     k2 = k*k
     rho = k2 * Y / (4 * np.pi) + protein.phiS + phic
     dx2, qc2, phi2, rho2 = dx * dx, protein.qc * protein.qc, phiM * phiM, rho * rho
@@ -473,7 +473,7 @@ def d2_Frg_phiM(phiM,Y,protein,x=None,dx=None,ddx=None):
     x = x_solver(phiM, Y,protein) if x == None else x
     dx = d1_x_solver(phiM, Y, protein,x) if dx == None else dx
     ddx = d2_x_solver(phiM, Y, protein,x, dx) if ddx == None else ddx
-    phic = protein.qc * phiM
+    phic = protein.qc * phiM + protein.phiS
     phiW = 1 - phiM - phic - protein.phiS
 
     #################Entropyd2##########
@@ -605,8 +605,10 @@ def minFtotal(Y,protein):
     #initial_guess= getInitialVsolved(Y,phi1spin,phi2spin,phiB,protein)
     initial_guess=(np.float64(phi1spin*.9-epsilon),np.float64(phi2spin*1.1*(protein.Yc/Y) +epsilon))
     #initial_guess = (np.float64(phi1spin*0.9),np.float64(1.01*phi2spin*(protein.Yc/Y)**2.5))
+    if protein.phiS ==0:
+        maxL = minimize(FBINODAL, initial_guess, args=(Y, phiB,protein), method=M, jac=Jac_rgRPA, bounds=bounds , options={'ftol':1e-20, 'gtol':1e-20, 'eps':1e-20})#, 'maxfun':MINMAX})
+    else:maxL = minimize(FBINODAL, initial_guess, args=(Y, phiB,protein), method=M, jac=None, bounds=bounds , options={'ftol':1e-20, 'gtol':1e-20, 'eps':1e-20})#, 'maxfun':MINMAX})
 
-    maxL = minimize(FBINODAL, initial_guess, args=(Y, phiB,protein), method=M, jac=Jac_rgRPA, bounds=bounds , options={'ftol':1e-20, 'gtol':1e-20, 'eps':1e-20})#, 'maxfun':MINMAX})
     ### FINDING LOWEST SOLUTION ###
     phi1min = min(maxL.x)
     phi2min = max(maxL.x)
