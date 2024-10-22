@@ -205,7 +205,7 @@ def run_saver(plot,proteinlist):
         today = datetime.today().strftime('%Y-%m-%d')
 
         filename = f"{proteinlist[0].name[:6]}&mutants_fgRPA_w2Pred_{today}.png"
-        savedir = r'C:\Users\Nickl\PycharmProjects\Researchcode (1) (1)\CurrentProjects\PS_ChiFitting_and_ML\using_MLed_w2s\FH_PhaseDiagrams'
+        savedir = r'C:\Users\Nick\PycharmProjects\Researchcode (1) (1)\CurrentProjects\PS_ChiFitting_and_ML\using_MLed_w2s\FH_PhaseDiagrams'
 
         fullpath = os.path.join(savedir,filename)
 
@@ -215,7 +215,7 @@ def run_saver(plot,proteinlist):
 
 
 if __name__ == '__main__':
-    df = r'C:\Users\Nickl\PycharmProjects\Researchcode (1) (1)\CurrentProjects\PS_ChiFitting_and_ML\ML_Lili_w2s\phase_sep_seqs_w2s.csv'
+    df = r'C:\Users\Nick\PycharmProjects\Researchcode (1) (1)\CurrentProjects\PS_ChiFitting_and_ML\ML_Lili_w2s\phase_sep_seqs_w2s.csv'
     proteinlist = load_proteins_fromcsv(df,rg=0,phiS=0.0)
 
     phiSlist1 = [('ddx4n1',.006609),('ddx4n1',.003304),('ddx4n1',.009913),('ddx4n1',.013218),('ddx4n1',.016522)]

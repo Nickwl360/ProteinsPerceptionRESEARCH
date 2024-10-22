@@ -17,8 +17,8 @@ warnings.filterwarnings("ignore", category=IntegrationWarning)
 warnings.filterwarnings("ignore", category=OptimizeWarning)
 
 ########################ConstANTS################################
-T0=100
-iterlim=1500
+T0=500
+iterlim=500
 epsabs = 1e-12
 epsrel = 1e-12
 MINMAX=25
@@ -334,8 +334,8 @@ def minFtotal(Y,protein):
 
     #print(phi1spin, phi2spin, 'SPINS LEFT/RIGHT')
 
-    #phiB = (phi1spin+phi2spin)/2
-    phiB = protein.phiC
+    phiB = (phi1spin+phi2spin)/2
+    #phiB = protein.phiC
 
     assert np.isfinite(phi1spin), "phi1spin is not a finite number"
     assert np.isfinite(phi2spin), "phi2spin is not a finite number"
@@ -349,13 +349,14 @@ def minFtotal(Y,protein):
     #M = 'L-BFGS-B'
     #if protein.phiS ==0:
     M = 'SLSQP'
+    #M= 'TNC'
 
     ### MAKE INITIAL ### IN PROGRESS ###
     #initial_guess= getInitialVsolved(Y,phi1spin,phi2spin,phiB,protein)
     initial_guess=(np.float64(phi1spin*.9),np.float64(phi2spin*1.1))#*(protein.Yc/Y) +epsilon))
     #initial_guess = (np.float64(phi1spin*0.9),np.float64(1.01*phi2spin*(protein.Yc/Y)**2.5))
 
-    maxL = minimize(FBINODAL, initial_guess, args=(Y, phiB,protein), method=M, jac=Jac_rgRPA, bounds=bounds , options={'ftol':1e-20, 'gtol':1e-20, 'eps':1e-20})#, 'maxfun':MINMAX})
+    maxL = minimize(FBINODAL, initial_guess, args=(Y, phiB,protein), method=M, jac=None, bounds=bounds , options={'ftol':1e-20, 'gtol':1e-20, 'eps':1e-20})#, 'maxfun':MINMAX})
     ### FINDING LOWEST SOLUTION ###
     phi1min = min(maxL.x)
     phi2min = max(maxL.x)
