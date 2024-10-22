@@ -183,7 +183,7 @@ def x_eqn(x,phiM,Y,protein):
     eqn = 1 - 1/x - (protein.N/(18*(protein.N-1))) * inte
     return eqn
 def x_eqn_toint(k,phiM,Y,x,protein):
-    phic= phiM*protein.qc
+    phic= phiM*protein.qc + protein.phiS
     ex = xee(k,x,protein)
     ex_r = xee_r(k,x,protein)
     g = gk(k,x,protein)
@@ -191,7 +191,8 @@ def x_eqn_toint(k,phiM,Y,x,protein):
     c = ck(k,x,protein)
     ckr = ck_r(k,x,protein)
     ionConst = k*k*Y/(4*np.pi) + protein.phiS + phic
-    v2 = 4*np.pi/3
+    #v2 = 4*np.pi/3
+    v2 = protein.w2
 
     num = ex_r + ionConst*gkr*v2 + phiM*v2*(ex_r*g + ex*gkr - 2*c*ckr)
     den = ionConst + phiM*(ex + g*ionConst*v2) + phiM*phiM*v2*(ex*g - c*c)
@@ -214,10 +215,11 @@ def d1_x_eqn_I1int(k,phiM,Y,x,protein):
     c = ck(k,x,protein)
     ckr = ck_r(k,x,protein)
 
-    ionConst = k*k*Y/(4*np.pi) +protein.qc*phiM + protein.phiS
+    ionConst = k*k*Y/(4*np.pi) +protein.qc*phiM + protein.phiS*2
     r12 = ex*g - c*c
     m12 = ex*gkr + g*exr - 2*c*ckr
-    v = 4*np.pi/3
+    #v = 4*np.pi/3
+    v = protein.w2
 
     b0 = m12 + protein.qc*gkr
     c0 = phiM*(g*(ionConst)+ex/v) + ionConst/v + phiM*phiM*(r12)
@@ -240,8 +242,10 @@ def d1_x_eqn_I2int(k,phiM,Y,x,protein):
     d1c = d1_ck(k, x, protein)
     d1ckr = d1_ck_r(k, x, protein)
 
-    ionConst = k*k*Y/(4*np.pi) + protein.qc*phiM + protein.phiS
-    v = 4*np.pi/3
+    ionConst = k*k*Y/(4*np.pi) + protein.qc*phiM + protein.phiS*2
+    #v = 4*np.pi/3
+    v = protein.w2
+
     r12 = ex*g-c*c
     d12 = g*d1ex + ex*d1g-2*c*d1c
     phi2 = phiM*phiM
@@ -285,8 +289,10 @@ def d2_x_eqn_I1int(k,phiM,Y,x,dx,protein):
     d2c = d2_ck(k, x, protein)
     d2ckr = d2_ck_r(k, x, protein)
 
-    rho = k * k * Y / (4 * np.pi) + protein.phiS + protein.qc * phiM
-    v = 4*np.pi/3
+    rho = k * k * Y / (4 * np.pi) + protein.phiS*2 + protein.qc * phiM
+    #v = 4*np.pi/3
+    v = protein.w2
+
     DD = g*d1ex*dx + ex*d1g*dx - 2*c*d1c*dx
     r12 = ex*g-c*c
     phi2,dx2 = phiM*phiM, dx*dx
@@ -322,8 +328,10 @@ def d2_x_eqn_I2int(k, phiM, Y, x, dx,protein):
     d1ckr = d1_ck_r(k,x,protein)
 
     k2,phi2 = k*k, phiM*phiM
-    ionConst = k2 * Y / (4 * np.pi) + protein.phiS + protein.qc*phiM
-    v = 4*np.pi/3
+    ionConst = k2 * Y / (4 * np.pi) + protein.phiS*2 + protein.qc*phiM
+    #v = 4*np.pi/3
+    v = protein.w2
+
     r12 = ex*g - c*c
     m12 = g*exr + ex*gkr - 2*c*ckr
 
