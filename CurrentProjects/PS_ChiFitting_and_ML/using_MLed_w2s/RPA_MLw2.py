@@ -12,7 +12,7 @@ class Protein:
     def __init__(self,name, sequence,w2,w3,rg,phiS=None):
         self.name = name
         self.sequence = sequence
-        self.w2 = w2
+        self.w2 = 0
         self.w3 = w3
         self.phiS = 0 if phiS == None else phiS
 
@@ -25,7 +25,7 @@ class Protein:
         self.qL = np.array(self.q_list)
         self.Q = np.sum(self.qL*self.qL)/self.N
 
-        self.nres = 15
+        self.nres = 20
         self.minFrac= .85
 
         self.phiC = None
@@ -39,7 +39,7 @@ class Protein:
 
         self.rg = rg
         self.epsC = .69
-        self.crowding_toggle = 1
+        self.crowding_toggle = 0
 
 
     def calculate_props_fromseq(self, sequence):
@@ -215,15 +215,22 @@ def plot_binodals(protein_list,phiS):
 def run_saver(plot,proteinlist):
     save_bool = input("do you want to save this plot? (Y/N) ").strip().upper()
     if save_bool=='Y':
-        today = datetime.today().strftime('%Y-%m-%d')
-        if proteinlist[0].rg == 0:
-            filename = f"{proteinlist[0].name[:6]}&mutants_fgRPA_w2Pred_{today}.png"
-        else:
-            if proteinlist[0].crowding_toggle == 1:
-                filename = f"{proteinlist[0].name[:6]}&mutants_rgRPA_w2Pred_{today}_crowded_{proteinlist[0].epsC}.png"
-            else: filename = f"{proteinlist[0].name[:6]}&mutants_rgRPA_w2Pred_{today}.png"
-        savedir = r'C:\Users\Nickl\PycharmProjects\Researchcode (1) (1)\CurrentProjects\PS_ChiFitting_and_ML\using_MLed_w2s\FH_PhaseDiagrams'
+        #make a new today variable that is just the month and day:
+        today = datetime.today().strftime('%m-%d')
 
+        if proteinlist[0].rg == 1:
+            prefix = f"{proteinlist[0].name[:6]}grp_rgRPA"
+        else:
+            prefix = f"{proteinlist[0].name[:6]}grp_fgRPA"
+
+        if proteinlist[0].phiS == 0:
+            suffix = "_w20" if proteinlist[0].w2 == 0 else "_w2MLd"
+        else:
+            suffix = "_w20_+salt" if proteinlist[0].w2 == 0 else "_w2MLd_+salt"
+
+        filename = f"{prefix}{suffix}{today}.png"
+
+        savedir = r'C:\Users\Nickl\PycharmProjects\Researchcode (1) (1)\CurrentProjects\PS_ChiFitting_and_ML\using_MLed_w2s\FH_PhaseDiagrams'
         fullpath = os.path.join(savedir,filename)
 
         plot.savefig(fullpath)
@@ -232,8 +239,8 @@ def run_saver(plot,proteinlist):
 
 
 if __name__ == '__main__':
-    df = r'C:\Users\Nick\PycharmProjects\Researchcode (1) (1)\CurrentProjects\PS_ChiFitting_and_ML\ML_Lili_w2s\phase_sep_seqs_w2s.csv'
-    proteinlist = load_proteins_fromcsv(df,rg=1,phiS=0.0)
+    df = r'C:\Users\Nickl\PycharmProjects\Researchcode (1) (1)\CurrentProjects\PS_ChiFitting_and_ML\ML_Lili_w2s\phase_sep_seqs_w2s.csv'
+    proteinlist = load_proteins_fromcsv(df,rg=0,phiS=0.0)
 
     phiSlist1 = [('ddx4n1',convmMtoPhiS(200)),('ddx4n1',convmMtoPhiS(100)),('ddx4n1',convmMtoPhiS(300)),('ddx4n1',convmMtoPhiS(400)),('ddx4n1',convmMtoPhiS(500))]
     phiSlist2 = [('ddx4n1',convmMtoPhiS(200)),('ddx4n1',convmMtoPhiS(100)),('ddx4n1',convmMtoPhiS(300)),('ddx4n1-CS',convmMtoPhiS(100)),('ddx4n1-CS',convmMtoPhiS(300))]
