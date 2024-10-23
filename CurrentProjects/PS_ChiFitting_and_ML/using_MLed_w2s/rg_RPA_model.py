@@ -623,7 +623,7 @@ def minFtotal(Y,protein):
     initial_guess=(np.float64(phi1spin*.9),np.float64(phi2spin*1.1))#*(protein.Yc/Y) +epsilon))
     #initial_guess = (np.float64(phi1spin*0.9),np.float64(1.01*phi2spin*(protein.Yc/Y)**2.5))
     if protein.phiS ==0:
-        maxL = minimize(FBINODAL, initial_guess, args=(Y, phiB,protein), method=M, jac=None, bounds=bounds )#, options={'ftol':1e-20, 'gtol':1e-20, 'eps':1e-20})#, 'maxfun':MINMAX})
+        maxL = minimize(FBINODAL, initial_guess, args=(Y, phiB,protein), method=M, jac=Jac_rgRPA, bounds=bounds )#, options={'ftol':1e-20, 'gtol':1e-20, 'eps':1e-20})#, 'maxfun':MINMAX})
     else:maxL = minimize(FBINODAL, initial_guess, args=(Y, phiB,protein), method=M, jac=None, bounds=bounds , options={'ftol':1e-20, 'gtol':1e-20, 'eps':1e-20})#, 'maxfun':MINMAX})
 
     ### FINDING LOWEST SOLUTION ###
