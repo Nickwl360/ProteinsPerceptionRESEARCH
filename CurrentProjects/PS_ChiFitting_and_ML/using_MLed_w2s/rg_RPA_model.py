@@ -510,8 +510,10 @@ def d2_Frg_phiM(phiM,Y,protein,x=None,dx=None,ddx=None):
     #### FH OPTION ###
     if protein.W3_TOGGLE == 1:
         d2_ftot += 6 * (protein.w3 - 1 / 6) * phiM
+
+
     #print(d2s,d2fp,d2fion,d2f0,'this is d2s, d2fp, d2fion, d2f0 at phi= ',phiM,Y)
-    print(d2_ftot,'this is d2 at phi,Y= ',phiM,Y)
+    #print(d2_ftot,'this is d2 at phi,Y= ',phiM,Y)
 
     return d2_ftot
 
@@ -529,9 +531,9 @@ def spin_yfromphi(phiM,protein):
 
     d2f = lambda u: d2_Frg_phiM(phiM, 1/u, protein)
     try:
-        ures = root_scalar(d2f,x0=ui,x1=ui/2, rtol=epsabs, bracket = (1e-4, 1e3))
+        ures = root_scalar(d2f,x0=ui,x1=ui/5, rtol=epsabs, bracket = (1e-5, 1e4))
         #ures = fsolve(d2f,ui,xtol=epsabs)
-        print('phi,t:' ,phiM, 1/ures.root, 'attempted')
+        #print('phi,t:' ,phiM, 1/ures.root, 'attempted')
 
         if ures.converged:
             return np.float64(ures.root)

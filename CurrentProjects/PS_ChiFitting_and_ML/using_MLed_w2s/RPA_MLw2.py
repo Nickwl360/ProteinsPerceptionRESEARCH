@@ -1,9 +1,7 @@
 from CurrentProjects.PS_ChiFitting_and_ML.RPA_MODEL_functs import findCrit, getBinodal
-import CurrentProjects.PS_ChiFitting_and_ML.ML_Lili_w2s
 from CurrentProjects.LLPS_rg_RPA.rgRPA_init import pH_qs
 import pandas as pd
 import numpy as np
-import csv
 import os
 import time
 from matplotlib import pyplot as plt
@@ -27,8 +25,8 @@ class Protein:
         self.qL = np.array(self.q_list)
         self.Q = np.sum(self.qL*self.qL)/self.N
 
-        self.nres = 20
-        self.minFrac= .8
+        self.nres = 15
+        self.minFrac= .85
 
         self.phiC = None
         self.Yc = None
@@ -99,13 +97,10 @@ def load_proteins_fromcsv(file_path,rg,phiS):
     df = pd.read_csv(file_path)
     proteinList = [Protein(name=row['Name'], sequence=row['Sequence'], w2=row['w2_preds_LLw302'], w3=0.2, rg=rg,phiS=phiS) for _,row in df.iterrows()]
     return proteinList
-
 def convPhiSto_mM(phiS):
     return phiS/(6.022e-7*(3.8)**3)
 def convmMtoPhiS(mM):
     return mM*(6.022e-7*(3.8)**3)
-
-
 
 
 ### a little silly, but this method takes specific input from user for determining which proteins to use for model. ###
@@ -120,10 +115,13 @@ def select_andrun_proteins(proteinobj_list):
 
     for protein in selected_proteins:
         run_model_onProtein(protein)
+
     ycNorm = selected_proteins[0].Yc
     #print normalized crit list
     for protein in selected_proteins:
         print(f"Normalized Crit Value for {protein.name}: {protein.Yc/ycNorm}")
+
+    #perhaps add a data saver here
 
     plot_binodals(selected_proteins,phiS=0)
     return
@@ -201,18 +199,18 @@ def plot_binodals(protein_list,phiS):
 
     plt.xlabel(r'$\phi$')
     plt.ylabel(r'$T^*$')
-    plt.title(f'{protein_list[0].name[:6]} and Salt Dependence')
+    if phiS==1:
+        plt.title(f'{protein_list[0].name[:6]} and Salt Dependence')
+    else: plt.title(f'{protein_list[0].name[:6]} and mutants')
     plt.ylim(0.95 * min_ybin, 1.05 * max_ybin)
     plt.xlim(0.0, 1.1 * max_phibin)
     plt.legend(fontsize=9,loc='upper right')
-    plt.show()
     run_saver(plt,protein_list)
-
+    plt.show()
 def run_saver(plot,proteinlist):
     save_bool = input("do you want to save this plot? (Y/N) ").strip().upper()
     if save_bool=='Y':
         today = datetime.today().strftime('%Y-%m-%d')
-
         filename = f"{proteinlist[0].name[:6]}&mutants_fgRPA_w2Pred_{today}.png"
         savedir = r'C:\Users\Nickl\PycharmProjects\Researchcode (1) (1)\CurrentProjects\PS_ChiFitting_and_ML\using_MLed_w2s\FH_PhaseDiagrams'
 
@@ -231,6 +229,6 @@ if __name__ == '__main__':
     phiSlist2 = [('ddx4n1',convmMtoPhiS(200)),('ddx4n1',convmMtoPhiS(100)),('ddx4n1',convmMtoPhiS(300)),('ddx4n1-CS',convmMtoPhiS(100)),('ddx4n1-CS',convmMtoPhiS(300))]
 
     #select_andrun_proteins(proteinlist)
-    select_andrun_proteins_withsalt(proteinlist,phiSlist1)
+    select_andrun_proteins_withsalt(proteinlist,phiSlist2)
     #working needs to run
 
