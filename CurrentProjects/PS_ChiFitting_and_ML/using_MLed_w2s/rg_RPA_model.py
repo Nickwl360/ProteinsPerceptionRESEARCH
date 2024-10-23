@@ -361,6 +361,9 @@ def ftot_rg(phiM, Y, protein,x=None):
     if protein.W3_TOGGLE==1:
         ftot += (protein.w3 - 1/6)*phiM**3
 
+    if protein.crowding_toggle == 1:
+        ftot += -1*protein.epsC*phiM*phiM
+
     return ftot
 def rgFPint(k,Y,phiM,protein,x):
     xe = xee(k, x, protein)
@@ -440,6 +443,8 @@ def d1_Frg_dphi(phiM,Y,protein,x=None, dx = None):
 
     if protein.W3_TOGGLE == 1:
         d1_ftot += 3 * (protein.w3 - 1 / 6) * phiM ** 2
+    if protein.crowding_toggle == 1:
+        d1_ftot += -2 * protein.epsC * phiM
 
     return d1_ftot
 
@@ -511,7 +516,8 @@ def d2_Frg_phiM(phiM,Y,protein,x=None,dx=None,ddx=None):
     if protein.W3_TOGGLE == 1:
         d2_ftot += 6 * (protein.w3 - 1 / 6) * phiM
 
-
+    if protein.crowding_toggle == 1:
+        d2_ftot += -2 * protein.epsC
     #print(d2s,d2fp,d2fion,d2f0,'this is d2s, d2fp, d2fion, d2f0 at phi= ',phiM,Y)
     #print(d2_ftot,'this is d2 at phi,Y= ',phiM,Y)
 
@@ -596,8 +602,8 @@ def minFtotal(Y,protein):
 
     #print(phi1spin, phi2spin, 'SPINS LEFT/RIGHT')
 
-    #phiB = (phi1spin+phi2spin)/2
-    phiB = protein.phiC
+    phiB = (phi1spin+phi2spin)/2
+    #phiB = protein.phiC
 
     assert np.isfinite(phi1spin), "phi1spin is not a finite number"
     assert np.isfinite(phi2spin), "phi2spin is not a finite number"
@@ -610,13 +616,14 @@ def minFtotal(Y,protein):
 
     #M = 'L-BFGS-B'
     M = 'SLSQP'
-
+    #M = 'TNC'
+    print(phi1spin,phi2spin, 'SPINS LEFT/RIGHT')
     ### MAKE INITIAL ### IN PROGRESS ###
     #initial_guess= getInitialVsolved(Y,phi1spin,phi2spin,phiB,protein)
-    initial_guess=(np.float64(phi1spin*.9-epsilon),np.float64(phi2spin*1.1*(protein.Yc/Y) +epsilon))
+    initial_guess=(np.float64(phi1spin*.9),np.float64(phi2spin*1.1))#*(protein.Yc/Y) +epsilon))
     #initial_guess = (np.float64(phi1spin*0.9),np.float64(1.01*phi2spin*(protein.Yc/Y)**2.5))
     if protein.phiS ==0:
-        maxL = minimize(FBINODAL, initial_guess, args=(Y, phiB,protein), method=M, jac=Jac_rgRPA, bounds=bounds , options={'ftol':1e-20, 'gtol':1e-20, 'eps':1e-20})#, 'maxfun':MINMAX})
+        maxL = minimize(FBINODAL, initial_guess, args=(Y, phiB,protein), method=M, jac=None, bounds=bounds )#, options={'ftol':1e-20, 'gtol':1e-20, 'eps':1e-20})#, 'maxfun':MINMAX})
     else:maxL = minimize(FBINODAL, initial_guess, args=(Y, phiB,protein), method=M, jac=None, bounds=bounds , options={'ftol':1e-20, 'gtol':1e-20, 'eps':1e-20})#, 'maxfun':MINMAX})
 
     ### FINDING LOWEST SOLUTION ###

@@ -38,6 +38,8 @@ class Protein:
         self.Yspace = None
 
         self.rg = rg
+        self.epsC = .69
+        self.crowding_toggle = 1
 
 
     def calculate_props_fromseq(self, sequence):
@@ -160,7 +162,10 @@ def run_model_onProtein(protein):
     #print(f"- Charge List: {protein.q_list}")
     print(f"- w2 Value: {protein.w2}")
     print(f"- phiS Value: {protein.phiS}")
+    print(f"- MODEL: fg = 0, rg =1 : {protein.rg}")
     #print(f"- xeeshift: {protein.xeeSig}")
+    if protein.crowding_toggle == 1:
+        print(f"- Crowding Toggle: ON, epsC = {protein.epsC} kT")
     tik = time.time()
     protein.getCrits()
     print(protein.phiC,protein.Yc,'crit found in ', (time.time()-tik), ' s \n')
@@ -211,7 +216,12 @@ def run_saver(plot,proteinlist):
     save_bool = input("do you want to save this plot? (Y/N) ").strip().upper()
     if save_bool=='Y':
         today = datetime.today().strftime('%Y-%m-%d')
-        filename = f"{proteinlist[0].name[:6]}&mutants_fgRPA_w2Pred_{today}.png"
+        if proteinlist[0].rg == 0:
+            filename = f"{proteinlist[0].name[:6]}&mutants_fgRPA_w2Pred_{today}.png"
+        else:
+            if proteinlist[0].crowding_toggle == 1:
+                filename = f"{proteinlist[0].name[:6]}&mutants_rgRPA_w2Pred_{today}_crowded_{proteinlist[0].epsC}.png"
+            else: filename = f"{proteinlist[0].name[:6]}&mutants_rgRPA_w2Pred_{today}.png"
         savedir = r'C:\Users\Nickl\PycharmProjects\Researchcode (1) (1)\CurrentProjects\PS_ChiFitting_and_ML\using_MLed_w2s\FH_PhaseDiagrams'
 
         fullpath = os.path.join(savedir,filename)
@@ -222,13 +232,13 @@ def run_saver(plot,proteinlist):
 
 
 if __name__ == '__main__':
-    df = r'C:\Users\Nickl\PycharmProjects\Researchcode (1) (1)\CurrentProjects\PS_ChiFitting_and_ML\ML_Lili_w2s\phase_sep_seqs_w2s.csv'
-    proteinlist = load_proteins_fromcsv(df,rg=0,phiS=0.0)
+    df = r'C:\Users\Nick\PycharmProjects\Researchcode (1) (1)\CurrentProjects\PS_ChiFitting_and_ML\ML_Lili_w2s\phase_sep_seqs_w2s.csv'
+    proteinlist = load_proteins_fromcsv(df,rg=1,phiS=0.0)
 
     phiSlist1 = [('ddx4n1',convmMtoPhiS(200)),('ddx4n1',convmMtoPhiS(100)),('ddx4n1',convmMtoPhiS(300)),('ddx4n1',convmMtoPhiS(400)),('ddx4n1',convmMtoPhiS(500))]
     phiSlist2 = [('ddx4n1',convmMtoPhiS(200)),('ddx4n1',convmMtoPhiS(100)),('ddx4n1',convmMtoPhiS(300)),('ddx4n1-CS',convmMtoPhiS(100)),('ddx4n1-CS',convmMtoPhiS(300))]
 
-    #select_andrun_proteins(proteinlist)
-    select_andrun_proteins_withsalt(proteinlist,phiSlist2)
+    select_andrun_proteins(proteinlist)
+    #select_andrun_proteins_withsalt(proteinlist,phiSlist2)
     #working needs to run
 
