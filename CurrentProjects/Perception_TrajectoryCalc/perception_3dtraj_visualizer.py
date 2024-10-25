@@ -6,6 +6,7 @@ import os
 from datetime import datetime
 from matplotlib import cm
 import matplotlib.colors as mcolors
+from scipy.io import savemat
 
 
         ### Parameters for loading data ###
@@ -442,6 +443,7 @@ def plot_side_profile_flow(avgData,xyxb_space,Ni,I):
     uX,uY,uXb = xyxb_space
     M = len(uX)  ## (a-b) space [-NR, NR]
     P = len(uXb)  ## (a+b) space [0, 2NE]
+    N = len(uY)
 
     X_mnpi, Y_mnpi, Xb_mnpi, Yb_mnpi = avgData
 
@@ -556,6 +558,31 @@ def plot_side_profile_flow(avgData,xyxb_space,Ni,I):
     print(f'plot saved to {fullpath}')
 
     plt.show()
+
+def DownloadResults(M, N, P, bX_mnp, eX_mnp, dX_mnp, bXb_mnp, eXb_mnp, dXb_mnp, bY_mnp, eY_mnp, dY_mnp ):
+
+    # Create data structure
+    data = {
+        'M': M,
+        'N': N,
+        'P': P,
+        'bX_mnp': bX_mnp,   # begin
+        'eX_mnp': eX_mnp,   # end
+        'dX_mnp': dX_mnp,   # difference
+        'bXb_mnp': bXb_mnp,
+        'eXb_mnp': eXb_mnp,
+        'dXb_mnp': dXb_mnp,
+        'bY_mnp': bY_mnp,
+        'eY_mnp': eY_mnp,
+        'dY_mnp': dY_mnp
+    }
+
+    # Save data to a .mat file
+    #save to a specific directory:
+    save_path = os.path.join(trajdir,'resultsfromcolab.mat')
+    savemat(save_path, data)
+
+
 
 
 

@@ -114,6 +114,8 @@ def ftot_rg(phiM, Y, protein):
 
     if protein.W3_TOGGLE==1:
         ftot += (protein.w3 - 1/6)*phiM**3
+    if protein.crowding_toggle == 1:
+        ftot += -1*protein.epsC*phiM*phiM
 
     return ftot
 def rgFPint(k,Y,phiM,protein):
@@ -195,6 +197,8 @@ def d1_Frg_dphi(phiM,Y,protein):
 
     if protein.W3_TOGGLE ==1:
         d1_ftot += 3*(protein.w3 - 1/6)*phiM**2
+    if protein.crowding_toggle == 1:
+        d1_ftot += -2 * protein.epsC * phiM
 
     return d1_ftot
 
@@ -255,6 +259,8 @@ def d2_Frg_phiM(phiM,Y,protein):
 
     if protein.W3_TOGGLE == 1:
         d2_ftot += 6*(protein.w3 - 1/6)*phiM
+    if protein.crowding_toggle == 1:
+        d2_ftot += -2 * protein.epsC
 
     return d2_ftot
 

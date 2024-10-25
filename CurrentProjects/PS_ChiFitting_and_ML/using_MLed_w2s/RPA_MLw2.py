@@ -12,7 +12,7 @@ class Protein:
     def __init__(self,name, sequence,w2,w3,rg,phiS=None):
         self.name = name
         self.sequence = sequence
-        self.w2 = 0
+        self.w2 = w2
         self.w3 = w3
         self.phiS = 0 if phiS == None else phiS
 
@@ -20,7 +20,7 @@ class Protein:
         self.qc ,self.q_list, self.N = self.calculate_props_fromseq(sequence)
         self.xeeSig, self.gkSig, self.ckSig = self.getSigShifts(self.N, self.q_list)
         self.L = np.arange
-        self.W3_TOGGLE = 1
+        self.W3_TOGGLE = 0
         self.i_vals = np.arange(0, self.N)
         self.qL = np.array(self.q_list)
         self.Q = np.sum(self.qL*self.qL)/self.N
@@ -38,8 +38,8 @@ class Protein:
         self.Yspace = None
 
         self.rg = rg
-        self.epsC = .69
-        self.crowding_toggle = 0
+        self.epsC = .3
+        self.crowding_toggle = 1
 
 
     def calculate_props_fromseq(self, sequence):
@@ -173,7 +173,7 @@ def run_model_onProtein(protein):
 
     print(f'SOLVING FOR A BINODAL CURVE (Nres = {protein.nres})')
     tok = time.time()
-    protein.getCurves()
+    #protein.getCurves()
     print('binodal calculated in ', (time.time()-tok), ' s \n')
 
     print("\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n")
