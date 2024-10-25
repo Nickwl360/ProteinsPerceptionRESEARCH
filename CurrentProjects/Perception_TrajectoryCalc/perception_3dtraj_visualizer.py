@@ -433,7 +433,7 @@ def plot_average_trajectory_flow(Data_avg,xyxb_space,L, I):
     filename = f"I_{I}_MCalPerceptionAvgFlow_{today}_L={L}.png"
     fullpath = os.path.join(savdir, filename)
 
-    plt.savefig(fullpath)
+    #plt.savefig(fullpath)
     print(f'plot saved to {fullpath}')
     #fix start view angle
     plt.show()
@@ -452,6 +452,7 @@ def plot_side_profile_flow(avgData,xyxb_space,Ni,I):
     X_mnp = np.squeeze(X_mnpi[:, :, :, 0])
     Y_mnp = np.squeeze(Y_mnpi[:, :, :, 0])
     Xb_mnp = np.squeeze(Xb_mnpi[:, :, :, 0])
+    print(np.shape(X_mnp))
 
     eX_mnp = np.squeeze(X_mnpi[:, :, :, Ni - 1])
     eY_mnp = np.squeeze(Y_mnpi[:, :, :, Ni - 1])
@@ -557,7 +558,7 @@ def plot_side_profile_flow(avgData,xyxb_space,Ni,I):
     filename = f"I_{I}_MCPavgSideFlow_{today}_L={Ni}.png"
     fullpath = os.path.join(savdir, filename)
 
-    plt.savefig(fullpath)
+    #plt.savefig(fullpath)
     print(f'plot saved to {fullpath}')
 
     plt.show()
@@ -583,7 +584,7 @@ def DownloadResults(M, N, P, bX_mnp, eX_mnp, dX_mnp, bXb_mnp, eXb_mnp, dXb_mnp, 
     # Save data to a .mat file
     #save to a specific directory:
     save_path = os.path.join(trajdir, f'I{I}L{L}maxCalPerceptionData.mat')
-    savemat(save_path, data)
+    #savemat(save_path, data)
 
 
 
@@ -592,7 +593,7 @@ def DownloadResults(M, N, P, bX_mnp, eX_mnp, dX_mnp, bXb_mnp, eXb_mnp, dXb_mnp, 
 if __name__ == '__main__':
             # load raw data 0-N integers#
     Is = ['1','6875','375','0625']
-    I_test = Is[0]
+    I_test = Is[2]
 
     ### LOAD FULL DATA ###
     total_length = 50_000_001
@@ -616,10 +617,10 @@ if __name__ == '__main__':
 
     ### GET TRAJECTORY DENSITY ###
     x, y, xb, yb = shift_toXY((small_trajA,small_trajB,small_trajC,small_trajD), NE, NR)
-    ux, uy, uxb = plot_trajectory_density((x, y, xb, yb), I_test)
-    # ux = np.arange(-5, 6, 1)
-    # uy = np.arange(-4, 5, 8)
-    # uxb = np.arange(0, 10, 1)
+    #ux, uy, uxb = plot_trajectory_density((x, y, xb, yb), I_test)
+    ux = np.arange(-5, 6, 1)
+    uy = np.arange(-4, 5, 8)
+    uxb = np.arange(0, 10, 1)
     ################################
 
     ### GET AVERAGE TRAJECTORY FLOW ###
