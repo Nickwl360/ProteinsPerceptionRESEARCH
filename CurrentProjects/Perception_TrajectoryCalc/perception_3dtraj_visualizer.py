@@ -7,7 +7,6 @@ from datetime import datetime
 from matplotlib import cm
 import matplotlib.colors as mcolors
 from scipy.io import savemat
-import glob
 
 
         ### Parameters for loading data ###
@@ -299,7 +298,7 @@ def plot_trajectory_density(XYtrajs,I):
     filename = f"I_{I}_MCPavgTrajField_{today}.png"
     fullpath = os.path.join(savdir, filename)
 
-    #plt.savefig(fullpath)
+    plt.savefig(fullpath)
     print(f'plot saved to {fullpath}')
     plt.show()
     return uX,uY,uXb
@@ -433,7 +432,7 @@ def plot_average_trajectory_flow(Data_avg,xyxb_space,L, I):
     filename = f"I_{I}_MCalPerceptionAvgFlow_{today}_L={L}.png"
     fullpath = os.path.join(savdir, filename)
 
-    #plt.savefig(fullpath)
+    plt.savefig(fullpath)
     print(f'plot saved to {fullpath}')
     #fix start view angle
     plt.show()
@@ -445,14 +444,30 @@ def plot_side_profile_flow(avgData,xyxb_space,Ni,I):
     M = len(uX)  ## (a-b) space [-NR, NR]
     P = len(uXb)  ## (a+b) space [0, 2NE]
     N = len(uY)
+    X_mnpi = np.full((M, N, P, Ni), np.nan)
+    print(np.shape(X_mnpi))
+    Y_mnpi = np.full((M, N, P, Ni), np.nan)
+    Xb_mnpi = np.full((M, N, P, Ni), np.nan)
+    Yb_mnpi = np.full((M, N, P, Ni), np.nan)
 
-    X_mnpi, Y_mnpi, Xb_mnpi, Yb_mnpi = avgData
+    X_mnpi_data, Y_mnpi_data, Xb_mnpi_data, Yb_mnpi_data = avgData
+    print(np.shape(X_mnpi_data))
+    # I want X_mnpi, Y_mnpi, Xb_mnpi, to fit be converted to the sizes of uX,uY,uXb
+    for m in range(0,M):
+        for p in range(0,P):
+            for n in range(0,N):
+
+                X_mnpi[m, n, p, :] = X_mnpi_data[m, n, p, :]
+                Y_mnpi[m, n, p, :] = Y_mnpi_data[m, n, p, :]
+                Xb_mnpi[m, n, p, :] = Xb_mnpi_data[m, n, p, :]
+                Yb_mnpi[m, n, p, :] = Yb_mnpi_data[m, n, p, :]
+
 
     # Convert to x, dx, and y, dy for arrow plotting
-    X_mnp = np.squeeze(X_mnpi[:, :, :, 0])
+    X_mnp = np.squeeze(X_mnpi_data[:, :, :, 0])
+    print(np.shape(X_mnp))
     Y_mnp = np.squeeze(Y_mnpi[:, :, :, 0])
     Xb_mnp = np.squeeze(Xb_mnpi[:, :, :, 0])
-    print(np.shape(X_mnp))
 
     eX_mnp = np.squeeze(X_mnpi[:, :, :, Ni - 1])
     eY_mnp = np.squeeze(Y_mnpi[:, :, :, Ni - 1])
@@ -461,8 +476,8 @@ def plot_side_profile_flow(avgData,xyxb_space,Ni,I):
     dX_mnp = eX_mnp - X_mnp
     dY_mnp = eY_mnp - Y_mnp
     dXb_mnp = eXb_mnp - Xb_mnp
+    DownloadResults(M,N,P,X_mnpi,eX_mnp,dX_mnp,Xb_mnpi,eXb_mnp,dXb_mnp,Y_mnpi,eY_mnp,dY_mnp,I,Ni)
 
-    DownloadResults(M,N,P,X_mnp,eX_mnp,dX_mnp,Xb_mnp,eXb_mnp,dXb_mnp,Y_mnp,eY_mnp,dY_mnp,I,Ni)
 
     # Get colormap and scaling
     clrmp1 = plt.get_cmap('jet')
@@ -476,7 +491,7 @@ def plot_side_profile_flow(avgData,xyxb_space,Ni,I):
     # First subplot
     ax1 = fig.add_subplot(2, 1, 1)
 
-    for m in range(0, M-1):
+    for m in range(0, M):
         nX = uX[m]
 
         n = 0
@@ -484,7 +499,7 @@ def plot_side_profile_flow(avgData,xyxb_space,Ni,I):
 
         cix = GetColorIndex(nX / maxuX, nY / maxuY, num_colors)
 
-        for p in range(0, P-1):
+        for p in range(0, P):
 
             X_p = np.squeeze(X_mnp[m, n, p])
             Xb_p = np.squeeze(Xb_mnp[m, n, p])
@@ -514,7 +529,7 @@ def plot_side_profile_flow(avgData,xyxb_space,Ni,I):
     # Second subplot
     ax2 = fig.add_subplot(2, 1, 2)
 
-    for m in range(0, M-1):
+    for m in range(0, M):
         nX = uX[m]
 
         n = 1  # surface nY = +4
@@ -522,7 +537,7 @@ def plot_side_profile_flow(avgData,xyxb_space,Ni,I):
 
         cix = GetColorIndex(nX / maxuX, nY / maxuY, num_colors)
 
-        for p in range(0, P-1):
+        for p in range(0, P):
 
             X_p = np.squeeze(X_mnp[m, n, p])
             Xb_p = np.squeeze(Xb_mnp[m, n, p])
@@ -558,12 +573,12 @@ def plot_side_profile_flow(avgData,xyxb_space,Ni,I):
     filename = f"I_{I}_MCPavgSideFlow_{today}_L={Ni}.png"
     fullpath = os.path.join(savdir, filename)
 
-    #plt.savefig(fullpath)
+    plt.savefig(fullpath)
     print(f'plot saved to {fullpath}')
 
     plt.show()
 
-def DownloadResults(M, N, P, bX_mnp, eX_mnp, dX_mnp, bXb_mnp, eXb_mnp, dXb_mnp, bY_mnp, eY_mnp, dY_mnp,I ,L):
+def DownloadResults(M, N, P, bX_mnp, eX_mnp, dX_mnp, bXb_mnp, eXb_mnp, dXb_mnp, bY_mnp, eY_mnp, dY_mnp,I_test,Ltraj ):
 
     # Create data structure
     data = {
@@ -583,9 +598,8 @@ def DownloadResults(M, N, P, bX_mnp, eX_mnp, dX_mnp, bXb_mnp, eXb_mnp, dXb_mnp, 
 
     # Save data to a .mat file
     #save to a specific directory:
-    save_path = os.path.join(trajdir, f'I{I}L{L}maxCalPerceptionData.mat')
-    #savemat(save_path, data)
-
+    save_path = os.path.join(trajdir, f'I{I_test}L{Ltraj}maxCalPerceptionData.mat')
+    savemat(save_path, data)
 
 
 
@@ -617,9 +631,12 @@ if __name__ == '__main__':
 
     ### GET TRAJECTORY DENSITY ###
     x, y, xb, yb = shift_toXY((small_trajA,small_trajB,small_trajC,small_trajD), NE, NR)
+    #change y so that only index 0 and Ni-1 are saved:
+
     #ux, uy, uxb = plot_trajectory_density((x, y, xb, yb), I_test)
     ux = np.arange(-5, 6, 1)
     uy = np.arange(-4, 5, 8)
+    print(uy)
     uxb = np.arange(0, 10, 1)
     ################################
 
@@ -629,13 +646,16 @@ if __name__ == '__main__':
 
     #check if there is a file with same Ltraj and I_test in name before calculating data
 
+    import glob
 
-    filenametest = f"I_{I_test}_L={Ltraj}MCavgflow_*.npy"
+    # Check if there is a file with the same Ltraj and I_test in the name before calculating data
+    filenametest = f"I_{I_test}_L={Ltraj}MCavgflow_{today}.npy"
+    print(filenametest)
     fullpathtest = os.path.join(trajdir, filenametest)
-    if glob.glob(fullpathtest):
-        avg_traj_data = np.load(glob.glob(fullpathtest)[0])
+    if os.path.exists(fullpathtest):
+        avg_traj_data = np.load(fullpathtest)
         print(f'Data loaded {filenametest}')
-    #if file does not exist, calculate data
+        # if file does not exist, calculate data
     else:
         avg_traj_data,xyxb_space= get_average_trajectory_flow(Ltraj,nSamples,(inf_trajA,inf_trajB,inf_trajC,inf_trajD),(ux,uy,uxb),I_test)
         filename = f"I_{I_test}_L={Ltraj}MCavgflow_{today}_.npy"
