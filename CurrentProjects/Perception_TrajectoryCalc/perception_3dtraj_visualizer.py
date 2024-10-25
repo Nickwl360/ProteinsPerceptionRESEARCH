@@ -7,6 +7,7 @@ from datetime import datetime
 from matplotlib import cm
 import matplotlib.colors as mcolors
 from scipy.io import savemat
+import glob
 
 
         ### Parameters for loading data ###
@@ -298,7 +299,7 @@ def plot_trajectory_density(XYtrajs,I):
     filename = f"I_{I}_MCPavgTrajField_{today}.png"
     fullpath = os.path.join(savdir, filename)
 
-    plt.savefig(fullpath)
+    #plt.savefig(fullpath)
     print(f'plot saved to {fullpath}')
     plt.show()
     return uX,uY,uXb
@@ -460,6 +461,8 @@ def plot_side_profile_flow(avgData,xyxb_space,Ni,I):
     dY_mnp = eY_mnp - Y_mnp
     dXb_mnp = eXb_mnp - Xb_mnp
 
+    DownloadResults(M,N,P,X_mnp,eX_mnp,dX_mnp,Xb_mnp,eXb_mnp,dXb_mnp,Y_mnp,eY_mnp,dY_mnp,I,Ni)
+
     # Get colormap and scaling
     clrmp1 = plt.get_cmap('jet')
     clrmp2 = plt.get_cmap('jet_r')
@@ -472,7 +475,7 @@ def plot_side_profile_flow(avgData,xyxb_space,Ni,I):
     # First subplot
     ax1 = fig.add_subplot(2, 1, 1)
 
-    for m in range(0, M):
+    for m in range(0, M-1):
         nX = uX[m]
 
         n = 0
@@ -480,7 +483,7 @@ def plot_side_profile_flow(avgData,xyxb_space,Ni,I):
 
         cix = GetColorIndex(nX / maxuX, nY / maxuY, num_colors)
 
-        for p in range(0, P):
+        for p in range(0, P-1):
 
             X_p = np.squeeze(X_mnp[m, n, p])
             Xb_p = np.squeeze(Xb_mnp[m, n, p])
@@ -510,7 +513,7 @@ def plot_side_profile_flow(avgData,xyxb_space,Ni,I):
     # Second subplot
     ax2 = fig.add_subplot(2, 1, 2)
 
-    for m in range(0, M):
+    for m in range(0, M-1):
         nX = uX[m]
 
         n = 1  # surface nY = +4
@@ -518,7 +521,7 @@ def plot_side_profile_flow(avgData,xyxb_space,Ni,I):
 
         cix = GetColorIndex(nX / maxuX, nY / maxuY, num_colors)
 
-        for p in range(0, P):
+        for p in range(0, P-1):
 
             X_p = np.squeeze(X_mnp[m, n, p])
             Xb_p = np.squeeze(Xb_mnp[m, n, p])
@@ -559,7 +562,7 @@ def plot_side_profile_flow(avgData,xyxb_space,Ni,I):
 
     plt.show()
 
-def DownloadResults(M, N, P, bX_mnp, eX_mnp, dX_mnp, bXb_mnp, eXb_mnp, dXb_mnp, bY_mnp, eY_mnp, dY_mnp ):
+def DownloadResults(M, N, P, bX_mnp, eX_mnp, dX_mnp, bXb_mnp, eXb_mnp, dXb_mnp, bY_mnp, eY_mnp, dY_mnp,I ,L):
 
     # Create data structure
     data = {
@@ -579,7 +582,7 @@ def DownloadResults(M, N, P, bX_mnp, eX_mnp, dX_mnp, bXb_mnp, eXb_mnp, dXb_mnp, 
 
     # Save data to a .mat file
     #save to a specific directory:
-    save_path = os.path.join(trajdir,'resultsfromcolab.mat')
+    save_path = os.path.join(trajdir, f'I{I}L{L}maxCalPerceptionData.mat')
     savemat(save_path, data)
 
 
@@ -589,7 +592,7 @@ def DownloadResults(M, N, P, bX_mnp, eX_mnp, dX_mnp, bXb_mnp, eXb_mnp, dXb_mnp, 
 if __name__ == '__main__':
             # load raw data 0-N integers#
     Is = ['1','6875','375','0625']
-    I_test = Is[3]
+    I_test = Is[0]
 
     ### LOAD FULL DATA ###
     total_length = 50_000_001
@@ -614,6 +617,9 @@ if __name__ == '__main__':
     ### GET TRAJECTORY DENSITY ###
     x, y, xb, yb = shift_toXY((small_trajA,small_trajB,small_trajC,small_trajD), NE, NR)
     ux, uy, uxb = plot_trajectory_density((x, y, xb, yb), I_test)
+    # ux = np.arange(-5, 6, 1)
+    # uy = np.arange(-4, 5, 8)
+    # uxb = np.arange(0, 10, 1)
     ################################
 
     ### GET AVERAGE TRAJECTORY FLOW ###
@@ -622,10 +628,11 @@ if __name__ == '__main__':
 
     #check if there is a file with same Ltraj and I_test in name before calculating data
 
-    filenametest = f"I_{I_test}_L={Ltraj}MCavgflow_{today}_.npy"
+
+    filenametest = f"I_{I_test}_L={Ltraj}MCavgflow_*.npy"
     fullpathtest = os.path.join(trajdir, filenametest)
-    if os.path.exists(fullpathtest):
-        avg_traj_data = np.load(fullpathtest)
+    if glob.glob(fullpathtest):
+        avg_traj_data = np.load(glob.glob(fullpathtest)[0])
         print(f'Data loaded {filenametest}')
     #if file does not exist, calculate data
     else:
@@ -636,7 +643,7 @@ if __name__ == '__main__':
         print(f'plot saved to {fullpath}')
 
     #plot average trajectory flow
-    plot_average_trajectory_flow(avg_traj_data,(ux,uy,uxb),Ltraj,I_test)
+    #plot_average_trajectory_flow(avg_traj_data,(ux,uy,uxb),Ltraj,I_test)
     plot_side_profile_flow(avg_traj_data,(ux,uy,uxb),Ltraj,I_test)
 
 
