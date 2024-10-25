@@ -184,7 +184,7 @@ def get_average_trajectory_flow(Ltraj,Ntraj,fulltraj,xyxb_space,I):
     for n in range(0,2):
 
         #loop through Y [Difference in upper layer]
-
+        nY= uY[n]
 
         if n == 0:
             nY = min(uY) #cmax
@@ -302,8 +302,6 @@ def plot_trajectory_density(XYtrajs,I):
     print(f'plot saved to {fullpath}')
     plt.show()
     return uX,uY,uXb
-
-
 def plot_average_trajectory_flow(Data_avg,xyxb_space,L, I):
 
     (X_mnpi,Y_mnpi,Xb_mnpi,Yb_mnpi) = Data_avg
@@ -453,25 +451,25 @@ def plot_side_profile_flow(avgData,xyxb_space,Ni,I):
     X_mnpi_data, Y_mnpi_data, Xb_mnpi_data, Yb_mnpi_data = avgData
     print(np.shape(X_mnpi_data))
     # I want X_mnpi, Y_mnpi, Xb_mnpi, to fit be converted to the sizes of uX,uY,uXb
-    for m in range(0,M):
-        for p in range(0,P):
-            for n in range(0,N):
-
-                X_mnpi[m, n, p, :] = X_mnpi_data[m, n, p, :]
-                Y_mnpi[m, n, p, :] = Y_mnpi_data[m, n, p, :]
-                Xb_mnpi[m, n, p, :] = Xb_mnpi_data[m, n, p, :]
-                Yb_mnpi[m, n, p, :] = Yb_mnpi_data[m, n, p, :]
+    # for m in range(0,M):
+    #     for p in range(0,P):
+    #         for n in range(0,N):
+    #
+    #             X_mnpi[m, n, p, :] = X_mnpi_data[m, n, p, :]
+    #             Y_mnpi[m, n, p, :] = Y_mnpi_data[m, n, p, :]
+    #             Xb_mnpi[m, n, p, :] = Xb_mnpi_data[m, n, p, :]
+    #             Yb_mnpi[m, n, p, :] = Yb_mnpi_data[m, n, p, :]
 
 
     # Convert to x, dx, and y, dy for arrow plotting
     X_mnp = np.squeeze(X_mnpi_data[:, :, :, 0])
     print(np.shape(X_mnp))
-    Y_mnp = np.squeeze(Y_mnpi[:, :, :, 0])
-    Xb_mnp = np.squeeze(Xb_mnpi[:, :, :, 0])
+    Y_mnp = np.squeeze(Y_mnpi_data[:, :, :, 0])
+    Xb_mnp = np.squeeze(Xb_mnpi_data[:, :, :, 0])
 
-    eX_mnp = np.squeeze(X_mnpi[:, :, :, Ni - 1])
-    eY_mnp = np.squeeze(Y_mnpi[:, :, :, Ni - 1])
-    eXb_mnp = np.squeeze(Xb_mnpi[:, :, :, Ni - 1])
+    eX_mnp = np.squeeze(X_mnpi_data[:, :, :, Ni - 1])
+    eY_mnp = np.squeeze(Y_mnpi_data[:, :, :, Ni - 1])
+    eXb_mnp = np.squeeze(Xb_mnpi_data[:, :, :, Ni - 1])
 
     dX_mnp = eX_mnp - X_mnp
     dY_mnp = eY_mnp - Y_mnp
@@ -512,12 +510,12 @@ def plot_side_profile_flow(avgData,xyxb_space,Ni,I):
             eXb_p = np.squeeze(eXb_mnp[m, n, p])
 
             if np.sum(~np.isnan(X_p)) >= 1:
-
+                if p!= P-1 and m!= M-1:
                 # ax1.scatter(X_p, Xb_p, marker='.', color=clrmp_array[cix,:], linewidth=1)
                 # ax1.scatter(X_p+dX_p, Xb_p+dXb_p, marker='.', color=clrmp_array[cix,:], linewidth=0.5)
-                if dY_p >= 1:
-                    ax1.scatter(eX_p, eXb_p, marker='o', color='grey', linewidth=0.01)
-                ax1.arrow(X_p, Xb_p, dX_p, dXb_p, color=clrmp_array1[cix, :], width=0.001, head_width=0.01)
+                    if dY_p >= 1:
+                        ax1.scatter(eX_p, eXb_p, marker='o', color='grey', linewidth=0.01)
+                    ax1.arrow(X_p, Xb_p, dX_p, dXb_p, color=clrmp_array1[cix, :], width=0.001, head_width=0.01)
 
     ax1.set_xlabel('X, Y=-1', fontsize=14)
     ax1.set_ylabel('Xb', fontsize=14)
@@ -642,14 +640,14 @@ if __name__ == '__main__':
 
     ### GET AVERAGE TRAJECTORY FLOW ###
     nSamples = 10000
-    Ltraj = 50
+    Ltraj = 100
 
     #check if there is a file with same Ltraj and I_test in name before calculating data
 
     import glob
 
     # Check if there is a file with the same Ltraj and I_test in the name before calculating data
-    filenametest = f"I_{I_test}_L={Ltraj}MCavgflow_{today}.npy"
+    filenametest = f"I_{I_test}_L={Ltraj}MCavgflow_{today}_.npy"
     print(filenametest)
     fullpathtest = os.path.join(trajdir, filenametest)
     if os.path.exists(fullpathtest):
