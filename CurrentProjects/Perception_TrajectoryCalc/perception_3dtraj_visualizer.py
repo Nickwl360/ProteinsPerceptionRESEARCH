@@ -474,7 +474,7 @@ def plot_side_profile_flow(avgData,xyxb_space,Ni,I):
     dX_mnp = eX_mnp - X_mnp
     dY_mnp = eY_mnp - Y_mnp
     dXb_mnp = eXb_mnp - Xb_mnp
-    DownloadResults(M,N,P,X_mnpi,eX_mnp,dX_mnp,Xb_mnpi,eXb_mnp,dXb_mnp,Y_mnpi,eY_mnp,dY_mnp,I,Ni)
+    DownloadResults(M,N,P,X_mnp,eX_mnp,dX_mnp,Xb_mnp,eXb_mnp,dXb_mnp,Y_mnp,eY_mnp,dY_mnp,I,Ni)
 
 
     # Get colormap and scaling
