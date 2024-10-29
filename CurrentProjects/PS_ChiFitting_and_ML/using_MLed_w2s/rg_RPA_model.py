@@ -520,7 +520,7 @@ def d2_Frg_phiM(phiM,Y,protein,x=None,dx=None,ddx=None):
         d2_ftot += -2 * protein.epsC
     #print(d2s,d2fp,d2fion,d2f0,'this is d2s, d2fp, d2fion, d2f0 at phi= ',phiM,Y)
     #print(d2_ftot,'this is d2 at phi,Y= ',phiM,Y)
-
+    print(x,'this is x')
     return d2_ftot
 
 ###############################################################################################################

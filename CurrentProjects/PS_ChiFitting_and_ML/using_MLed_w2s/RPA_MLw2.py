@@ -20,13 +20,13 @@ class Protein:
         self.qc ,self.q_list, self.N = self.calculate_props_fromseq(sequence)
         self.xeeSig, self.gkSig, self.ckSig = self.getSigShifts(self.N, self.q_list)
         self.L = np.arange
-        self.W3_TOGGLE = 0
+        self.W3_TOGGLE = 1
         self.i_vals = np.arange(0, self.N)
         self.qL = np.array(self.q_list)
         self.Q = np.sum(self.qL*self.qL)/self.N
 
-        self.nres = 20
-        self.minFrac= .85
+        self.nres = 30
+        self.minFrac= .7
 
         self.phiC = None
         self.Yc = None
@@ -39,7 +39,7 @@ class Protein:
 
         self.rg = rg
         self.epsC = .3
-        self.crowding_toggle = 1
+        self.crowding_toggle = 0
 
 
     def calculate_props_fromseq(self, sequence):
@@ -173,7 +173,7 @@ def run_model_onProtein(protein):
 
     print(f'SOLVING FOR A BINODAL CURVE (Nres = {protein.nres})')
     tok = time.time()
-    #protein.getCurves()
+    protein.getCurves()
     print('binodal calculated in ', (time.time()-tok), ' s \n')
 
     print("\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n")
@@ -240,7 +240,7 @@ def run_saver(plot,proteinlist):
 
 if __name__ == '__main__':
     df = r'C:\Users\Nickl\PycharmProjects\Researchcode (1) (1)\CurrentProjects\PS_ChiFitting_and_ML\ML_Lili_w2s\phase_sep_seqs_w2s.csv'
-    proteinlist = load_proteins_fromcsv(df,rg=0,phiS=0.0)
+    proteinlist = load_proteins_fromcsv(df,rg=1,phiS=0)
 
     phiSlist1 = [('ddx4n1',convmMtoPhiS(200)),('ddx4n1',convmMtoPhiS(100)),('ddx4n1',convmMtoPhiS(300)),('ddx4n1',convmMtoPhiS(400)),('ddx4n1',convmMtoPhiS(500))]
     phiSlist2 = [('ddx4n1',convmMtoPhiS(200)),('ddx4n1',convmMtoPhiS(100)),('ddx4n1',convmMtoPhiS(300)),('ddx4n1-CS',convmMtoPhiS(100)),('ddx4n1-CS',convmMtoPhiS(300))]
