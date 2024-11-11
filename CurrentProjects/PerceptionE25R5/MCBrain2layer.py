@@ -1,10 +1,15 @@
+
 import numpy as np
 import matplotlib.pyplot as plt
 import pyopencl as cl
-from Utilities.EQUILIBRIUMFINDER import EquilibriumMatrix
+#0from Utilities.EQUILIBRIUMFINDER import EquilibriumMatrix
+
 import os
 
-Pmnop_prog = '/Users/Nickl/PycharmProjects/Researchcode (1) (1)/CurrentProjects/PerceptionE25R5/MCBrain2layer.cl'
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+example_file_path = os.path.join(current_dir, 'MCBrain2layer.cl')
+Pmnop_prog = example_file_path
 
 # constants
 Tmax = 10_000

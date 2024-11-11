@@ -1,0 +1,12 @@
+import os
+
+# Get the current script directory
+current_dir = os.path.dirname(os.path.abspath(__file__))
+
+# Define the relative path to the ProteinsPerceptionRESEARCH folder
+research_folder = os.path.join(current_dir, '..', 'ProteinsPerceptionRESEARCH')
+
+# Example of referring to a file in the ProteinsPerceptionRESEARCH folder
+example_file_path = os.path.join(research_folder, 'example_file.txt')
+
+print(f"Path to the example file: {example_file_path}")
