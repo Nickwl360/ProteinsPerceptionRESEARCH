@@ -2,7 +2,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pyopencl as cl
-#0from Utilities.EQUILIBRIUMFINDER import EquilibriumMatrix
+from Utilities.EQUILIBRIUMFINDER import EquilibriumMatrix
 
 import os
 
@@ -38,10 +38,19 @@ def runtime_program(params, prog_path):
     global_size = ((MAXTOP*MAXTOP*MAXBOT*MAXBOT)**2,)
     calc = program.compute_Pmnop
     calc.set_scalar_arg_dtypes([None, np.float64,np.float64,np.float64,np.float64,np.float64,np.float64,np.float64,np.float64,np.float64,np.float64,np.float64,np.float64,np.float64])
-    calc(queue, global_size, None, Pmnop_buf, halpha, hbeta, hgamma, hdelta,ha,hb,hc,hd, kcomp, kcoop,kdu,kud,kx)
-    queue.finish()
+    try:
+        calc(queue, global_size, None, Pmnop_buf, halpha, hbeta, hgamma, hdelta,
+             ha, hb, hc, hd, kcomp, kcoop, kdu, kud, kx)
+        queue.finish()
+    except cl.LogicError as e:
+        print("Error during kernel execution:", e)
+        return None
     # Read the results back from the GPU to the host
-    cl.enqueue_copy(queue, NextPmnop, Pmnop_buf)
+    try:
+        cl.enqueue_copy(queue, NextPmnop, Pmnop_buf)
+    except cl.LogicError as e:
+        print("Error copying buffer to host:", e)
+        return None
     return NextPmnop
 def renormalize(Pijkl):
     # Create a matrix to store the normalization factors

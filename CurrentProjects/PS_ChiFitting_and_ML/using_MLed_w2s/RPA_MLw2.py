@@ -7,6 +7,8 @@ import time
 from matplotlib import pyplot as plt
 from datetime import datetime
 import rg_RPA_model as rg
+from CurrentProjects.PerceptionE25R5.MCBrain2layer import current_dir
+
 
 class Protein:
     def __init__(self,name, sequence,w2,w3,rg,phiS=None):
@@ -239,7 +241,10 @@ def run_saver(plot,proteinlist):
 
 
 if __name__ == '__main__':
-    df = r'C:\Users\Nickl\PycharmProjects\Researchcode (1) (1)\CurrentProjects\PS_ChiFitting_and_ML\ML_Lili_w2s\phase_sep_seqs_w2s.csv'
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    print(current_dir)
+    df = os.path.join(current_dir, 'ML_Lili_w2s\phase_sep_seqs_w2s.csv')
+    #df = r'C:\Users\Nickl\PycharmProjects\Researchcode (1) (1)\CurrentProjects\PS_ChiFitting_and_ML\ML_Lili_w2s\phase_sep_seqs_w2s.csv'
     proteinlist = load_proteins_fromcsv(df,rg=1,phiS=0)
 
     phiSlist1 = [('ddx4n1',convmMtoPhiS(200)),('ddx4n1',convmMtoPhiS(100)),('ddx4n1',convmMtoPhiS(300)),('ddx4n1',convmMtoPhiS(400)),('ddx4n1',convmMtoPhiS(500))]

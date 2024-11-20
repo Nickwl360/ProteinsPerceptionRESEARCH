@@ -1,4 +1,4 @@
-#define MAXTOP 5
+ #define MAXTOP 5
 #define MAXBOT 12
 #define M1 MAXTOP*MAXBOT*MAXBOT*MAXTOP*MAXTOP*MAXBOT*MAXBOT
 #define M2 M1/MAXTOP
@@ -65,7 +65,7 @@ __kernel void compute_Pmnop(__global double* Pmnop, const double halpha, const d
             {
                 for(int d=0; d<=M;d++)
                 {
-                    int e = nam - nai + a;  //lalpha
+                    int e = nam - nai + a;  //  lalpha
                     int f = nbn - nbj + b;  //lbeta
                     int g = nco - nck + c;  //lgamma
                     int h = ndp - ndl + d; // ldelta
