@@ -3,7 +3,7 @@
 #ABOVE IS HOW WE LABEL THE PARAMETERS
 
 ######################################################################################################################################
-###INFERENCE FROM C:\Users\Nick\PycharmProjects\Researchcode (1) (1)\CurrentProjects\PerceptionE25R5\StochasticRecurrentSymmetricNE11NR4.mat
+###INFERENCE FROM C:\Users\Nick\PycharmProjects\Researchcode (1) (1)\CurrentProjects\Perception_openclscripts\StochasticRecurrentSymmetricNE11NR4.mat
 
 #DT=.001, I = .0625:
 #METHOD: NELDER-MEAD
@@ -19,7 +19,7 @@
 #(hgamma, hc, halpha, ha, kcoop, kcomp, kdu, kud, kx)=(-8.28640719 ,-8.42166917 ,-6.27641919 ,-0.61254556  ,4.71567638  ,2.15322098,6.15779811  ,0.29307981  ,1.63738961)
 
 ####################################################################################################################################################
-##OLD INFERENCE, dt = .01 from C:\Users\Nick\PycharmProjects\Researchcode (1) (1)\CurrentProjects\PerceptionE25R5\StochasticRecurrentSymmetric (1).mat
+##OLD INFERENCE, dt = .01 from C:\Users\Nick\PycharmProjects\Researchcode (1) (1)\CurrentProjects\Perception_openclscripts\StochasticRecurrentSymmetric (1).mat
 
 # Strong infered calcedhs dt01
 # paramsBEST= (-6.00432578 ,-6.03486149, -3.80626702 , 5.35061176 , 6.4340547  , 3.67099913 ,8.6066445  , 0.28647123 , 2.42905138)

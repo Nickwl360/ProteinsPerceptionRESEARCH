@@ -3,12 +3,12 @@ from scipy.optimize import minimize
 
 MAX=26
 Pijkl_prog = '/Users/Nickl/PycharmProjects/Researchcode (1) (1)/brainpijkl.cl'
-dataa= np.loadtxt('../OldMCProjects/NA_sequence.csv', delimiter=",")
-datab= np.loadtxt('../OldMCProjects/NB_sequence.csv', delimiter=",")
+dataa= np.loadtxt('../NA_sequence.csv', delimiter=",")
+datab= np.loadtxt('../NB_sequence.csv', delimiter=",")
 datalowa=np.loadtxt('MA_sequence.csv', delimiter=",")
 datalowb=np.loadtxt('MB_sequence.csv',delimiter=",")
-Nalong= np.loadtxt('../OldMCProjects/NA_long_sequence.csv', delimiter=",")
-Nblong= np.loadtxt('../OldMCProjects/NB_long_sequence.csv', delimiter=",")
+Nalong= np.loadtxt('../NA_long_sequence.csv', delimiter=",")
+Nblong= np.loadtxt('../NB_long_sequence.csv', delimiter=",")
 Malong= np.loadtxt('MA_long_sequence.csv', delimiter=",")
 Mblong= np.loadtxt('MB_long_sequence.csv', delimiter=",")
 

@@ -7,7 +7,6 @@ import time
 from matplotlib import pyplot as plt
 from datetime import datetime
 import rg_RPA_model as rg
-from CurrentProjects.PerceptionE25R5.MCBrain2layer import current_dir
 
 
 class Protein:

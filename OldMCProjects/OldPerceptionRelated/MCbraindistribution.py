@@ -1,4 +1,4 @@
-from OldPerceptionRelated.MCBrainTime import *
+from OldMCProjects.OldPerceptionRelated.MCBrainTime import *
 import numpy as np
 #import matplotlib.pyplot as plt
 
