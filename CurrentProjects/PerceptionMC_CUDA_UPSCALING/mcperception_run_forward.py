@@ -61,6 +61,7 @@ if __name__ == '__main__':
     #
     start = (0,0,0,0)
     Pij = get_Pij(params)
+    print('gotpij')
 
     A,B,C,D = sim_forward(start, Pij, T_total)
 
@@ -74,11 +75,11 @@ if __name__ == '__main__':
     plt.ylim(-.1,4.5)
     plt.show()
     # # #
-    plt.figure()
-    plt.plot(ts, C, linewidth=1, c='b')
-    plt.plot(ts, D, linewidth=1, c='r')
-    plt.xlabel("T" , fontsize=15)
-    plt.ylabel("# Activated", fontsize=15)
-    plt.xticks(fontsize=15)
-    plt.yticks(fontsize=15)
-    plt.show()
+    # plt.figure()
+    # plt.plot(ts, C, linewidth=1, c='b')
+    # plt.plot(ts, D, linewidth=1, c='r')
+    # plt.xlabel("T" , fontsize=15)
+    # plt.ylabel("# Activated", fontsize=15)
+    # plt.xticks(fontsize=15)
+    # plt.yticks(fontsize=15)
+    # plt.show()
