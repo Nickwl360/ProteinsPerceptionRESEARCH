@@ -16,17 +16,21 @@ def get_Pij(params):
     Pij = np.zeros((RMax,RMax,EMax,EMax,RMax,RMax,EMax,EMax))
     for A in range(0,RMax):
         for B in range(0,RMax):
+            print(A,B)
             for C in range(0,EMax):
                 for D in range(0,EMax):
                     state = (A,B,C,D)
                     P_next = get_prob_array(params, state)
-
                     Pij[A,B,C,D,:,:,:,:] = P_next
 
     return Pij
 
+
+
 def nextState(pij,state):
     A,B,C,D = state
+
+    #prob_next_state = get_prob_array(params, state) # not the problem
     prob_next_state = pij[A,B,C,D,:,:,:,:]
     randnum = random.random()
     pshape = prob_next_state.shape
@@ -35,8 +39,7 @@ def nextState(pij,state):
     index = np.searchsorted(cumsum_parr,randnum)
     if index < len(cumsum_parr):
         a_next,b_next,c_next,d_next = np.unravel_index(index, pshape)
-        nextState = (a_next,b_next,c_next,d_next)
-    return nextState
+        return (a_next,b_next,c_next,d_next)
 
 def sim_forward(start_state, pij, T_total):
     a0,b0,c0,d0 = start_state
@@ -56,11 +59,13 @@ def sim_forward(start_state, pij, T_total):
 if __name__ == '__main__':
     epsilon1,epsilon2 = 0,0
     (hgamma, hc, halpha, ha, kcoop, kcomp, kdu, kud, kx) = (-8.39780022, -8.31815575, -6.24283186, -0.62797361, 4.64786633, 2.1348466, 6.06874194, 0.29438665, 1.62159095)
-
+    #(hgamma, hc, halpha, ha, kcoop, kcomp, kdu, kud, kx) =(-6.00432578 ,-6.03486149, -3.80626702 , 5.35061176 , 6.4340547  , 3.67099913 ,8.6066445  , 0.28647123 , 2.42905138)
+    #(halpha, ha, hgamma, hc, kcoop, kcomp, kdu, kud, kx) = (.8245,-.8245,.297,-.297,2,3,.8175,.1681,.4359)
     params = (halpha, ha, halpha - epsilon1, ha + epsilon1, hgamma, hc, hgamma - epsilon2, hc + epsilon2, kcoop, kcomp, kdu, kud, kx)
     #
     start = (0,0,0,0)
     Pij = get_Pij(params)
+    #Pij = renormalize(Pij)
     print('gotpij')
 
     A,B,C,D = sim_forward(start, Pij, T_total)
