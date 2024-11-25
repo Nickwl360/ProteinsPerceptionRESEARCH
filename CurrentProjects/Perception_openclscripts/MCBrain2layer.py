@@ -54,6 +54,7 @@ def runtime_program(params, prog_path):
     except cl.LogicError as e:
         print("Error during kernel execution:", e)
         return None
+
     # Read the results back from the GPU to the host
     try:
         cl.enqueue_copy(queue, NextPmnop, Pmnop_buf)
