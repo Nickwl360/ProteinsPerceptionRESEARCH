@@ -58,9 +58,10 @@ def sim_forward(start_state, pij, T_total):
 
 if __name__ == '__main__':
     epsilon1,epsilon2 = 0,0
-    (hgamma, hc, halpha, ha, kcoop, kcomp, kdu, kud, kx) = (-8.39780022, -8.31815575, -6.24283186, -0.62797361, 4.64786633, 2.1348466, 6.06874194, 0.29438665, 1.62159095)
+    #(hgamma, hc, halpha, ha, kcoop, kcomp, kdu, kud, kx) = (-8.39780022, -8.31815575, -6.24283186, -0.62797361, 4.64786633, 2.1348466, 6.06874194, 0.29438665, 1.62159095)
     #(hgamma, hc, halpha, ha, kcoop, kcomp, kdu, kud, kx) =(-6.00432578 ,-6.03486149, -3.80626702 , 5.35061176 , 6.4340547  , 3.67099913 ,8.6066445  , 0.28647123 , 2.42905138)
-    #(halpha, ha, hgamma, hc, kcoop, kcomp, kdu, kud, kx) = (.8245,-.8245,.297,-.297,2,3,.8175,.1681,.4359)
+
+    (halpha, ha, hgamma, hc, kcoop, kcomp, kdu, kud, kx) = (.8245,-.8245,.297,-.297,2,3,.8175,.1681,.4359)
     params = (halpha, ha, halpha - epsilon1, ha + epsilon1, hgamma, hc, hgamma - epsilon2, hc + epsilon2, kcoop, kcomp, kdu, kud, kx)
     #
     start = (0,0,0,0)
@@ -78,13 +79,12 @@ if __name__ == '__main__':
     plt.xticks(fontsize=15)
     plt.yticks(fontsize=15)
     plt.ylim(-.1,4.5)
-    plt.show()
     # # #
-    # plt.figure()
-    # plt.plot(ts, C, linewidth=1, c='b')
-    # plt.plot(ts, D, linewidth=1, c='r')
-    # plt.xlabel("T" , fontsize=15)
-    # plt.ylabel("# Activated", fontsize=15)
-    # plt.xticks(fontsize=15)
-    # plt.yticks(fontsize=15)
-    # plt.show()
+    plt.figure()
+    plt.plot(ts, C, linewidth=1, c='b')
+    plt.plot(ts, D, linewidth=1, c='r')
+    plt.xlabel("T" , fontsize=15)
+    plt.ylabel("# Activated", fontsize=15)
+    plt.xticks(fontsize=15)
+    plt.yticks(fontsize=15)
+    plt.show()

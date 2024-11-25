@@ -37,8 +37,8 @@ def ln_comb(n,l):
 
 @cuda.jit(device=True)
 def calc_H(params, state, action):
-    #hap,ham,hbp,hbm,hcp,hcm,hdp,hdm, kcoop,kcomp,kdu,kud,kx = float(params[0]),float(params[1]),float(params[2]),float(params[3]),float(params[4]),float(params[5]),float(params[6]),float(params[7]),float(params[8]),float(params[9]),float(params[10]),float(params[11]),float(params[12])
-    hap,ham,hbp,hbm,hcp,hcm,hdp,hdm, kcomp,kcoop,kdu,kud,kx = float(params[0]),float(params[1]),float(params[2]),float(params[3]),float(params[4]),float(params[5]),float(params[6]),float(params[7]),float(params[8]),float(params[9]),float(params[10]),float(params[11]),float(params[12])
+    hap,ham,hbp,hbm,hcp,hcm,hdp,hdm, kcoop,kcomp,kdu,kud,kx = float(params[0]),float(params[1]),float(params[2]),float(params[3]),float(params[4]),float(params[5]),float(params[6]),float(params[7]),float(params[8]),float(params[9]),float(params[10]),float(params[11]),float(params[12])
+    #hap,ham,hbp,hbm,hcp,hcm,hdp,hdm, kcomp,kcoop,kdu,kud,kx = float(params[0]),float(params[1]),float(params[2]),float(params[3]),float(params[4]),float(params[5]),float(params[6]),float(params[7]),float(params[8]),float(params[9]),float(params[10]),float(params[11]),float(params[12])
 
     A,B,C,D = float(state[0]),float(state[1]),float(state[2]),float(state[3])
     (la_p,lb_p,lc_p,ld_p,la_m,lb_m,lc_m,ld_m) = action[0],action[1],action[2],action[3],action[4],action[5],action[6],action[7]
@@ -117,4 +117,4 @@ def get_prob_array(params, state):
 
     return prob_next_state
 
-get_prob_array((1,1,1,1,1,1,1,1,1,1,1,1,1),(1,1,1,1))
+#get_prob_array((1,1,1,1,1,1,1,1,1,1,1,1,1),(1,1,1,1))
