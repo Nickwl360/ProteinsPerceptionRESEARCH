@@ -25,7 +25,16 @@ if not os.path.exists(directory):
 
 def runtime_program(params, prog_path):
     halpha, ha, hbeta,hb,hgamma,hc,hdelta,hd, kcoop,kcomp,kdu,kud, kx = params
-    ctx = cl.create_some_context()
+
+    platforms = cl.get_platforms()
+    for platform in platforms:
+        print(platform)
+        for device in platform.get_devices():
+            print(device)
+
+    device = cl.get_platforms()[0].get_devices()[0]
+    ctx = cl.Context([device])
+    #ctx = cl.create_some_context()
     queue = cl.CommandQueue(ctx)
     with open(prog_path, "r") as f:
         program_source = f.read()
