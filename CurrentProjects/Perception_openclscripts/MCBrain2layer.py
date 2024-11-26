@@ -12,7 +12,7 @@ example_file_path = os.path.join(current_dir, 'MCBrain2layer.cl')
 Pmnop_prog = example_file_path
 
 # constants
-Tmax = 10_000
+Tmax = 10_0000
 MAXTOP=5
 MAXBOT = 12
 rng = np.random
@@ -247,10 +247,10 @@ epsilon2 = .0
 #(hgamma, hc, halpha, ha, kcoop, kcomp, kdu, kud, kx)= (-8.96733557, -7.73231853, -6.01935508 ,-0.99322105,  4.7228139 ,  1.98114397 ,6.05944224 , 0.29747507 , 1.53067954)
 
 #I = .375 dt001 L = 0.04606900201790876
-#(hgamma, hc, halpha, ha, kcoop, kcomp, kdu, kud, kx)=(-8.57134921, -8.1347204,  -6.11845674 ,-0.84250452,  4.60511341,  2.04416943,  5.97552154,  0.29414426 , 1.57459083)
+(hgamma, hc, halpha, ha, kcoop, kcomp, kdu, kud, kx)=(-8.57134921, -8.1347204,  -6.11845674 ,-0.84250452,  4.60511341,  2.04416943,  5.97552154,  0.29414426 , 1.57459083)
 
 #I = .6875 dt001  L = 0.05103779273020195
-(hgamma, hc, halpha, ha, kcoop, kcomp, kdu, kud, kx)=(-8.39780022, -8.31815575 ,-6.24283186, -0.62797361,  4.64786633,  2.1348466,  6.06874194 , 0.29438665 , 1.62159095)
+#(hgamma, hc, halpha, ha, kcoop, kcomp, kdu, kud, kx)=(-8.39780022, -8.31815575 ,-6.24283186, -0.62797361,  4.64786633,  2.1348466,  6.06874194 , 0.29438665 , 1.62159095)
 
 params = (halpha, ha, halpha - epsilon1, ha + epsilon1,hgamma,hc,hgamma-epsilon2,hc +epsilon2, kcoop, kcomp,kdu,kud,kx)
 #
@@ -295,16 +295,15 @@ if __name__ == "__main__":
     plt.xticks(fontsize=15)
     plt.yticks(fontsize=15)
     plt.ylim(-.1,4.5)
-    plt.show()
     # # #
-    # plt.figure()
-    # plt.plot(ts, Cs, linewidth=1, c='b')
-    # plt.plot(ts, Ds, linewidth=1, c='r')
-    # plt.xlabel("T" , fontsize=15)
-    # plt.ylabel("# Activated", fontsize=15)
-    # plt.xticks(fontsize=15)
-    # plt.yticks(fontsize=15)
-    # plt.show()
+    plt.figure()
+    plt.plot(ts, Cs, linewidth=1, c='b')
+    plt.plot(ts, Ds, linewidth=1, c='r')
+    plt.xlabel("T" , fontsize=15)
+    plt.ylabel("# Activated", fontsize=15)
+    plt.xticks(fontsize=15)
+    plt.yticks(fontsize=15)
+    plt.show()
     # # #
     # np.save('JochenI_1dt_.001HseedA',As)
     # np.save('JochenI_1dt_.001HseedB',Bs)
