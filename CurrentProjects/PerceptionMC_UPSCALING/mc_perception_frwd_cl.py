@@ -12,8 +12,8 @@ perception_cl_prog = example_file_path
 
 # constants
 Tmax = 10_000
-MAXTOP=51
-MAXBOT = 51
+MAXTOP=gp.MAXTOP
+MAXBOT = gp.MAXBOT
 rng = np.random
 
 def calc_next_state(params,current_state, prog_path):
@@ -55,7 +55,6 @@ def calc_next_state(params,current_state, prog_path):
         print("Error copying buffer to host:", e)
         return None
     return Result
-
 def get_Pij(params):
     Pij = np.zeros((MAXTOP,MAXTOP,MAXBOT,MAXBOT,MAXTOP,MAXTOP,MAXBOT,MAXBOT),dtype=np.float64)
     for A in range(0,MAXTOP):
@@ -70,8 +69,6 @@ def get_Pij(params):
                     Pij[A,B,C,D,:,:,:,:] = P_next
 
     return Pij
-
-
 def renormalize(Pijkl):
     # Create a matrix to store the normalization factors
     normalizefactors = np.sum(Pijkl, axis=(4, 5, 6, 7))  # Sum over the end state indices
@@ -156,42 +153,23 @@ def simulation(Nstart,pmnopnorm,Tmax):
 
 
 
-########PARAM EDITING#############################
-initial=(0,0,0,0)  #A,B,C,D
-######OLD VERSION FOR REFERENCE
-#ULC = 0.8245
-#LLC = 0.297
-#params = ( -1 * ULC + epsilon1/2,ULC + -1*epsilon1/2, -1*LLC +epsilon2/2,LLC + -1*epsilon2/2, kcoop, kcomp,kdu,kud,kx)
-#(halpha, ha,hgamma,hc, kcoop, kcomp,kdu,kud,kx) = ( -1 * ULC + epsilon1/2,ULC + -1*epsilon1/2, -1*LLC +epsilon2/2,LLC + -1*epsilon2/2,2.0,2.43,.8175,.1681,.4359)
-#(halpha, ha,hgamma,hc, kcoop, kcomp,kdu,kud,kx) = ( -1 * ULC + epsilon1/2,ULC + -1*epsilon1/2, -1*LLC +epsilon2/2,LLC + -1*epsilon2/2,kcoop,kcomp,kdu,kud,kx)
 
-epsilon1= .0
-epsilon2 = .0
-# kcoop,kcomp,kdu,kud,kx
-
-#CalcedHsStrong= (-5.836,-6.09057,-3.8672,6.9068)
-#DT = .01stuff
-#set15, 9inference,dt=.01 seeded with calculations  L = 0.3089
-#(hgamma, hc, halpha, ha, kcoop, kcomp, kdu, kud, kx) =(-6.00432578 ,-6.03486149, -3.80626702 , 5.35061176 , 6.4340547  , 3.67099913 ,8.6066445  , 0.28647123 , 2.42905138)
-#set0, 9inference, dt=.01 L = .1915
-#(hgamma, hc, halpha, ha, kcoop, kcomp, kdu, kud, kx)=(-6.58151137, -5.4149016 , -7.32583317, 11.50703375,  8.02477748,  7.15952577, 11.87505467,  0.31408652,  5.4198252 )
-
-#I=1 dt001 L = .05868?
-#(hgamma, hc, halpha, ha, kcoop, kcomp, kdu, kud, kx)=(-8.28640719 ,-8.42166917 ,-6.27641919 ,-0.61254556  ,4.71567638  ,2.15322098,6.15779811  ,0.29307981  ,1.63738961)
-
-#I=.0625 dt001 L = .0403
-#(hgamma, hc, halpha, ha, kcoop, kcomp, kdu, kud, kx)= (-8.96733557, -7.73231853, -6.01935508 ,-0.99322105,  4.7228139 ,  1.98114397 ,6.05944224 , 0.29747507 , 1.53067954)
-
-#I = .375 dt001 L = 0.04606900201790876
-#(hgamma, hc, halpha, ha, kcoop, kcomp, kdu, kud, kx)=(-8.57134921, -8.1347204,  -6.11845674 ,-0.84250452,  4.60511341,  2.04416943,  5.97552154,  0.29414426 , 1.57459083)
-
-#I = .6875 dt001  L = 0.05103779273020195
-(hgamma, hc, halpha, ha, kcoop, kcomp, kdu, kud, kx)=(-8.39780022, -8.31815575 ,-6.24283186, -0.62797361,  4.64786633,  2.1348466,  6.06874194 , 0.29438665 , 1.62159095)
-
-params = (halpha, ha, halpha - epsilon1, ha + epsilon1,hgamma,hc,hgamma-epsilon2,hc +epsilon2, kcoop, kcomp,kdu,kud,kx)
 #
 if __name__ == "__main__":
-    #Pij = get_Pij(params)
+    ########PARAM EDITING#############################
+    ### TO REPLACE WITH A SAVING FUNCTION ###
+    initial = (0, 0, 0, 0)  # A,B,C,D
+
+    epsilon1 = .0
+    epsilon2 = .0
+
+    (hgamma, hc, halpha, ha, kcoop, kcomp, kdu, kud, kx) = (-8.39780022, -8.31815575, -6.24283186, -0.62797361, 4.64786633, 2.1348466, 6.06874194, 0.29438665, 1.62159095)
+
+    params = (halpha, ha, halpha - epsilon1, ha + epsilon1, hgamma, hc, hgamma - epsilon2, hc + epsilon2, kcoop, kcomp, kdu, kud,kx)
+    Pij = get_Pij(params)
+
+    ########################################################
+
     p_test = calc_next_state((params),initial, perception_cl_prog)
     print(p_test)
     ##RUNNINGFORWARD################################################

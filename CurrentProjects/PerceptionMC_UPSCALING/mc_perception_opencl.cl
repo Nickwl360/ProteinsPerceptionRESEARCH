@@ -1,5 +1,5 @@
- #define MAXTOP 51
-#define MAXBOT 51
+ #define MAXTOP 11
+#define MAXBOT 26
 #define PI 3.1415
 #define M 1
 
@@ -57,8 +57,8 @@ __kernel void calc_next_state(__global double* Result, __global double* Params, 
      double hc = Params[5];
      double hdelta = Params[6];
      double hd = Params[7];
-     double kcoop = Params[9];
-     double kcomp = Params[8];
+     double kcoop = Params[8];
+     double kcomp = Params[9];
      double kdu = Params[10];
      double kup = Params[11];
      double kx = Params[12];
@@ -73,12 +73,12 @@ __kernel void calc_next_state(__global double* Result, __global double* Params, 
             {
                 for(int d=0; d<=M;d++)
                 {
-                    int e = nam - nai + a;  //  lalpha
+                    int e = nam - nai + a;  //lalpha
                     int f = nbn - nbj + b;  //lbeta
                     int g = nco - nck + c;  //lgamma
                     int h = ndp - ndl + d; // ldelta
-                    //if(0 <= e && e <= (MAXTOP-1-nai) && 0 <= f && f <= (MAXTOP-1-nbj) && 0 <= g && g <= (MAXBOT-1-nck) && 0 <= h && h <= (MAXBOT-1-ndl) )
-                    if(0 <= e && e <= (M) && 0 <= f && f <= (M) && 0 <= g && g <= (M) && 0 <= h && h <= (M) )
+                    if(0 <= e && e <= (MAXTOP-1-nai) && 0 <= f && f <= (MAXTOP-1-nbj) && 0 <= g && g <= (M) && 0 <= h && h <= (M) )
+                    //if(0 <= e && e <= (M) && 0 <= f && f <= (M) && 0 <= g && g <= (M) && 0 <= h && h <= (M) )
 
                     {
                         loop4 +=  exp(calcP(nai,nbj,nck,ndl, e,a,f,b,g,c,h,d, halpha,ha,hbeta,hb,hgamma,hdelta,hc,hd,kcoop,kcomp,kdu,kup,kx));

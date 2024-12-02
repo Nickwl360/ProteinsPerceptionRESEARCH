@@ -1,30 +1,20 @@
 import pyopencl as cl
 import numpy as np
+import os
+import global_params as gp
+import scipy.io as sio
 
-context = cl.create_some_context()
-queue = cl.CommandQueue(context)
 
+def display_mat_keys(file_path, key):
+    mat_contents = sio.loadmat(file_path)
+    print(mat_contents.keys())
+    if key in mat_contents:
+        print(f"Value for key '{key}': {mat_contents[key]}")
+    else:
+        print(f"Key '{key}' not found in the .mat file")
 
-device = cl.get_platforms()[0].get_devices()[0]
-print(f"Max workgroup size: {device.max_work_group_size}")
-print(f"Max memory alloc size: {device.max_mem_alloc_size}")
-print(f"Global memory size: {device.global_mem_size}")
-print(f"Local memory size: {device.local_mem_size}")
-
-kernel_code = """
-__kernel void add_one(__global float *arr) {
-    int i = get_global_id(0);
-    arr[i] += 1.0f;
-}
-"""
-
-program = cl.Program(context, kernel_code).build()
-array = np.random.rand(10).astype(np.float32)
-
-mf = cl.mem_flags
-buffer = cl.Buffer(context, mf.READ_WRITE | mf.COPY_HOST_PTR, hostbuf=array)
-
-program.add_one(queue, array.shape, None, buffer)
-cl.enqueue_copy(queue, array, buffer)
-print(array)
-
+if __name__ == '__main__':
+    directory = 'Joch_data_given'
+    file_name = 'TwoChoiceTrajectoriesDensity_000.mat'  # Replace with your actual .mat file name
+    file_path = os.path.join(directory, file_name)
+    display_mat_keys(file_path,'r_step')
