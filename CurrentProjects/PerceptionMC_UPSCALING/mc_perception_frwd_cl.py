@@ -2,8 +2,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pyopencl as cl
-from Utilities.EQUILIBRIUMFINDER import EquilibriumMatrix
-
+import global_params as gp
 import os
 
 
@@ -13,11 +12,9 @@ perception_cl_prog = example_file_path
 
 # constants
 Tmax = 10_000
-MAXTOP=5
-MAXBOT = 26
+MAXTOP=51
+MAXBOT = 51
 rng = np.random
-
-
 
 def calc_next_state(params,current_state, prog_path):
 
@@ -194,8 +191,9 @@ epsilon2 = .0
 params = (halpha, ha, halpha - epsilon1, ha + epsilon1,hgamma,hc,hgamma-epsilon2,hc +epsilon2, kcoop, kcomp,kdu,kud,kx)
 #
 if __name__ == "__main__":
-    Pij = get_Pij(params)
-
+    #Pij = get_Pij(params)
+    p_test = calc_next_state((params),initial, perception_cl_prog)
+    print(p_test)
     ##RUNNINGFORWARD################################################
     As,Bs,Cs,Ds = simulation(initial,Pij,Tmax)
 

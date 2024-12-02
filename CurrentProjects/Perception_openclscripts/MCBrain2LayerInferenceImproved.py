@@ -1,6 +1,8 @@
 from CurrentProjects.PerceptionE25R5.MCBrain2layer import *
 from scipy.optimize import minimize
 import scipy.io
+import numpy as np
+
 # directory = 'JochNE25NR5Counts'
 # if not os.path.exists(directory):
 #     os.makedirs(directory)

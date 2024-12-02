@@ -1,5 +1,5 @@
- #define MAXTOP 5
-#define MAXBOT 26
+ #define MAXTOP 51
+#define MAXBOT 51
 #define PI 3.1415
 #define M 1
 
