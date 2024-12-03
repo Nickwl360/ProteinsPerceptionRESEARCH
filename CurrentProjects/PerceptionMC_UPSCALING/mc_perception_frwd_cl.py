@@ -11,7 +11,7 @@ example_file_path = os.path.join(current_dir, 'mc_perception_opencl.cl')
 perception_cl_prog = example_file_path
 
 # constants
-Tmax = 10_000
+Tmax = gp.TMax
 MAXTOP=gp.MAXTOP
 MAXBOT = gp.MAXBOT
 rng = np.random
@@ -69,7 +69,7 @@ def get_Pij(params):
                     Pij[A,B,C,D,:,:,:,:] = P_next
 
     return Pij
-def renormalize(Pijkl):
+def renormalizepij(Pijkl):
     # Create a matrix to store the normalization factors
     normalizefactors = np.sum(Pijkl, axis=(4, 5, 6, 7))  # Sum over the end state indices
     # Ensure that the denominator is not zero to avoid division by zero
@@ -79,31 +79,6 @@ def renormalize(Pijkl):
     #This works, I double checked with the old method
     return Pijkl
 
-
-def nextNs(P,na,nb,nc,nd):
-    # print(na,nb,nc,nd)
-    Parr = P[na,nb,nc,nd,:,:,:,:]
-    randnum = rng.random()
-    SUM = 0
-    NAm = 0
-    NBn = 0
-    NCo = 0
-    NDp = 0
-    for i in range(MAXTOP):
-        for j in range(MAXTOP):
-            for k in range(MAXBOT):
-                for l in range(MAXBOT):
-                    SUM += Parr[i][j][k][l]
-                    if SUM >= randnum:
-                        NAm = i
-                        NBn = j
-                        NCo = k
-                        NDp = l
-                        #print(type(NAm), type(NBn), type(NCo), type(NDp),NAm,NBn,NCo,NDp, 'types A-D')
-                        return NAm,NBn,NCo,NDp
-    if type(NAm)!= type(None) and type(NBn)!= type(None) and type(NCo)!= type(None) and type(NDp)!= type(None):
-        return NAm,NBn,NCo,NDp
-    else: return 0,0,0,0
 
 def faster_function(Parr,ns):
     na,nb,nc,nd=ns
@@ -120,6 +95,20 @@ def faster_function(Parr,ns):
         return NAm, NBn, NCo, NDp
     else:
         return 0, 0, 0, 0
+def faster_function_nopij(Parr):
+    randnum = rng.random()
+
+    shape = Parr.shape
+    flat_Parr = Parr.reshape(-1)  # Flatten the Parr array
+    cumsum = np.cumsum(flat_Parr)  # Compute cumulative sum
+    index = np.searchsorted(cumsum, randnum)  # Find index where randnum fits in cumsum
+
+    if index < len(cumsum):
+        NAm, NBn, NCo, NDp = np.unravel_index(index, shape)
+        return NAm, NBn, NCo, NDp
+    else:
+        return 0, 0, 0, 0
+
 def simulation(Nstart,pmnopnorm,Tmax):
     NA = Nstart[0]
     NB = Nstart[1]
@@ -151,6 +140,46 @@ def simulation(Nstart,pmnopnorm,Tmax):
         # print(type(A), type(B), type(C),type(D), 'types A-D')
     return A,B,C,D
 
+def simulation_nopij(Nstart,Tmax,file_path):
+    NA = Nstart[0]
+    NB = Nstart[1]
+    NC = Nstart[2]
+    ND = Nstart[3]
+    t = 0
+    A = [NA]
+    B = [NB]
+    C = [NC]
+    D = [ND]
+    state_cache = {}
+    p_arr_cache = {}
+
+    while t < Tmax:
+        #print(params)
+        state= (A[-1],B[-1],C[-1],D[-1])
+        state_key = f"{state}"
+        if state_key in state_cache:
+            p_state = p_arr_cache[state_key]
+            print('known state')
+        else:
+            next_state = calc_next_state(params, state, file_path)
+            if np.sum(next_state) != 0:
+                next_state /= np.sum(next_state)
+            next_state = next_state.reshape((MAXTOP, MAXTOP, MAXBOT, MAXBOT))
+            p_arr_cache[state_key] = next_state
+            p_state = next_state
+
+        NA,NB,NC,ND=faster_function_nopij(p_state)
+        t += 1
+        print(t)
+        # print(NA, NB, NC, ND, 'a,b,c,d')
+
+        A.append(NA)
+        B.append(NB)
+        C.append(NC)
+        D.append(ND)
+
+    return A,B,C,D
+
 
 
 
@@ -163,17 +192,20 @@ if __name__ == "__main__":
     epsilon1 = .0
     epsilon2 = .0
 
-    (hgamma, hc, halpha, ha, kcoop, kcomp, kdu, kud, kx) = (-8.39780022, -8.31815575, -6.24283186, -0.62797361, 4.64786633, 2.1348466, 6.06874194, 0.29438665, 1.62159095)
+    #(hgamma, hc, halpha, ha, kcoop, kcomp, kdu, kud, kx) = (-8.39780022, -8.31815575, -6.24283186, -0.62797361, 4.64786633, 2.1348466, 6.06874194, 0.29438665, 1.62159095)
+    (hgamma, hc, halpha, ha, kcoop, kcomp, kdu, kud, kx)= (-11.45954105, - 9.81027345, - 10.15358925, - 1.49456199,  0.93641602, 1.79710763, 2.86152824, 0.11585655, 0.56313622)#000   .013
+
+
 
     params = (halpha, ha, halpha - epsilon1, ha + epsilon1, hgamma, hc, hgamma - epsilon2, hc + epsilon2, kcoop, kcomp, kdu, kud,kx)
-    Pij = get_Pij(params)
+    #Pij = get_Pij(params)
 
     ########################################################
 
-    p_test = calc_next_state((params),initial, perception_cl_prog)
-    print(p_test)
     ##RUNNINGFORWARD################################################
-    As,Bs,Cs,Ds = simulation(initial,Pij,Tmax)
+    #As,Bs,Cs,Ds = simulation(initial,Pij,Tmax)
+    As,Bs,Cs,Ds = simulation_nopij(initial,Tmax,perception_cl_prog)
+
 
     #############SAVING###################################
     total_length = len(As)
@@ -187,22 +219,21 @@ if __name__ == "__main__":
     plt.ylabel("# Activated",fontsize=15)
     plt.xticks(fontsize=15)
     plt.yticks(fontsize=15)
-    plt.ylim(-.1,4.5)
     plt.show()
     # # #
-    # plt.figure()
-    # plt.plot(ts, Cs, linewidth=1, c='b')
-    # plt.plot(ts, Ds, linewidth=1, c='r')
-    # plt.xlabel("T" , fontsize=15)
-    # plt.ylabel("# Activated", fontsize=15)
-    # plt.xticks(fontsize=15)
-    # plt.yticks(fontsize=15)
-    # plt.show()
+    plt.figure()
+    plt.plot(ts, Cs, linewidth=1, c='b')
+    plt.plot(ts, Ds, linewidth=1, c='r')
+    plt.xlabel("T" , fontsize=15)
+    plt.ylabel("# Activated", fontsize=15)
+    plt.xticks(fontsize=15)
+    plt.yticks(fontsize=15)
+    plt.show()
     # # #
-    # np.save('JochenI_1dt_.001HseedA',As)
-    # np.save('JochenI_1dt_.001HseedB',Bs)
-    # np.save('JochenI_1dt_.001HseedC',Cs)
-    # np.save('JochenI_1dt_.001HseedD',Ds)
+    np.save('Joch_inferred_traj_000_A',As)
+    np.save('Joch_inferred_traj_000_B',Bs)
+    np.save('Joch_inferred_traj_000_C',Cs)
+    np.save('Joch_inferred_traj_000_D',Ds)
 
 
 

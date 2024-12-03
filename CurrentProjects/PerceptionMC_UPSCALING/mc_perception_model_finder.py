@@ -109,7 +109,7 @@ if __name__ == '__main__':
     perception_cl_prog  = os.path.join(current_dir, 'mc_perception_opencl.cl')
 
     directory = 'Joch_data_given'
-    I_test = '000'
+    I_test = '025'
 
     counts_file = os.path.join(directory, f'counts_{I_test}.npy')
     if os.path.exists(counts_file):
@@ -123,6 +123,9 @@ if __name__ == '__main__':
     #print(count)
 
     t0 = time.time()
-    initial_guess= (-8.96733557, -7.73231853, -6.01935508 ,-0.99322105,  4.7228139 ,  1.98114397 ,6.05944224 , 0.29747507 , 1.53067954)
+    #initial_guess= (-8.96733557, -7.73231853, -6.01935508 ,-0.99322105,  4.7228139 ,  1.98114397 ,6.05944224 , 0.29747507 , 1.53067954)#old
+    initial_guess= (-11.45954105, - 9.81027345, - 10.15358925, - 1.49456199,  0.93641602, 1.79710763, 2.86152824, 0.11585655, 0.56313622)#000   .013
     max_params = maximize_likelyhood(count, initial_guess,perception_cl_prog)
     print(max_params,'time:',time.time()-t0)
+
+
