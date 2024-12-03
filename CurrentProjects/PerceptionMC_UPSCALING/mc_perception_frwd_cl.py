@@ -159,18 +159,19 @@ def simulation_nopij(Nstart,Tmax,file_path):
         state_key = f"{state}"
         if state_key in state_cache:
             p_state = p_arr_cache[state_key]
-            print('known state')
         else:
             next_state = calc_next_state(params, state, file_path)
             if np.sum(next_state) != 0:
                 next_state /= np.sum(next_state)
             next_state = next_state.reshape((MAXTOP, MAXTOP, MAXBOT, MAXBOT))
             p_arr_cache[state_key] = next_state
+            state_cache[state_key] = state_key
             p_state = next_state
 
         NA,NB,NC,ND=faster_function_nopij(p_state)
         t += 1
-        print(t)
+        if t%10000==0:
+            print(t)
         # print(NA, NB, NC, ND, 'a,b,c,d')
 
         A.append(NA)
@@ -206,8 +207,6 @@ if __name__ == "__main__":
     #As,Bs,Cs,Ds = simulation(initial,Pij,Tmax)
     As,Bs,Cs,Ds = simulation_nopij(initial,Tmax,perception_cl_prog)
 
-
-    #############SAVING###################################
     total_length = len(As)
 
     print('halpha, hA,hbeta,hB,hgamma,hC,hdelta,hD,kcoop,kcomp,kdu,kud,kx = ',params)
@@ -219,7 +218,6 @@ if __name__ == "__main__":
     plt.ylabel("# Activated",fontsize=15)
     plt.xticks(fontsize=15)
     plt.yticks(fontsize=15)
-    plt.show()
     # # #
     plt.figure()
     plt.plot(ts, Cs, linewidth=1, c='b')
@@ -230,10 +228,20 @@ if __name__ == "__main__":
     plt.yticks(fontsize=15)
     plt.show()
     # # #
-    np.save('Joch_inferred_traj_000_A',As)
-    np.save('Joch_inferred_traj_000_B',Bs)
-    np.save('Joch_inferred_traj_000_C',Cs)
-    np.save('Joch_inferred_traj_000_D',Ds)
+
+    #save trajectoires in 'inferred_trajectory' folder
+    dir_path = 'inferred_trajectories'
+    file_name = f'Joch_inferred_traj_000_L{Tmax}_'
+    save_patha = os.path.join(dir_path, file_name+'A.npy')
+    save_pathb = os.path.join(dir_path, file_name+'B.npy')
+    save_pathc = os.path.join(dir_path, file_name+'C.npy')
+    save_pathd = os.path.join(dir_path, file_name+'D.npy')
+
+
+    np.save(save_patha,As)
+    np.save(save_pathb,Bs)
+    np.save(save_pathc,Cs)
+    np.save(save_pathd,Ds)
 
 
 

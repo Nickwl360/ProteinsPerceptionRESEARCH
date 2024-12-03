@@ -44,7 +44,7 @@ def plot_mat_data(file_path,T):
 
 if __name__ == '__main__':
     directory = 'Joch_data_given'
-    file_name = 'TwoChoiceTrajectoriesDensity_050.mat'  # Replace with your actual .mat file name
+    file_name = 'TwoChoiceTrajectoriesDensity_100.mat'  # Replace with your actual .mat file name
     file_path = os.path.join(directory, file_name)
     #display_mat_keys(file_path,'r_step')
     TMAX = 1_000_00

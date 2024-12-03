@@ -19,10 +19,7 @@ and modules:
 module load cuda11.0/toolkit/11.0.3
 module load compilers/anaconda-2021.11
 
-Ted Kaczynski 
 """
-
-
 
 @cuda.jit
 def get_micro(p,lalphs,las,lbetas,lbs,halpha,ha,Kaalpha,Kabeta,Na,Nb):#
@@ -48,14 +45,7 @@ def get_micro(p,lalphs,las,lbetas,lbs,halpha,ha,Kaalpha,Kabeta,Na,Nb):#
                     expval=(halpha*(lalpha+lbeta))+(ha*(la+lb))+(Kaalpha*((lalpha*la)+(lbeta*lb)))+(Kabeta*((lbeta*la)+(lalpha*lb)))
                     p[lalpha,la,lbeta,lb]=val+expval
 
-                    
-
-
-
-
-
     #p=np.exp(p-np.max(p))
-    
 
 
 # Create the data array - usually initialized some other way

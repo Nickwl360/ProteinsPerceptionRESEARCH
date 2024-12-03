@@ -1,4 +1,4 @@
-from CurrentProjects.Perception_openclscripts.MCBrain2layer import *
+from Perception_openclscripts.MCBrain2layer import *
 from scipy.optimize import minimize
 import scipy.io
 

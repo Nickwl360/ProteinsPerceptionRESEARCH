@@ -22,7 +22,6 @@ def count_transitions(data):
         count[indices] += 1
     return count
 
-
 def cl_likelyhood(params7, count, prog_path):
 
     L = 0
@@ -57,44 +56,10 @@ def cl_likelyhood(params7, count, prog_path):
     print('Likelyhood: ', -1 * L /np.sum(list(count.values())))
     return -L / np.sum(list(count.values()))
 
-
-def cl_likelyhood_old(params7, data, prog_path):
-    a_data, b_data, c_data, d_data = data
-    leng = len(a_data)
-    p_arr_cache = {}
-    L = 0
-
-    (hgamma, hc, halpha, ha, kcoop, kcomp, kdu, kud, kx) = params7
-    params = (halpha, ha, halpha , ha , hgamma, hc, hgamma , hc , kcoop, kcomp, kdu, kud,kx)
-
-    for i, _ in enumerate(a_data):
-        state = (a_data[i], b_data[i], c_data[i], d_data[i])
-
-        state_key = f"{state}"
-
-        if state_key in p_arr_cache:
-            p_state = p_arr_cache[state_key]
-        else:
-            p_arr = calc_next_state(params, state, prog_path)
-            p_arr_cache[state_key] = p_arr
-            p_state = p_arr
-
-        p_state= p_state.reshape((rmax, rmax, emax, emax))
-        p_val = p_state[state]
-
-
-        if p_val!=0:
-            L += np.log(p_val)
-
-    print('Likelyhood: ', -1 * L / leng)
-
-    return -1*L/ leng
-
 def maximize_likelyhood(count,initial,prog_path):
 
     maxL = minimize(cl_likelyhood, initial, args=(count,prog_path), method='Nelder-Mead')
     return maxL.x
-
 def load_mat_data(file_path):
     mat_contents = sio.loadmat(file_path)
     a = mat_contents['r_li'][0]
@@ -125,6 +90,7 @@ if __name__ == '__main__':
     t0 = time.time()
     #initial_guess= (-8.96733557, -7.73231853, -6.01935508 ,-0.99322105,  4.7228139 ,  1.98114397 ,6.05944224 , 0.29747507 , 1.53067954)#old
     initial_guess= (-11.45954105, - 9.81027345, - 10.15358925, - 1.49456199,  0.93641602, 1.79710763, 2.86152824, 0.11585655, 0.56313622)#000   .013
+
     max_params = maximize_likelyhood(count, initial_guess,perception_cl_prog)
     print(max_params,'time:',time.time()-t0)
 

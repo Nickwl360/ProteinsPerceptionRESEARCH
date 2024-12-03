@@ -142,7 +142,6 @@ data = simulation(Tmax, initial)
 ts = np.linspace(0, Tmax, len(data[2]))
 plt.figure()
 plt.plot(ts, data[2], c='red')
-plt.figure()
 plt.plot(ts,data[5],c='blue')
 
 plt.xlabel('time (s)')
