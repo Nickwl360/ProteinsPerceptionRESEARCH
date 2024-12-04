@@ -9,9 +9,6 @@
 
 module load cuda11.0/toolkit/11.0.3
 
-
 module load compilers/anaconda-2021.11 
-
-
 
 python3 nubtest.py

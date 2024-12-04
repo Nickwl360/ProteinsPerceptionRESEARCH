@@ -5,4 +5,4 @@ MAXBOT = 26
 M_step = 1
 
 #for running forward
-TMax = 10_000
+TMax = 1_000_00
