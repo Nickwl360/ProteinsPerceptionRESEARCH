@@ -41,9 +41,9 @@ def cl_likelyhood(params7, count, prog_path):
             p_arr = p_arr_cache[state_key]
         else:
             p_arr = calc_next_state(params, state, prog_path)
-            if np.sum(p_arr) != 0:
-                p_arr/=np.sum(p_arr)
-            else:
+            try:
+                p_arr /= np.sum(p_arr)
+            except ZeroDivisionError:
                 continue
             p_arr = p_arr.reshape((rmax, rmax, emax, emax))
             p_arr_cache[state_key] = p_arr
@@ -74,7 +74,7 @@ if __name__ == '__main__':
     perception_cl_prog  = os.path.join(current_dir, 'mc_perception_opencl.cl')
 
     directory = 'Joch_data_given'
-    I_test = '025'
+    I_test = '050'
 
     counts_file = os.path.join(directory, f'counts_{I_test}.npy')
     if os.path.exists(counts_file):
@@ -89,7 +89,8 @@ if __name__ == '__main__':
 
     t0 = time.time()
     #initial_guess= (-8.96733557, -7.73231853, -6.01935508 ,-0.99322105,  4.7228139 ,  1.98114397 ,6.05944224 , 0.29747507 , 1.53067954)#old
-    initial_guess= (-11.45954105, - 9.81027345, - 10.15358925, - 1.49456199,  0.93641602, 1.79710763, 2.86152824, 0.11585655, 0.56313622)#000   .013
+    #initial_guess=(-11.45954105,- 9.81027345, - 10.15358925,- 1.49456199,  0.93641602, 1.79710763, 2.86152824, 0.11585655, 0.56313622)#000   .013
+    initial_guess= (-11.2481983, - 10.05704405,- 8.5134479, - 3.30299464 ,  0.79097099,  1.89522803, 2.70952583 , 0.11745314 , 0.6743023)#025#.01295
 
     max_params = maximize_likelyhood(count, initial_guess,perception_cl_prog)
     print(max_params,'time:',time.time()-t0)
