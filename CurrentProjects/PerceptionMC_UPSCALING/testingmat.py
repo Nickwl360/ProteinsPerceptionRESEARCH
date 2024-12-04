@@ -1,7 +1,7 @@
 import pyopencl as cl
 import numpy as np
 import os
-import global_params as gp
+import mc_perception_inferred_model_analyzer as gp
 import scipy.io as sio
 import matplotlib.pyplot as plt
 
@@ -44,9 +44,9 @@ def plot_mat_data(file_path,T):
 
 if __name__ == '__main__':
     directory = 'Joch_data_given'
-    file_name = 'TwoChoiceTrajectoriesDensity_100.mat'  # Replace with your actual .mat file name
+    file_name = 'TwoChoiceTrajectoriesDensity_050.mat'  # Replace with your actual .mat file name
     file_path = os.path.join(directory, file_name)
     display_mat_keys(file_path,'r_step')
     TMAX = 1_000_00
 
-    #plot_mat_data(file_path,TMAX)
+    plot_mat_data(file_path,TMAX)

@@ -2,7 +2,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pyopencl as cl
-import global_params as gp
+import mc_perception_inferred_model_analyzer as gp
 import os
 
 
