@@ -1,9 +1,3 @@
-
-
-
-
-
-# Global model size parameters
 MAXTOP = 11
 MAXBOT = 26
 M_step = 1

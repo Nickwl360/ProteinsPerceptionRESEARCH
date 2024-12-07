@@ -1,7 +1,7 @@
 import pyopencl as cl
 import numpy as np
 import os
-import mc_perception_inferred_model_analyzer as gp
+import mc_perception_inferred_model_class as gp
 import scipy.io as sio
 import matplotlib.pyplot as plt
 

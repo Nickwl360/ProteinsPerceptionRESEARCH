@@ -2,7 +2,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pyopencl as cl
-import mc_perception_inferred_model_analyzer as gp
+import mc_perception_main as gp
 import os
 
 
@@ -192,10 +192,19 @@ if __name__ == "__main__":
 
     epsilon1 = .0
     epsilon2 = .0
+    Itest = 100
 
+    #read parameters from Infered_parameters directory read csv file
+
+    dir_path = 'Infered_parameters'
+    file_name = f'{Itest}_inferred_params'
+    file_path = os.path.join(dir_path, file_name+'.csv')
+    with open(file_path, 'r') as f:
+        params = eval(f.readlines()[1].split(',')[1].strip())
+    #params = (-10.57359064, -10.74478163, -8.46817699, -3.50334181, 0.81771474, 1.87695072, 2.6787412, 0.12152318, 0.71633869)
     #(hgamma, hc, halpha, ha, kcoop, kcomp, kdu, kud, kx) = (-8.39780022, -8.31815575, -6.24283186, -0.62797361, 4.64786633, 2.1348466, 6.06874194, 0.29438665, 1.62159095)
-    (hgamma, hc, halpha, ha, kcoop, kcomp, kdu, kud, kx)= (-11.45954105, - 9.81027345, - 10.15358925, - 1.49456199,  0.93641602, 1.79710763, 2.86152824, 0.11585655, 0.56313622)#000   .013
-
+    #(hgamma, hc, halpha, ha, kcoop, kcomp, kdu, kud, kx)= (-11.45954105, - 9.81027345, - 10.15358925, - 1.49456199,  0.93641602, 1.79710763, 2.86152824, 0.11585655, 0.56313622)#000   .013
+    (hgamma, hc, halpha, ha, kcoop, kcomp, kdu, kud, kx) = params
 
 
     params = (halpha, ha, halpha - epsilon1, ha + epsilon1, hgamma, hc, hgamma - epsilon2, hc + epsilon2, kcoop, kcomp, kdu, kud,kx)
@@ -230,18 +239,19 @@ if __name__ == "__main__":
     # # #
 
     #save trajectoires in 'inferred_trajectory' folder
-    dir_path = 'inferred_trajectories'
-    file_name = f'Joch_inferred_traj_000_L{Tmax}_'
-    save_patha = os.path.join(dir_path, file_name+'A.npy')
-    save_pathb = os.path.join(dir_path, file_name+'B.npy')
-    save_pathc = os.path.join(dir_path, file_name+'C.npy')
-    save_pathd = os.path.join(dir_path, file_name+'D.npy')
 
-
-    np.save(save_patha,As)
-    np.save(save_pathb,Bs)
-    np.save(save_pathc,Cs)
-    np.save(save_pathd,Ds)
+    # dir_path = 'inferred_trajectories'
+    # file_name = f'Joch_inferred_traj_000_L{Tmax}_'
+    # save_patha = os.path.join(dir_path, file_name+'A.npy')
+    # save_pathb = os.path.join(dir_path, file_name+'B.npy')
+    # save_pathc = os.path.join(dir_path, file_name+'C.npy')
+    # save_pathd = os.path.join(dir_path, file_name+'D.npy')
+    #
+    #
+    # np.save(save_patha,As)
+    # np.save(save_pathb,Bs)
+    # np.save(save_pathc,Cs)
+    # np.save(save_pathd,Ds)
 
 
 
